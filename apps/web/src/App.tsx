@@ -15,7 +15,7 @@ import { SessionContext } from './session';
 
 type Boot =
   | { state: 'loading' }
-  | { state: 'signed-out'; demo: boolean }
+  | { state: 'signed-out'; demo: boolean; oidc: boolean }
   | { state: 'signed-in'; me: Me }
   | { state: 'error'; error: Error };
 
@@ -39,10 +39,10 @@ export function App() {
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
         const cfg = await api
-          .get<{ demoLogin: boolean }>('/api/v1/auth/config')
-          .catch(() => ({ demoLogin: false }));
+          .get<{ demoLogin: boolean; oidc: boolean }>('/api/v1/auth/config')
+          .catch(() => ({ demoLogin: false, oidc: false }));
         setCsrfToken(null);
-        setBoot({ state: 'signed-out', demo: cfg.demoLogin });
+        setBoot({ state: 'signed-out', demo: cfg.demoLogin, oidc: cfg.oidc });
       } else {
         setBoot({ state: 'error', error: e as Error });
       }
@@ -54,13 +54,21 @@ export function App() {
   }, [load]);
 
   const signOut = useCallback(async () => {
-    await api.post('/api/v1/auth/logout').catch(() => undefined);
+    const res = await api
+      .post<{ logoutUrl: string | null }>('/api/v1/auth/logout')
+      .catch(() => null);
+    // With SSO, also end the identity-provider session; it redirects back to EPI afterwards.
+    if (res?.logoutUrl) {
+      window.location.assign(res.logoutUrl);
+      return;
+    }
     await load();
   }, [load]);
 
   if (boot.state === 'loading') return <Loading />;
   if (boot.state === 'error') return <ErrorState error={boot.error} onRetry={load} />;
-  if (boot.state === 'signed-out') return <Login demo={boot.demo} onSignedIn={load} />;
+  if (boot.state === 'signed-out')
+    return <Login demo={boot.demo} oidc={boot.oidc} onSignedIn={load} />;
 
   return (
     <SessionContext.Provider value={{ me: boot.me, signOut }}>

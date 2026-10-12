@@ -631,3 +631,9 @@ code {
     padding: 1rem;
   }
 }
+.btn-block {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+}
