@@ -4,3 +4,5 @@
 - **2026-10-12** — KPI engine test-first (Cycle Time, Aging, Review Waiting + proxy, confidence, trends).
 - **2026-10-12** — Schema migration, synthetic seed (26 users, 4 teams, transfer, small team), sessions + CSRF, ScopeService RBAC, org/KPI/review APIs, Swagger. Integration tests found and fixed a real bug: TypeORM returns `[rows, count]` for `UPDATE … RETURNING`, which made session lookup accept unknown tokens with an empty user; fixed via `db/rows.ts` + regression tests.
 - **2026-10-12** — Unified React UI, Playwright e2e (desktop + mobile), Docker image + Compose + `epi.sh`, backup/restore verified, scheduler scripts (disabled).
+- **2026-10-12** — Owner confirmed NestJS, delegated license (Apache-2.0), approved merge (PR #1 → `main` @ `56205d2`) and hourly resume (Routine, ADR-014).
+- **2026-10-12** — EPI-003 Keycloak SSO: OIDC BFF with openid-client (PKCE/state/nonce, browser binding, no token storage, no auto-provisioning), production gating, IdP logout, compose overlay, doctor checks; tested against an ephemeral Keycloak (15 integration + browser E2E).
