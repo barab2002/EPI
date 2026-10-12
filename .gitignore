@@ -13,3 +13,5 @@ test-results/
 .DS_Store
 .vite/
 *.tsbuildinfo
+.epi/
+build/
