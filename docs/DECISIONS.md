@@ -74,3 +74,12 @@ Owner approved the hourly resume scheduler. The dev container is ephemeral (recl
 ## ADR-016 · 2026-10-12 · Accepted — Demo bundles a dev-mode Keycloak with generated users
 
 Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `deploy/compose.demo-sso.yaml`: Keycloak 26.3.3 in dev mode (file DB in a volume), realm `epi-demo` generated per install by `scripts/kc-demo-realm.mjs` with one user per demo role, random passwords and client secret kept only in `.epi/keycloak/` (0700, gitignored) and shown by `./epi.sh credentials`. Users link to synthetic EPI people by verified e-mail (enabled in demo only; the seed leaves `keycloak_sub` empty). Split-horizon issuer solved with `EPI_OIDC_INTERNAL_URL` (openid-client `customFetch`): browser uses `127.0.0.1:8081`, EPI's back channel uses `keycloak:8080`, the issuer stays the public URL. `/auth/login` restarts on `EPI_PUBLIC_URL` when opened under another host name so the binding cookie and callback share a host. Not for real users: production uses the organization's Keycloak.
+
+## ADR-017 · 2026-10-12 · Accepted — Jira collector: REST, metadata only, relative JQL
+
+- **REST, not MCP** (spec §7 MCP rule): no approved, locally runnable Jira DC MCP server is available; REST through the `EngineeringSource`-style client is deterministic and testable. Revisit if one is approved (B8).
+- **Metadata only:** no summary/description/comments are requested or stored (`title`, `raw_json` stay NULL). Drill-down shows issue keys.
+- **Relative JQL time** (`updated >= "-Nm"`) avoids the Jira user-time-zone ambiguity of absolute JQL dates; 48 h overlap absorbs late edits.
+- **Status mapping by status ID** (names can be renamed), inferred from Jira status categories, admin-overridable; admin rows are never overwritten.
+- **Attribution:** current assignee (documented limitation). Story Points stored only when the field is confirmed or unambiguous.
+- **Tests:** an in-process fake Jira DC server (synthetic data, documented response shapes, fault injection) — real-instance reconciliation (spec §14: 20 issues) awaits access B1–B3.

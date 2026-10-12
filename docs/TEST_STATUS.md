@@ -4,6 +4,8 @@ Environment: cloud dev container, Ubuntu 24.04, Node 22.22.0, pnpm 10.28.0, Dock
 
 | When (UTC) | Command | Result |
 |---|---|---|
+| 2026-10-12 20:45 | `bash scripts/ci.sh` (branch `feature/jira-collector`) | ✅ ALL CHECKS PASSED — **98 unit**, 17 web, **54 integration** (RBAC 23, OIDC 16, Jira collector 10, admin API 5), build |
+| 2026-10-12 20:40 | CLI smoke: `migrate`, `jira-add` (http refused / https saved), `jira-check` (missing secret), `jira-sync` (unreachable host) | ✅ actionable errors, non-zero exit codes, failed run recorded |
 | 2026-10-12 20:15 | `bash scripts/ci.sh` (branch `feature/demo-keycloak`) | ✅ ALL CHECKS PASSED — 72 unit, 17 web, 39 integration (PostgreSQL + Keycloak), build |
 | 2026-10-12 20:12 | `./epi.sh demo` (with bundled Keycloak, clean volumes) + `pnpm run e2e` with demo user `taylor` | ✅ 9 passed, 1 skipped by design — SSO via demo Keycloak on desktop + mobile, all demo flows; Taylor linked by verified e-mail (audited) |
 | 2026-10-12 20:05 | `EPI_IMAGE_REGISTRY=mirror.gcr.io bash scripts/ci.sh` (branch `feature/keycloak-oidc`) | ✅ ALL CHECKS PASSED — secret scan, format, lint, typecheck, **70 API unit**, **17 web**, **38 integration** (PostgreSQL + ephemeral Keycloak 26.3.3: 23 RBAC + 15 OIDC), build |
