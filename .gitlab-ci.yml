@@ -1,0 +1,19 @@
+# For an approved INTERNAL GitLab runner only (ADR-006). Requires Node 22 + pnpm and a Docker
+# executor with access to an internal image mirror. Never point this at public shared runners.
+stages: [check]
+check:
+  stage: check
+  image: ${EPI_IMAGE_REGISTRY}/library/node:22-alpine
+  services:
+    - name: ${EPI_IMAGE_REGISTRY}/library/postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: epi_test
+    POSTGRES_PASSWORD: epi_test # secret-scan:allow (ephemeral CI database)
+    POSTGRES_DB: epi_test
+    EPI_TEST_DATABASE_URL: postgres://epi_test:epi_test@postgres:5432/epi_test # secret-scan:allow
+  before_script:
+    - apk add --no-cache bash git
+    - corepack enable
+  script:
+    - bash scripts/ci.sh

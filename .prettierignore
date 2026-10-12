@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+dist
+coverage
+*.md
+test-results
+playwright-report
+.epi
+build
+backups

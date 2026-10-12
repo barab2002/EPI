@@ -1,0 +1,46 @@
+# EPI demo stack. Ports bind to localhost by default; exposing them on a network needs approval.
+name: epi
+services:
+  postgres:
+    image: ${EPI_IMAGE_REGISTRY:-docker.io}/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: epi
+      POSTGRES_DB: epi
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes:
+      - epi-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U epi -d epi']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    deploy:
+      resources:
+        limits: { memory: 1g }
+
+  epi:
+    image: ${EPI_IMAGE:-epi:local}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      EPI_MODE: ${EPI_MODE:-demo}
+      EPI_COOKIE_SECURE: ${EPI_COOKIE_SECURE:-false}
+      EPI_DB_PASSWORD_FILE: /run/secrets/db_password
+      EPI_DB_HOST: postgres
+    secrets: [db_password]
+    ports:
+      - '${EPI_BIND:-127.0.0.1}:${EPI_PORT:-8080}:8080'
+    deploy:
+      resources:
+        limits: { memory: 768m }
+
+secrets:
+  db_password:
+    file: ${EPI_DB_PASSWORD_PATH:?EPI_DB_PASSWORD_PATH must point to a secret file}
+
+volumes:
+  epi-db:
