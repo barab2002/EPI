@@ -43,3 +43,15 @@ KPI math lives in `apps/api/src/kpi/engine` with no DB or framework imports, so 
 ## ADR-009 · 2026-10-12 · Accepted — Container images via mirror in this dev environment
 
 Docker Hub returns HTTP 429 from this sandbox; `mirror.gcr.io/library/*` works. Compose files reference images through an `EPI_IMAGE_REGISTRY` variable (default `docker.io`) so an internal registry/mirror can be substituted without editing files. Production images must still be pinned by digest (EPI-012).
+
+## ADR-010 · 2026-10-12 · Accepted — KPIs computed on request in slice 1
+
+For pilot scale (2–4 teams, ≤6 months) KPI cards are computed per request from raw events, so results always match the current formula version and need no backfill job. `kpi_snapshots` (already in the schema) will be filled by a scheduled job when history charts or scale require it.
+
+## ADR-011 · 2026-10-12 · Accepted — Developer KPI page shows flow KPIs only
+
+Review Waiting Time is shown for team/group/org only. Spec: never interpret reviewer waiting as the author's productivity; showing it on a person's page invites that reading.
+
+## ADR-012 · 2026-10-12 · Accepted — Commits authored solely by the project owner
+
+Per the owner's standing instruction ("any change … under my name only"), commits use the owner's GitHub identity via repo-local git config and carry no co-author trailer.
