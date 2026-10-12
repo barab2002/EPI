@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+epi.yaml
+secrets/
+backups/
+playwright-report/
+test-results/
+.DS_Store
+.vite/
+*.tsbuildinfo
