@@ -17,9 +17,13 @@ warn() { printf '  %sWARN%s %s\n' "$Y" "$N" "$*"; WARNINGS=$((WARNINGS + 1)); }
 fail() { printf '  %sFAIL%s %s\n' "$R" "$N" "$*"; FAILURES=$((FAILURES + 1)); }
 die() { printf '%serror:%s %s\n' "$R" "$N" "$*" >&2; exit 1; }
 info() { printf '%s==>%s %s\n' "$B" "$N" "$*"; }
+KC_DIR="$STATE_DIR/keycloak"
+demo_sso_enabled() { [ "${EPI_DEMO_SSO:-true}" != "false" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; }
 compose() {
   if [ -n "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; then
     docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.oidc.yaml" "$@"
+  elif demo_sso_enabled && [ -f "$KC_DIR/epi-demo-realm.json" ]; then
+    docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.demo-sso.yaml" "$@"
   else
     docker compose -f "$COMPOSE_FILE" "$@"
   fi
@@ -34,6 +38,8 @@ Usage: ./epi.sh <command> [options]
   doctor              Check prerequisites (PASS/WARN/FAIL with remediation)
   build               Build the app on this host and the runtime image ($EPI_IMAGE)
   demo                Build if needed and start a demo with SYNTHETIC data on http://$EPI_BIND:$EPI_PORT
+                      (includes a demo Keycloak on :${EPI_KC_PORT:-8081}; EPI_DEMO_SSO=false to skip)
+  credentials         Show this install's demo sign-in users and passwords
   start | stop        Start / stop the stack (data volume is kept)
   status              Show containers and application health
   logs                Follow application logs
@@ -94,6 +100,10 @@ cmd_doctor() {
   fi
   if [ "$EPI_BIND" != "127.0.0.1" ]; then warn "EPI_BIND=$EPI_BIND exposes EPI beyond localhost — requires approval and TLS"; fi
   if docker image inspect "$EPI_IMAGE" >/dev/null 2>&1; then pass "image $EPI_IMAGE present"; else warn "image $EPI_IMAGE not built yet — run ./epi.sh build"; fi
+  if demo_sso_enabled; then
+    kc_image="${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}"
+    if docker image inspect "$kc_image" >/dev/null 2>&1; then pass "keycloak image present (demo SSO)"; else warn "keycloak image not present locally — will be pulled ($kc_image)"; fi
+  fi
   if docker image inspect "$EPI_IMAGE_REGISTRY/library/postgres:16-alpine" >/dev/null 2>&1; then pass "postgres image present"; else warn "postgres image not present locally — will be pulled from $EPI_IMAGE_REGISTRY"; fi
   if command -v node >/dev/null && command -v pnpm >/dev/null; then pass "build tools: node $(node --version), pnpm $(pnpm --version)"; else warn "node/pnpm missing — needed only for ./epi.sh build"; fi
   printf '\nResult: %d failure(s), %d warning(s)\n' "$FAILURES" "$WARNINGS"
@@ -128,12 +138,23 @@ cmd_demo() {
   cmd_doctor || die "doctor reported failures; fix them and retry"
   docker image inspect "$EPI_IMAGE" >/dev/null 2>&1 || cmd_build
   ensure_state
+  if demo_sso_enabled; then
+    command -v node >/dev/null || die "node is required to generate the demo Keycloak realm (or set EPI_DEMO_SSO=false)"
+    node "$ROOT/scripts/kc-demo-realm.mjs" "$KC_DIR" "http://127.0.0.1:$EPI_PORT"
+  fi
   info "Starting demo stack (synthetic data)"
   EPI_MODE=demo compose up -d
   info "Waiting for health"
   if wait_healthy; then
     printf '\n%sEPI demo is running:%s http://%s:%s  (API docs: /api/docs)\n' "$G" "$N" "$EPI_BIND" "$EPI_PORT"
-    printf 'All people and data are synthetic. Sign in by choosing a demo person.\n'
+    printf 'All people and data are synthetic. Sign in by choosing a demo person'
+    if demo_sso_enabled; then
+      printf ', or use single sign-on with these demo accounts:\n\n'
+      cat "$KC_DIR/demo-credentials.txt"
+      printf '\nShow them again any time with: ./epi.sh credentials\n'
+    else
+      printf '.\n'
+    fi
   else
     compose logs --tail 50 epi >&2
     die "EPI did not become healthy; see logs above"
@@ -184,6 +205,9 @@ case "${1:-help}" in
   stop) compose stop ;;
   status) cmd_status ;;
   logs) compose logs -f epi ;;
+  credentials)
+    [ -f "$KC_DIR/demo-credentials.txt" ] || die "no demo credentials yet — run ./epi.sh demo"
+    cat "$KC_DIR/demo-credentials.txt" ;;
   test) shift; bash "$ROOT/scripts/ci.sh" "$@" ;;
   backup) cmd_backup ;;
   restore) shift; cmd_restore "$@" ;;

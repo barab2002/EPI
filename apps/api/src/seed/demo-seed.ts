@@ -112,6 +112,11 @@ export const DEMO_ORG: {
 /** Quinn moves Mobile -> Web 45 days before `now` to demonstrate historical attribution. */
 export const TRANSFER = { name: 'Quinn Mover', from: 'Mobile', to: 'Web', daysAgo: 45 };
 
+/** Synthetic e-mail used by the seed and the demo Keycloak realm (e.g. taylor.lead@example.invalid). */
+export function demoEmail(displayName: string): string {
+  return `${displayName.toLowerCase().replace(/\s+/g, '.')}@example.invalid`;
+}
+
 export interface SeedSummary {
   users: number;
   teams: number;
@@ -149,12 +154,11 @@ async function seedInTx(m: EntityManager, now: Date, seed: number): Promise<Seed
     );
   }
 
-  let emailN = 0;
   const createUser = async (name: string, grade?: string): Promise<string> => {
-    emailN++;
     const id = await one(
-      `INSERT INTO users(display_name,email,keycloak_sub,is_synthetic) VALUES ($1,$2,$3,true) RETURNING id`,
-      [name, `${name.toLowerCase().replace(/\s+/g, '.')}@example.invalid`, `demo-${emailN}`],
+      // keycloak_sub stays NULL: the demo Keycloak users link on first sign-in by verified e-mail.
+      `INSERT INTO users(display_name,email,is_synthetic) VALUES ($1,$2,true) RETURNING id`,
+      [name, demoEmail(name)],
     );
     if (grade) {
       await m.query(

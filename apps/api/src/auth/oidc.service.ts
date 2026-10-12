@@ -36,6 +36,17 @@ export function safeReturnTo(value: unknown): string {
 }
 
 /**
+ * Routes back-channel requests for the issuer's origin to `internalOrigin` (same path/query).
+ * Requests to any other origin are left untouched.
+ */
+export function rewriteToInternal(url: string, issuer: string, internalOrigin: string): string {
+  const from = new URL(issuer).origin;
+  const target = new URL(url);
+  if (target.origin !== from) return url;
+  return internalOrigin + target.pathname + target.search;
+}
+
+/**
  * Keycloak (or any OIDC provider) login as a backend-for-frontend: Authorization Code + PKCE
  * (S256), state and nonce, confidential client. EPI keeps no access/refresh tokens; after the
  * ID token is validated the user gets an EPI session. Authorization stays in the EPI database.
@@ -74,7 +85,19 @@ export class OidcService {
           o.clientId,
           { client_secret: o.clientSecret },
           client.ClientSecretBasic(o.clientSecret),
-          { execute: o.allowHttp ? [client.allowInsecureRequests] : [], timeout: 10 },
+          {
+            execute: o.allowHttp ? [client.allowInsecureRequests] : [],
+            timeout: 10,
+            ...(o.internalUrl
+              ? {
+                  [client.customFetch]: (url: string, init: client.CustomFetchOptions) =>
+                    fetch(
+                      rewriteToInternal(url, o.issuer, o.internalUrl as string),
+                      init as RequestInit,
+                    ),
+                }
+              : {}),
+          },
         )
         .catch((e: unknown) => {
           this.configPromise = null;

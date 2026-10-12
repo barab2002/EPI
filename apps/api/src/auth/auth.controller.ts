@@ -87,8 +87,16 @@ export class AuthController {
   @Public()
   @Get('auth/login')
   @ApiOperation({ summary: 'Start OIDC sign-in (redirects to the identity provider)' })
-  async login(@Query() q: LoginQuery, @Res() res: Response) {
+  async login(@Query() q: LoginQuery, @Req() req: Request, @Res() res: Response) {
     if (!this.oidc.enabled) throw new NotFoundException();
+    // The binding cookie must be set on the same host the IdP redirects back to. If the user
+    // opened EPI under another name (e.g. localhost vs 127.0.0.1), restart on the public URL.
+    const publicHost = new URL(this.config.publicUrl).host;
+    if (req.headers.host && req.headers.host !== publicHost) {
+      const params = q.return_to ? `?return_to=${encodeURIComponent(q.return_to)}` : '';
+      res.redirect(302, `${this.config.publicUrl}/api/v1/auth/login${params}`);
+      return;
+    }
     try {
       const { url, binding } = await this.oidc.startLogin(q.return_to);
       res.cookie(OIDC_BINDING_COOKIE, binding, {

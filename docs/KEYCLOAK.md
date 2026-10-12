@@ -2,6 +2,21 @@
 
 EPI uses Keycloak **only for authentication**. Who can see what is decided by EPI's own role assignments. EPI never auto-creates people: every person must exist in EPI (and be mapped to their Keycloak account) before they can sign in.
 
+## 0. Demo: bundled Keycloak with ready-made users
+
+`./epi.sh demo` starts a **demo-only** Keycloak (`http://127.0.0.1:8081`, realm `epi-demo`) next to EPI and prints sign-in accounts at the end. Passwords are random **per install** and stored only in `.epi/keycloak/` (gitignored); show them again with `./epi.sh credentials`.
+
+| Username | Signs in as (synthetic) | Sees |
+|---|---|---|
+| `morgan` | Morgan Example — engineering manager | whole organization |
+| `gal` | Gal Groupman — group manager | Platform group |
+| `taylor` | Taylor Lead — team lead | Payments team, can write assessments |
+| `eli` | Eli Engineer — developer | own data + Payments aggregate |
+| `jo` | Jo Small — developer, 3-person team | own data; team aggregate suppressed |
+| `avery` | Avery Admin — administrator | structure only |
+
+Keycloak admin console: `http://127.0.0.1:8081/admin`, user `admin`, password also in `./epi.sh credentials`. Open EPI at **http://127.0.0.1:8080** (if you open `localhost`, EPI switches to `127.0.0.1` before sign-in). Disable with `EPI_DEMO_SSO=false`. The demo Keycloak runs in dev mode with a file database: never use it for real users.
+
 ## 1. Keycloak client (IdP admin)
 
 In a dedicated realm (or the existing corporate realm, if approved), create a client:
@@ -31,6 +46,7 @@ export EPI_OIDC_CLIENT_SECRET_PATH=/etc/epi/oidc_client_secret
 ./epi.sh start
 ```
 
+- Split DNS: if EPI must reach Keycloak under a different internal address than users do, set `EPI_OIDC_INTERNAL_URL` (e.g. `http://keycloak:8080`); only EPI's server-side calls go there, the issuer stays the public one.
 - Internal CA: make the CA bundle available to the container and set `NODE_EXTRA_CA_CERTS`. EPI never disables TLS verification; `http://` issuers are only allowed for local test realms (`EPI_OIDC_ALLOW_HTTP=true`, refused in production mode).
 - Production mode (`EPI_MODE=production`) refuses to start without OIDC and an `https://` public URL.
 

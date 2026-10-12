@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { request } from 'node:http';
 import { createServer } from 'node:net';
 import { DataSource } from 'typeorm';
 import { freshDatabase, startApp, userId } from './helpers';
@@ -83,6 +84,7 @@ describeKc('OIDC sign-in with Keycloak (integration)', () => {
         clientId: realm.clientId,
         clientSecret: realm.clientSecret,
         allowHttp: true,
+        internalUrl: null,
         linkByVerifiedEmail: true,
       },
     });
@@ -130,6 +132,26 @@ describeKc('OIDC sign-in with Keycloak (integration)', () => {
       [await userId(ds, 'Taylor Lead')],
     );
     expect(audit.method).toBe('oidc');
+  });
+
+  it('restarts sign-in on the public URL when EPI was opened under another host name', async () => {
+    // fetch() ignores a custom Host header, so use node:http directly.
+    const { status, location } = await new Promise<{ status?: number; location?: string }>(
+      (resolve, reject) => {
+        const req = request(
+          `${base}/api/v1/auth/login?return_to=%2Fteams`,
+          { headers: { Host: 'localhost:8080' } },
+          (res) => {
+            res.resume();
+            resolve({ status: res.statusCode, location: res.headers.location });
+          },
+        );
+        req.on('error', reject);
+        req.end();
+      },
+    );
+    expect(status).toBe(302);
+    expect(location).toBe(`${base}/api/v1/auth/login?return_to=%2Fteams`);
   });
 
   it('rejects replay of a used callback (state is single-use)', async () => {

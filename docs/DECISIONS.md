@@ -69,4 +69,8 @@ Owner approved the hourly resume scheduler. The dev container is ephemeral (recl
 - `openid-client` (MIT, OpenID-certified) handles discovery, PKCE, code exchange and ID-token validation. It is ESM-only; Node 22 loads it from the CommonJS build natively, and Jest transpiles only it and its two dependencies (`oauth4webapi`, `jose`) for tests.
 - No access/refresh/ID tokens are stored; EPI only needs identity. Trade-off: Keycloak shows a logout confirmation (no `id_token_hint`).
 - No auto-provisioning; mapping by `sub`, optional verified-e-mail linking (default off).
-- Demo Compose does not bundle Keycloak: browser and container would see different issuer hosts. Real deployments point to the corporate/dedicated Keycloak via `deploy/compose.oidc.yaml`; tests use an ephemeral Keycloak on the host.
+- Real deployments point to the corporate/dedicated Keycloak via `deploy/compose.oidc.yaml`; tests use an ephemeral Keycloak on the host. (Demo bundling: ADR-016.)
+
+## ADR-016 · 2026-10-12 · Accepted — Demo bundles a dev-mode Keycloak with generated users
+
+Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `deploy/compose.demo-sso.yaml`: Keycloak 26.3.3 in dev mode (file DB in a volume), realm `epi-demo` generated per install by `scripts/kc-demo-realm.mjs` with one user per demo role, random passwords and client secret kept only in `.epi/keycloak/` (0700, gitignored) and shown by `./epi.sh credentials`. Users link to synthetic EPI people by verified e-mail (enabled in demo only; the seed leaves `keycloak_sub` empty). Split-horizon issuer solved with `EPI_OIDC_INTERNAL_URL` (openid-client `customFetch`): browser uses `127.0.0.1:8081`, EPI's back channel uses `keycloak:8080`, the issuer stays the public URL. `/auth/login` restarts on `EPI_PUBLIC_URL` when opened under another host name so the binding cookie and callback share a host. Not for real users: production uses the organization's Keycloak.

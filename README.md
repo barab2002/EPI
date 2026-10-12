@@ -2,7 +2,7 @@
 
 One self-hosted web application for engineering managers and developers: organization hierarchy, explainable flow KPIs (from Jira/GitLab), monthly manager assessments, with strict scoped access. Built for closed networks: no cloud services, no runtime internet, no external fonts or CDNs.
 
-> **Status (2026-10-12): pilot vertical slice, demo mode only.** Synthetic data, demo sign-in. Keycloak login, real Jira/GitLab ingestion and the offline bundle are not implemented yet; see [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md).
+> **Status (2026-10-12): pilot vertical slice + Keycloak single sign-on.** Synthetic data only. Real Jira/GitLab ingestion and the offline bundle are not implemented yet; see [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md). SSO setup: [`docs/KEYCLOAK.md`](docs/KEYCLOAK.md).
 
 ## Quick start (demo, synthetic data)
 
@@ -11,7 +11,8 @@ Prerequisites: Docker Engine 24+ with Compose v2, Node 22 + pnpm 10 (to build), 
 ```bash
 ./epi.sh doctor          # checks prerequisites
 ./epi.sh demo            # builds, starts Postgres + EPI, seeds synthetic data
-# open http://127.0.0.1:8080 and choose a demo person; API docs at /api/docs
+# open http://127.0.0.1:8080 — choose a demo person, or "Sign in with your organization account"
+# with one of the printed demo Keycloak users (./epi.sh credentials shows them again)
 ```
 
 If Docker Hub rate-limits you, use a mirror: `EPI_IMAGE_REGISTRY=mirror.gcr.io ./epi.sh demo` (or your internal registry).
