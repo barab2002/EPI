@@ -21,10 +21,11 @@ test('group manager drills down org → group → team → developer and opens a
 }) => {
   await signInAs(page, 'Gal Groupman');
   await page.getByRole('link', { name: 'Organization', exact: true }).click();
-  await page.getByRole('link', { name: 'Platform' }).click();
+  await expect(page.getByRole('heading', { name: 'Organization', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Platform', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Platform/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Cycle Time' })).toBeVisible();
-  await page.getByRole('link', { name: 'Payments' }).click();
+  await page.getByRole('link', { name: 'Payments', exact: true }).click();
   await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('Platform');
   await page.getByRole('link', { name: 'Dana Dev' }).click();
   await expect(page.getByRole('heading', { name: 'Dana Dev' })).toBeVisible();
