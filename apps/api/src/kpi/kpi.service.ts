@@ -334,9 +334,11 @@ export class KpiService {
           key: `${r.project_external_id}!${r.mr_iid}`,
           authorId: r.author_user_id,
           createdAt: r.created_at,
+          // Requested reviewers may not be mapped to EPI users yet; the same source identity is
+          // used for their notes (actorOf), so waits are still measured for the author's team.
           reviewRequests: r.events
-            .filter((e) => e.type === 'review_requested' && e.actor)
-            .map((e) => ({ reviewerId: e.actor as string, at: new Date(e.at) })),
+            .filter((e) => e.type === 'review_requested' && (e.actor || e.external))
+            .map((e) => ({ reviewerId: actorOf(e), at: new Date(e.at) })),
           notes: r.events
             .filter((e) => e.type === 'note' || e.type === 'approval' || e.type === 'system_note')
             .map((e) => ({
