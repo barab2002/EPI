@@ -10,6 +10,7 @@ const en = {
   navOrganization: 'Organization',
   navReviews: 'Reviews',
   navCatalog: 'KPI catalog',
+  navAdmin: 'Administration',
   signOut: 'Sign out',
   loading: 'Loading…',
   retry: 'Try again',

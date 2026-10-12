@@ -64,6 +64,11 @@ export function Layout() {
               <li>
                 <NavLink to="/kpis">{t('navCatalog')}</NavLink>
               </li>
+              {me.roles.includes('ADMIN') && (
+                <li>
+                  <NavLink to="/admin">{t('navAdmin')}</NavLink>
+                </li>
+              )}
             </ul>
           </nav>
           <div className="user">
