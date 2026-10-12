@@ -14,9 +14,11 @@
     "build": "pnpm -r run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci": "bash scripts/ci.sh"
+    "ci": "bash scripts/ci.sh",
+    "e2e": "PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers} playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "prettier": "3.6.2"
   }
 }
