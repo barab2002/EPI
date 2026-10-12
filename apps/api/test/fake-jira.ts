@@ -52,6 +52,7 @@ export class FakeJira {
       project?: string;
       type?: string;
       assignee?: string | null;
+      assigneeName?: string;
       storyPoints?: number | null;
       createdDaysAgo: number;
       transitions: [statusId: string, daysAgo: number][];
@@ -67,7 +68,11 @@ export class FakeJira {
         assignee:
           opts.assignee === null
             ? null
-            : { key: opts.assignee ?? 'JIRAUSER1', name: 'synthetic', displayName: 'Synthetic' },
+            : {
+                key: opts.assignee ?? 'JIRAUSER1',
+                name: 'synthetic',
+                displayName: opts.assigneeName ?? 'Synthetic',
+              },
         project: { key: opts.project ?? 'ENG' },
         created: jiraDate(created),
         updated: jiraDate(created),

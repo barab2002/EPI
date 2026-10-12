@@ -2,6 +2,8 @@ import { DynamicModule, Global, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { AdminController } from './admin/admin.controller';
+import { IdentityController } from './admin/identity.controller';
+import { IdentityService } from './admin/identity.service';
 import { AuditService } from './audit/audit.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthGuard } from './auth/auth.guard';
@@ -35,6 +37,7 @@ export class AppModule {
         KpiController,
         ReviewsController,
         AdminController,
+        IdentityController,
       ],
       providers: [
         { provide: EPI_CONFIG, useValue: config },
@@ -48,6 +51,7 @@ export class AppModule {
         OrgService,
         KpiService,
         ReviewsService,
+        IdentityService,
         {
           provide: JiraSync,
           useFactory: (ds: DataSource) => new JiraSync(ds),

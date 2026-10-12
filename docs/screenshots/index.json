@@ -94,5 +94,21 @@
   {
     "name": "24-mobile-team",
     "title": "Mobile layout: team KPIs"
+  },
+  {
+    "name": "25-admin-integrations",
+    "title": "Administration \u203a Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)"
+  },
+  {
+    "name": "26-admin-identity-mapping",
+    "title": "Administration \u203a Identity mapping: accounts seen in syncs, mapped to EPI people by search"
+  },
+  {
+    "name": "27-admin-status-mappings",
+    "title": "Administration \u203a Status mappings: Jira status \u2192 EPI category, inferred vs admin-confirmed"
+  },
+  {
+    "name": "28-admin-data-quality",
+    "title": "Administration \u203a Data quality: freshness, identity coverage, MR-to-Jira links, unmapped statuses"
   }
 ]

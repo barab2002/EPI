@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { api, ApiError, Me, setCsrfToken } from './api';
 import { Layout } from './components/Layout';
 import { ErrorState, Loading } from './components/States';
+import { AdminPage } from './pages/admin/Admin';
+import { DataQualityTab } from './pages/admin/DataQuality';
+import { IdentitiesTab } from './pages/admin/Identities';
+import { IntegrationsTab } from './pages/admin/Integrations';
+import { StatusesTab } from './pages/admin/Statuses';
 import { CatalogPage } from './pages/Catalog';
 import { DeveloperPage } from './pages/Developer';
 import { GroupPage } from './pages/Group';
@@ -83,6 +88,13 @@ export function App() {
             <Route path="developers/:id" element={<DeveloperPage />} />
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="kpis" element={<CatalogPage />} />
+            <Route path="admin" element={<AdminPage />}>
+              <Route index element={<Navigate to="/admin/data-quality" replace />} />
+              <Route path="integrations" element={<IntegrationsTab />} />
+              <Route path="identities" element={<IdentitiesTab />} />
+              <Route path="statuses" element={<StatusesTab />} />
+              <Route path="data-quality" element={<DataQualityTab />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

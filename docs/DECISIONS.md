@@ -92,3 +92,10 @@ Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `depl
 - **Bots:** GitLab `bot` flag, project/group bot naming, well-known bot names and a configurable list.
 - **Unmapped reviewers:** requests and notes keep the GitLab user ID (`actor_external_id`), so waits are measured for the author's team even before every reviewer is mapped; individual attribution still requires a verified identity.
 - **Shared sync-run helpers** (`ingestion/sync-runs.ts`) enforce the same cursor/overlap/one-run rules for Jira and GitLab.
+
+## ADR-019 · 2026-10-12 · Accepted — Identity mapping by verified source IDs, re-attributing history
+
+- People are linked to Jira/GitLab accounts only through explicit `external_identities` set by an administrator (or verified-e-mail SSO linking, ADR-016) — never by display name (spec §7).
+- Collectors store external IDs on records (`assignee_external_id`, `author_external_id`, `actor_external_id`) and list seen accounts in `source_accounts` (display names kept only for the admin mapping screen), so a mapping made later re-attributes existing data and an unmapping removes attribution; both are audited.
+- One account per person and source; bot accounts cannot be mapped.
+- Data quality is a first-class admin page: freshness (stale after 26 h), mapping coverage, MR-to-Jira link rate, statuses without category.

@@ -4,6 +4,9 @@ Environment: cloud dev container, Ubuntu 24.04, Node 22.22.0, pnpm 10.28.0, Dock
 
 | When (UTC) | Command | Result |
 |---|---|---|
+| 2026-10-13 00:10 | `bash scripts/ci.sh` (branch `feature/identity-mapping`) | ✅ ALL CHECKS PASSED — **119 unit**, **22 web** (incl. 5 admin tabs), **70 integration** (RBAC 23, OIDC 16, Jira 10, GitLab 7, admin API 6, identity/data quality 8), build |
+| 2026-10-13 00:30 | `bash scripts/e2e-admin.sh` ×5 (Postgres + fake Jira/GitLab + EPI, Playwright) | ✅ 5/5 passed — Sync now (both sources), map 3 identities, set a status category, data quality shows coverage; non-admin blocked. Earlier the spec was **flaky (2 of 3 runs failed)**: the list's "Loading…" also has role=status; fixed by targeting the confirmation message |
+| 2026-10-13 00:05 | `./epi.sh build && ./epi.sh start`, then `pnpm run e2e` with demo SSO user | ✅ 9 passed, 3 skipped by design (admin spec needs e2e-admin.sh; mutating flow desktop-only) |
 | 2026-10-12 21:20 | `bash scripts/ci.sh` (branch `feature/gitlab-collector`) | ✅ ALL CHECKS PASSED — **119 unit** (incl. 20 GitLab mapper), 17 web, **62 integration** (RBAC 23, OIDC 16, Jira 10, GitLab 7, admin API 6), build |
 | 2026-10-12 20:45 | `bash scripts/ci.sh` (branch `feature/jira-collector`) | ✅ ALL CHECKS PASSED — **98 unit**, 17 web, **54 integration** (RBAC 23, OIDC 16, Jira collector 10, admin API 5), build |
 | 2026-10-12 20:40 | CLI smoke: `migrate`, `jira-add` (http refused / https saved), `jira-check` (missing secret), `jira-sync` (unreachable host) | ✅ actionable errors, non-zero exit codes, failed run recorded |

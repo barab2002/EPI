@@ -156,16 +156,18 @@ export class GitLabSync {
     const written = await rows<{ id: string; inserted: boolean }>(
       m,
       `INSERT INTO merge_requests(connection_id, project_external_id, mr_iid, author_user_id,
-         linked_work_item_id, link_confidence, created_at, merged_at, state)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         linked_work_item_id, link_confidence, created_at, merged_at, state, author_external_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT (connection_id, project_external_id, mr_iid) DO UPDATE SET
+         author_external_id = EXCLUDED.author_external_id,
          author_user_id = EXCLUDED.author_user_id, linked_work_item_id = EXCLUDED.linked_work_item_id,
          link_confidence = EXCLUDED.link_confidence, merged_at = EXCLUDED.merged_at, state = EXCLUDED.state
        WHERE (merge_requests.author_user_id, merge_requests.linked_work_item_id,
-              merge_requests.link_confidence, merge_requests.merged_at, merge_requests.state)
+              merge_requests.link_confidence, merge_requests.merged_at, merge_requests.state,
+              merge_requests.author_external_id)
          IS DISTINCT FROM
              (EXCLUDED.author_user_id, EXCLUDED.linked_work_item_id, EXCLUDED.link_confidence,
-              EXCLUDED.merged_at, EXCLUDED.state)
+              EXCLUDED.merged_at, EXCLUDED.state, EXCLUDED.author_external_id)
        RETURNING id, (xmax = 0) AS inserted`,
       [
         connectionId,
@@ -177,8 +179,21 @@ export class GitLabSync {
         mr.createdAt,
         mr.mergedAt,
         mr.state,
+        mr.authorExternalId,
       ],
     );
+    for (const a of x.accounts) {
+      await m.query(
+        `INSERT INTO source_accounts(source, external_id, display_name, is_bot, last_seen_at)
+         VALUES ('gitlab', $1, $2, $3, now())
+         ON CONFLICT (source, external_id) DO UPDATE
+           SET display_name = EXCLUDED.display_name, is_bot = EXCLUDED.is_bot, last_seen_at = now()
+         WHERE (source_accounts.display_name, source_accounts.is_bot)
+                 IS DISTINCT FROM (EXCLUDED.display_name, EXCLUDED.is_bot)
+            OR source_accounts.last_seen_at < now() - interval '1 hour'`,
+        [a.externalId, a.displayName, a.isBot],
+      );
+    }
     let mrId: string;
     if (written[0]) {
       mrId = written[0].id;

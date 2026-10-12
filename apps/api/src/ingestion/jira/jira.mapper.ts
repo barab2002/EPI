@@ -14,6 +14,8 @@ export interface MappedWorkItem {
   issueType: string;
   workType: string;
   assigneeExternalId: string | null;
+  /** Shown only on the admin mapping screen. */
+  assigneeDisplayName: string | null;
   storyPoints: number | null;
   status: string;
   createdAt: Date;
@@ -153,6 +155,7 @@ export function mapIssue(issue: JiraIssue, ctx: JiraMappingContext): MappedIssue
       issueType: f.issuetype.name,
       workType: workTypeFor(f.issuetype.name),
       assigneeExternalId: f.assignee ? (f.assignee.key ?? f.assignee.name ?? null) : null,
+      assigneeDisplayName: f.assignee ? (f.assignee.displayName ?? f.assignee.name ?? null) : null,
       storyPoints: ctx.storyPointsField ? numberOrNull(f[ctx.storyPointsField]) : null,
       status: f.status.name,
       createdAt,

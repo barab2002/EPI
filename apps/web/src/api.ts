@@ -39,6 +39,8 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
 export const api = {
   get: <T>(url: string) => call<T>('GET', url),
   post: <T>(url: string, body?: unknown) => call<T>('POST', url, body ?? {}),
+  put: <T>(url: string, body?: unknown) => call<T>('PUT', url, body ?? {}),
+  delete: <T>(url: string) => call<T>('DELETE', url),
 };
 
 export type Access = 'managed' | 'aggregate' | 'structure';
@@ -152,4 +154,85 @@ export interface DemoUser {
   display_name: string;
   roles: string;
   team: string | null;
+}
+
+export interface SourceAccount {
+  source: 'jira' | 'gitlab';
+  external_id: string;
+  display_name: string | null;
+  is_bot: boolean;
+  last_seen_at: string;
+  user_id: string | null;
+  user_name: string | null;
+  activity: number;
+}
+
+export interface PersonOption {
+  id: string;
+  display_name: string;
+  email: string | null;
+  identities: { source: string; external_id: string }[] | null;
+}
+
+export interface Integration {
+  id: string;
+  kind: 'jira' | 'gitlab';
+  name: string;
+  endpoint: string;
+  enabled: boolean;
+  secret_ref: string | null;
+  last_success_at: string | null;
+  last_run: {
+    status: string;
+    started_at: string;
+    finished_at: string | null;
+    error_summary: string | null;
+  } | null;
+}
+
+export interface SyncRun {
+  id: string;
+  connection: string;
+  status: 'running' | 'succeeded' | 'failed';
+  started_at: string;
+  finished_at: string | null;
+  counts: Record<string, unknown>;
+  error_summary: string | null;
+}
+
+export interface StatusMapping {
+  connection: string;
+  source_status_id: string;
+  source_status_name: string;
+  category: string | null;
+  origin: 'inferred' | 'admin';
+}
+
+export interface DataQuality {
+  generatedAt: string;
+  staleAfterHours: number;
+  connections: {
+    name: string;
+    kind: string;
+    enabled: boolean;
+    lastSuccessAt: string | null;
+    stale: boolean;
+    lastRun: { status: string; error_summary: string | null } | null;
+  }[];
+  jira: {
+    workItems: number;
+    withAssignee: number;
+    mappedAssignees: number;
+    assigneeCoveragePct: number | null;
+    unmappedAccounts: number;
+    statusesWithoutCategory: { connection: string; status: string }[];
+  };
+  gitlab: {
+    mergeRequests: number;
+    mappedAuthors: number;
+    authorCoveragePct: number | null;
+    linkedToJira: number;
+    jiraLinkPct: number | null;
+    unmappedAccounts: number;
+  };
 }
