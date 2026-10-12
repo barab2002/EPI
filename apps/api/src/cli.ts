@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { loadConfig } from './config';
 import { createDataSource } from './db/data-source';
+import { checkGitLabConnection, GitLabSync } from './ingestion/gitlab/gitlab.sync';
 import { checkJiraConnection, JiraSync } from './ingestion/jira/jira.sync';
 import { hasDemoData, seedDemo } from './seed/demo-seed';
 
@@ -13,7 +14,12 @@ const USAGE = `Usage: node dist/cli.js <command> [options]
            [--story-points auto|customfield_NNNNN|none] [--backfill-months 6] [--allow-http]
                                   create or update a read-only Jira DC connection
   jira-check --name N             verify access: version, statuses, Story Points field, issue count
-  jira-sync --name N [--full]     run a sync (incremental; --full re-reads the backfill window)`;
+  jira-sync --name N [--full]     run a sync (incremental; --full re-reads the backfill window)
+  gitlab-add --name N --url URL --projects ID[,ID] [--secret-ref EPI_GITLAB_TOKEN]
+             [--bots name,name] [--backfill-months 6] [--allow-http]
+                                  create or update a read-only GitLab connection
+  gitlab-check --name N           verify access: version, projects, recent merge requests
+  gitlab-sync --name N [--full]   sync merge requests and review activity`;
 
 function parseArgs(argv: string[]): Record<string, string | true> {
   const out: Record<string, string | true> = {};
@@ -35,7 +41,17 @@ function required(args: Record<string, string | true>, name: string): string {
   return v;
 }
 
-const COMMANDS = ['migrate', 'seed-demo', 'status', 'jira-add', 'jira-check', 'jira-sync'];
+const COMMANDS = [
+  'migrate',
+  'seed-demo',
+  'status',
+  'jira-add',
+  'jira-check',
+  'jira-sync',
+  'gitlab-add',
+  'gitlab-check',
+  'gitlab-sync',
+];
 
 async function main(cmd: string | undefined, rest: string[]): Promise<number> {
   if (!cmd || !COMMANDS.includes(cmd)) {
@@ -129,6 +145,64 @@ async function main(cmd: string | undefined, rest: string[]): Promise<number> {
         console.log(`jira-sync: ${r.status} (run ${r.runId})`);
         console.log(JSON.stringify(r.counts, null, 2));
         if (r.error) console.error(`jira-sync: ${r.error}`);
+        return r.status === 'succeeded' ? 0 : 1;
+      }
+      case 'gitlab-add': {
+        const name = required(args, 'name');
+        const url = new URL(required(args, 'url'));
+        if (url.protocol !== 'https:' && args['allow-http'] !== true) {
+          throw new Error(
+            'GitLab URL must use https (use --allow-http only for local test servers)',
+          );
+        }
+        const projectIds = required(args, 'projects')
+          .split(',')
+          .map((p) => p.trim());
+        if (projectIds.some((p) => !/^\d+$/.test(p))) {
+          throw new Error('--projects takes numeric GitLab project IDs (Settings → General)');
+        }
+        const cfg = {
+          projectIds,
+          botUsernames:
+            typeof args.bots === 'string' ? args.bots.split(',').map((b) => b.trim()) : [],
+          backfillMonths: Number(args['backfill-months'] ?? 6),
+        };
+        const secretRef =
+          typeof args['secret-ref'] === 'string' ? args['secret-ref'] : 'EPI_GITLAB_TOKEN';
+        await ds.query(
+          `INSERT INTO integration_connections(kind, name, endpoint, config_json, secret_ref)
+           VALUES ('gitlab', $1, $2, $3, $4)
+           ON CONFLICT (name) DO UPDATE SET endpoint = EXCLUDED.endpoint,
+             config_json = EXCLUDED.config_json, secret_ref = EXCLUDED.secret_ref`,
+          [name, url.origin + url.pathname.replace(/\/+$/, ''), JSON.stringify(cfg), secretRef],
+        );
+        await ds.query(
+          `INSERT INTO audit_events(action, resource_type, resource_id, metadata_json)
+           VALUES ('integration.upsert', 'integration_connection', $1, $2)`,
+          [name, JSON.stringify({ kind: 'gitlab', projectIds, via: 'cli' })],
+        );
+        console.log(
+          `gitlab-add: connection "${name}" saved (projects ${projectIds.join(', ')}). Provide the token via ${secretRef}_FILE, then run gitlab-check.`,
+        );
+        return 0;
+      }
+      case 'gitlab-check': {
+        const r = await checkGitLabConnection(ds, required(args, 'name'));
+        console.log(`GitLab ${r.version}: reachable, token accepted`);
+        for (const p of r.projects) {
+          console.log(
+            `  project ${p.id} (${p.path}): ${p.recentMergeRequests} MRs updated in 30 days`,
+          );
+        }
+        return 0;
+      }
+      case 'gitlab-sync': {
+        const r = await new GitLabSync(ds).run(required(args, 'name'), {
+          fullBackfill: args.full === true,
+        });
+        console.log(`gitlab-sync: ${r.status} (run ${r.runId})`);
+        console.log(JSON.stringify(r.counts, null, 2));
+        if (r.error) console.error(`gitlab-sync: ${r.error}`);
         return r.status === 'succeeded' ? 0 : 1;
       }
     }

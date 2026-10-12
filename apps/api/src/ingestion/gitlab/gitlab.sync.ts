@@ -222,3 +222,34 @@ export class GitLabSync {
     }
   }
 }
+
+/** Read-only connectivity/permission check for `gitlab-check`. */
+export async function checkGitLabConnection(
+  ds: DataSource,
+  connectionName: string,
+  deps: FetchDeps & { env?: NodeJS.ProcessEnv } = {},
+): Promise<{
+  version: string;
+  projects: { id: string; path: string; recentMergeRequests: number }[];
+}> {
+  const [conn] = await ds.query(
+    `SELECT endpoint, config_json, secret_ref FROM integration_connections WHERE name = $1 AND kind = 'gitlab'`,
+    [connectionName],
+  );
+  if (!conn) throw new Error(`No GitLab connection named "${connectionName}"`);
+  const config = conn.config_json as GitLabConnectionConfig;
+  const client = new GitLabClient(
+    conn.endpoint,
+    resolveSecret(conn.secret_ref ?? '', deps.env),
+    deps,
+  );
+  const version = await client.version();
+  const since = new Date(Date.now() - 30 * 86_400_000);
+  const projects = [];
+  for (const id of config.projectIds) {
+    const p = await client.project(id);
+    const page = await client.mergeRequests(id, since, 1, 100);
+    projects.push({ id, path: p.path_with_namespace, recentMergeRequests: page.items.length });
+  }
+  return { version: version.version, projects };
+}
