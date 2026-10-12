@@ -55,6 +55,15 @@ export async function fetchJson<T>(
   init: RequestInit = {},
   deps: FetchDeps = {},
 ): Promise<T> {
+  return (await fetchJsonWithHeaders<T>(url, init, deps)).data;
+}
+
+/** Like fetchJson, also returning response headers (for header-based pagination). */
+export async function fetchJsonWithHeaders<T>(
+  url: string,
+  init: RequestInit = {},
+  deps: FetchDeps = {},
+): Promise<{ data: T; headers: Headers }> {
   const policy = deps.policy ?? DEFAULT_RETRY;
   const doFetch = deps.fetchImpl ?? fetch;
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
@@ -71,7 +80,7 @@ export async function fetchJson<T>(
       if (attempt < policy.maxAttempts) await sleep(backoffDelayMs(attempt, policy));
       continue;
     }
-    if (res.ok) return (await res.json()) as T;
+    if (res.ok) return { data: (await res.json()) as T, headers: res.headers };
     lastError = new HttpError(res.status, `${describe(url)}: HTTP ${res.status}`);
     await res.body?.cancel().catch(() => undefined);
     if (!RETRYABLE.has(res.status)) throw lastError;

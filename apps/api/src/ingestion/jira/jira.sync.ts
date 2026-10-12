@@ -3,6 +3,7 @@ import { rows } from '../../db/rows';
 import type { StatusCategory } from '../../kpi/engine/types';
 import { FetchDeps } from '../http';
 import { resolveSecret } from '../secrets';
+import { failRun, lastSuccess, startRun, succeedRun, SyncAlreadyRunningError } from '../sync-runs';
 import { BASE_FIELDS, buildJql, JiraClient } from './jira.client';
 import { categoryForJiraStatusCategory, discoverStoryPointsField, mapIssue } from './jira.mapper';
 import type { JiraIssue } from './jira.types';
@@ -39,11 +40,7 @@ export interface SyncResult {
 
 const RESOURCE = 'issues';
 
-export class SyncAlreadyRunningError extends Error {
-  constructor(connectionName: string) {
-    super(`A sync for "${connectionName}" is already running`);
-  }
-}
+export { SyncAlreadyRunningError };
 
 /**
  * Read-only Jira DC → EPI ingestion (spec §7): idempotent upserts keyed by external IDs,
@@ -81,24 +78,7 @@ export class JiraSync {
       changelogRefetched: 0,
       skippedIssues: 0,
     };
-    // Runs left 'running' by a crash for over 2 h are expired so they cannot block forever.
-    await this.ds.query(
-      `UPDATE sync_runs SET status = 'failed', finished_at = now(), error_summary = 'abandoned (no finish recorded)'
-       WHERE connection_id = $1 AND status = 'running' AND started_at < now() - interval '2 hours'`,
-      [conn.id],
-    );
-    let run: { id: string };
-    try {
-      [run] = await this.ds.query(
-        `INSERT INTO sync_runs(connection_id, started_at, status) VALUES ($1, $2, 'running') RETURNING id`,
-        [conn.id, now],
-      );
-    } catch (e) {
-      if ((e as { code?: string }).code === '23505') {
-        throw new SyncAlreadyRunningError(connectionName);
-      }
-      throw e;
-    }
+    const run = { id: await startRun(this.ds, conn.id, connectionName, now) };
     opts.onStarted?.(run.id);
 
     try {
@@ -137,14 +117,11 @@ export class JiraSync {
       const fields = storyPointsField ? [...BASE_FIELDS, storyPointsField] : BASE_FIELDS;
 
       // Window: since last success minus overlap, or the backfill horizon.
-      const [cursor] = await this.ds.query(
-        `SELECT last_success_at FROM sync_cursors WHERE connection_id = $1 AND resource = $2`,
-        [conn.id, RESOURCE],
-      );
+      const last = await lastSuccess(this.ds, conn.id, RESOURCE);
       const overlapMs = (config.overlapHours ?? 48) * 3_600_000;
       const sinceMs =
-        cursor?.last_success_at && !opts.fullBackfill
-          ? new Date(cursor.last_success_at).getTime() - overlapMs
+        last && !opts.fullBackfill
+          ? last.getTime() - overlapMs
           : now.getTime() - (config.backfillMonths ?? 6) * 30 * 86_400_000;
       const jql = buildJql({
         projectKeys: config.projectKeys,
@@ -201,28 +178,14 @@ export class JiraSync {
 
       counts.unmappedAssignees = unmapped.size;
       counts.unknownStatuses = [...unknownStatuses].sort();
-      await this.ds.transaction(async (m) => {
-        await m.query(
-          `INSERT INTO sync_cursors(connection_id, resource, cursor, last_success_at)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (connection_id, resource) DO UPDATE
-             SET cursor = EXCLUDED.cursor, last_success_at = EXCLUDED.last_success_at`,
-          [conn.id, RESOURCE, now.toISOString(), now],
-        );
-        await m.query(
-          `UPDATE sync_runs SET status = 'succeeded', finished_at = now(), counts_json = $2 WHERE id = $1`,
-          [run.id, JSON.stringify({ ...counts, jiraVersion: info.version, storyPointsField })],
-        );
+      await succeedRun(this.ds, run.id, conn.id, RESOURCE, now, {
+        ...counts,
+        jiraVersion: info.version,
+        storyPointsField,
       });
       return { runId: run.id, status: 'succeeded', counts, jiraVersion: info.version };
     } catch (e) {
-      // Messages from our HTTP layer never include credentials or query strings.
-      const error = (e instanceof Error ? e.message : 'unknown error').slice(0, 500);
-      await this.ds.query(
-        `UPDATE sync_runs SET status = 'failed', finished_at = now(), counts_json = $2, error_summary = $3
-         WHERE id = $1`,
-        [run.id, JSON.stringify(counts), error],
-      );
+      const error = await failRun(this.ds, run.id, counts, e);
       return { runId: run.id, status: 'failed', counts, error };
     }
   }
