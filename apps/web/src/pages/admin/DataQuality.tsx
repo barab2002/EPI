@@ -4,6 +4,8 @@ import { ErrorState, Loading } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 export function pctLabel(p: number | null): string {
   return p === null ? 'N/A' : `${p}%`;
 }
@@ -79,13 +81,13 @@ export function DataQualityTab() {
           <Metric
             label="Jira assignees mapped"
             value={pctLabel(d.jira.assigneeCoveragePct)}
-            hint={`${d.jira.mappedAssignees} of ${d.jira.withAssignee} assigned items · ${d.jira.unmappedAccounts} unmapped accounts`}
+            hint={`${d.jira.mappedAssignees} of ${d.jira.withAssignee} assigned items · ${plural(d.jira.unmappedAccounts, 'unmapped account')}`}
             warn={lowCoverage(d.jira.assigneeCoveragePct)}
           />
           <Metric
             label="GitLab MR authors mapped"
             value={pctLabel(d.gitlab.authorCoveragePct)}
-            hint={`${d.gitlab.mappedAuthors} of ${d.gitlab.mergeRequests} MRs · ${d.gitlab.unmappedAccounts} unmapped accounts`}
+            hint={`${d.gitlab.mappedAuthors} of ${d.gitlab.mergeRequests} MRs · ${plural(d.gitlab.unmappedAccounts, 'unmapped account')}`}
             warn={lowCoverage(d.gitlab.authorCoveragePct)}
           />
           <Metric

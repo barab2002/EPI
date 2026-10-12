@@ -110,10 +110,31 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 ![OpenAPI / Swagger UI at /api/docs](screenshots/21-api-docs-swagger.png)
 
+
+## Administration (identity mapping and data quality)
+
+Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process fake Jira DC and GitLab servers (synthetic data).
+
+### Administration › Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)
+
+![Administration › Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)](screenshots/25-admin-integrations.png)
+
+### Administration › Identity mapping: accounts seen in syncs, mapped to EPI people by search
+
+![Administration › Identity mapping: accounts seen in syncs, mapped to EPI people by search](screenshots/26-admin-identity-mapping.png)
+
+### Administration › Status mappings: Jira status → EPI category, inferred vs admin-confirmed
+
+![Administration › Status mappings: Jira status → EPI category, inferred vs admin-confirmed](screenshots/27-admin-status-mappings.png)
+
+### Administration › Data quality: freshness, identity coverage, MR-to-Jira links, unmapped statuses
+
+![Administration › Data quality: freshness, identity coverage, MR-to-Jira links, unmapped statuses](screenshots/28-admin-data-quality.png)
+
 ## How these were made
 
 1. `./epi.sh demo` (signs-in users from `./epi.sh credentials`).
 2. A Playwright script signs in as each demo role (demo sign-in and Keycloak SSO for `taylor`), navigates every screen at 1366×900, Pixel 7 and dark color scheme, and saves PNGs here; `screenshots/index.json` lists file → caption.
 3. No passwords appear in any screenshot (the Keycloak page is captured before the password is typed).
 
-Known UI nit visible in the mobile shots: the top navigation wraps “My view” onto two lines (tracked in `NEXT_ACTIONS.md`).
+Admin shots (25–28) come from `scripts/e2e-admin.sh --screenshots`; mobile shots were refreshed after the mobile navigation fix.
