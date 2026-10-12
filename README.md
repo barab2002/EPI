@@ -19,6 +19,12 @@ If Docker Hub rate-limits you, use a mirror: `EPI_IMAGE_REGISTRY=mirror.gcr.io .
 
 Other commands: `start`, `stop`, `status`, `logs`, `test`, `backup`, `restore <file>`. Run `./epi.sh help`.
 
+## Screenshots
+
+A tour of every screen (sign-in, role-based homes, drill-down, KPI explanations, assessments, privacy suppression, mobile, dark mode, API docs): **[docs/SCREENSHOTS.md](docs/SCREENSHOTS.md)**.
+
+![Team overview](docs/screenshots/07-team-overview.png)
+
 ## What to try in the demo
 
 | Sign in as | Role | Sees |

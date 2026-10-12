@@ -1,0 +1,98 @@
+[
+  {
+    "name": "01-sign-in",
+    "title": "Sign-in page: single sign-on button and demo people (synthetic)"
+  },
+  {
+    "name": "02-keycloak-login",
+    "title": "Keycloak login page (demo realm epi-demo)"
+  },
+  {
+    "name": "03-home-team-lead-sso",
+    "title": "Team lead home after SSO sign-in: own KPIs and managed team"
+  },
+  {
+    "name": "04-home-engineering-manager",
+    "title": "Engineering manager home: organization KPIs and managed teams"
+  },
+  {
+    "name": "05-organization-tree",
+    "title": "Organization \u2192 group \u2192 team tree with access badges"
+  },
+  {
+    "name": "06-group-overview",
+    "title": "Group overview: group KPIs with trends and its teams"
+  },
+  {
+    "name": "07-team-overview",
+    "title": "Team overview (managed): KPI cards, trend, sample, confidence, freshness, members"
+  },
+  {
+    "name": "08-kpi-window-180d",
+    "title": "Switching the KPI window (30/90/180 days)"
+  },
+  {
+    "name": "09-kpi-explanation-drawer",
+    "title": "\"How calculated?\" drawer: formula, population, source, window, version, exclusions"
+  },
+  {
+    "name": "10-kpi-evidence",
+    "title": "Drawer continued: limitations, worked example computed by the engine, items behind the value"
+  },
+  {
+    "name": "11-developer-profile",
+    "title": "Developer profile (manager view): grade, team, flow KPIs, assessments"
+  },
+  {
+    "name": "12-assessment-form",
+    "title": "Monthly manager assessment: anchored 1\u20135 rubrics with required evidence"
+  },
+  {
+    "name": "13-assessment-submitted",
+    "title": "Submitted assessment (locked) in the developer profile"
+  },
+  {
+    "name": "14-out-of-scope",
+    "title": "Out-of-scope team opened by URL: \u201cNot available\u201d (server returns 404)"
+  },
+  {
+    "name": "15-home-developer",
+    "title": "Developer home: own flow KPIs and team aggregate (no member-level evidence)"
+  },
+  {
+    "name": "16-reviews-developer",
+    "title": "Reviews: the developer sees submitted assessments about themselves"
+  },
+  {
+    "name": "17-small-team-suppressed",
+    "title": "Privacy: team aggregate hidden for a 3-person team (minimum 5)"
+  },
+  {
+    "name": "18-admin-structure-only",
+    "title": "Administrator: organization structure only \u2014 no KPIs or private reviews"
+  },
+  {
+    "name": "19-kpi-catalog",
+    "title": "KPI catalog: versioned definitions, units, direction, scopes"
+  },
+  {
+    "name": "20-sso-refused-message",
+    "title": "Sign-in refused (no EPI account): clear message, no auto-provisioning"
+  },
+  {
+    "name": "21-api-docs-swagger",
+    "title": "OpenAPI / Swagger UI at /api/docs"
+  },
+  {
+    "name": "22-dark-mode",
+    "title": "Dark mode (follows the operating system setting)"
+  },
+  {
+    "name": "23-mobile-home",
+    "title": "Mobile layout: home"
+  },
+  {
+    "name": "24-mobile-team",
+    "title": "Mobile layout: team KPIs"
+  }
+]
