@@ -1,6 +1,6 @@
 # Project state — what actually works (2026-10-12)
 
-**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector done (branch `feature/jira-collector`, merged after CI). Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
+**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector (PR #4). Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
 
 ## Working and verified (tests in `TEST_STATUS.md`)
 
