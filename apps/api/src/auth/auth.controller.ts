@@ -4,20 +4,41 @@ import {
   Get,
   HttpCode,
   Inject,
+  Logger,
   NotFoundException,
   Post,
+  Query,
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
-import type { Response } from 'express';
+import {
+  ApiCookieAuth,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiProperty,
+  ApiPropertyOptional,
+  ApiTags,
+} from '@nestjs/swagger';
+import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import type { Request, Response } from 'express';
 import { DataSource } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { EPI_CONFIG, EpiConfig } from '../config';
 import { DATA_SOURCE } from '../db/data-source';
 import { AuthedRequest, Public, SESSION_COOKIE } from './auth.guard';
+import { OidcLoginError, OidcService } from './oidc.service';
 import { SessionService } from './session.service';
+
+export const OIDC_BINDING_COOKIE = 'epi_oidc';
+const OIDC_COOKIE_PATH = '/api/v1/auth';
+
+export class LoginQuery {
+  @ApiPropertyOptional({ description: 'Relative path to return to after sign-in' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  return_to?: string;
+}
 
 export class DemoLoginDto {
   @ApiProperty({ format: 'uuid' })
@@ -33,7 +54,19 @@ export class AuthController {
     @Inject(EPI_CONFIG) private readonly config: EpiConfig,
     private readonly sessions: SessionService,
     private readonly audit: AuditService,
+    private readonly oidc: OidcService,
   ) {}
+
+  private readonly log = new Logger('Auth');
+
+  private setSessionCookie(res: Response, token: string): void {
+    res.cookie(SESSION_COOKIE, token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: this.config.cookieSecure,
+      path: '/',
+    });
+  }
 
   private assertDemo(): void {
     // Indistinguishable from a missing route outside demo mode.
@@ -44,7 +77,58 @@ export class AuthController {
   @Get('auth/config')
   @ApiOperation({ summary: 'Which sign-in methods are available' })
   authConfig() {
-    return { mode: this.config.mode, demoLogin: this.config.mode === 'demo', oidc: false };
+    return {
+      mode: this.config.mode,
+      demoLogin: this.config.mode === 'demo',
+      oidc: this.oidc.enabled,
+    };
+  }
+
+  @Public()
+  @Get('auth/login')
+  @ApiOperation({ summary: 'Start OIDC sign-in (redirects to the identity provider)' })
+  async login(@Query() q: LoginQuery, @Res() res: Response) {
+    if (!this.oidc.enabled) throw new NotFoundException();
+    try {
+      const { url, binding } = await this.oidc.startLogin(q.return_to);
+      res.cookie(OIDC_BINDING_COOKIE, binding, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: this.config.cookieSecure,
+        path: OIDC_COOKIE_PATH,
+        maxAge: 10 * 60 * 1000,
+      });
+      res.redirect(302, url);
+    } catch (e) {
+      const reason = e instanceof OidcLoginError ? e.reason : 'oidc_unavailable';
+      res.redirect(302, `/?login_error=${reason}`);
+    }
+  }
+
+  @Public()
+  @Get('auth/callback')
+  @ApiExcludeEndpoint()
+  async callback(@Req() req: Request, @Res() res: Response) {
+    if (!this.oidc.enabled) throw new NotFoundException();
+    const binding = req.cookies?.[OIDC_BINDING_COOKIE] as string | undefined;
+    res.clearCookie(OIDC_BINDING_COOKIE, { path: OIDC_COOKIE_PATH });
+    const callbackUrl = new URL(req.originalUrl, this.config.publicUrl);
+    try {
+      const { userId, returnTo } = await this.oidc.finishLogin(callbackUrl, binding);
+      const { token } = await this.sessions.create(userId);
+      this.setSessionCookie(res, token);
+      await this.audit.record(userId, 'auth.login', 'session', null, { method: 'oidc' });
+      res.redirect(302, returnTo);
+    } catch (e) {
+      const reason = e instanceof OidcLoginError ? e.reason : 'idp_error';
+      // Detail goes to the server log only (no tokens/codes are included in messages).
+      this.log.warn(`OIDC login failed (${reason}): ${e instanceof Error ? e.message : 'unknown'}`);
+      await this.audit.record(null, 'auth.login_failed', 'session', null, {
+        method: 'oidc',
+        reason,
+      });
+      res.redirect(302, `/?login_error=${reason}`);
+    }
   }
 
   @Public()
@@ -75,22 +159,21 @@ export class AuthController {
     );
     if (!u) throw new NotFoundException('Unknown demo user');
     const { token } = await this.sessions.create(u.id);
-    res.cookie(SESSION_COOKIE, token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: this.config.cookieSecure,
-      path: '/',
-    });
+    this.setSessionCookie(res, token);
     await this.audit.record(u.id, 'auth.login', 'session', null, { method: 'demo' });
   }
 
   @Post('auth/logout')
-  @HttpCode(204)
+  @HttpCode(200)
   @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'End the EPI session; returns the identity provider logout URL when OIDC is used',
+  })
   async logout(@Req() req: AuthedRequest, @Res({ passthrough: true }) res: Response) {
     await this.sessions.destroy(req.cookies?.[SESSION_COOKIE]);
     res.clearCookie(SESSION_COOKIE, { path: '/' });
     await this.audit.record(req.scope.userId, 'auth.logout', 'session', null);
+    return { logoutUrl: await this.oidc.logoutUrl() };
   }
 
   @Get('me')

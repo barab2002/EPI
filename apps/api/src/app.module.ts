@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { AuditService } from './audit/audit.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthGuard } from './auth/auth.guard';
+import { OidcService } from './auth/oidc.service';
 import { SessionService } from './auth/session.service';
 import { ErrorFilter } from './common/correlation';
 import { EPI_CONFIG, EpiConfig } from './config';
@@ -38,6 +39,7 @@ export class AppModule {
         { provide: APP_FILTER, useClass: ErrorFilter },
         AuditService,
         SessionService,
+        OidcService,
         ScopeService,
         OrgService,
         KpiService,
