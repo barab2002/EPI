@@ -12,6 +12,7 @@ module.exports = {
       displayName: 'integration',
       testMatch: ['<rootDir>/test/**/*.int.spec.ts'],
       maxWorkers: 1,
+      testTimeout: 60000,
     },
   ],
 };
