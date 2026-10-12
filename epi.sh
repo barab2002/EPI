@@ -17,7 +17,13 @@ warn() { printf '  %sWARN%s %s\n' "$Y" "$N" "$*"; WARNINGS=$((WARNINGS + 1)); }
 fail() { printf '  %sFAIL%s %s\n' "$R" "$N" "$*"; FAILURES=$((FAILURES + 1)); }
 die() { printf '%serror:%s %s\n' "$R" "$N" "$*" >&2; exit 1; }
 info() { printf '%s==>%s %s\n' "$B" "$N" "$*"; }
-compose() { docker compose -f "$COMPOSE_FILE" "$@"; }
+compose() {
+  if [ -n "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; then
+    docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.oidc.yaml" "$@"
+  else
+    docker compose -f "$COMPOSE_FILE" "$@"
+  fi
+}
 
 usage() {
   cat <<EOF
@@ -39,6 +45,8 @@ Usage: ./epi.sh <command> [options]
 
 Environment: EPI_IMAGE_REGISTRY (image mirror, default docker.io), EPI_PORT (8080),
 EPI_BIND (127.0.0.1 — binding to other interfaces requires approval).
+Single sign-on (optional): EPI_OIDC_ISSUER, EPI_OIDC_CLIENT_ID (epi-web), EPI_PUBLIC_URL and
+EPI_OIDC_CLIENT_SECRET_PATH (a root-only file holding the client secret). See docs/KEYCLOAK.md.
 EOF
 }
 
@@ -70,6 +78,19 @@ cmd_doctor() {
     if compose ps --status running 2>/dev/null | grep -q epi-epi; then pass "port $EPI_PORT in use by EPI"; else fail "port $EPI_PORT is in use — set EPI_PORT"; fi
   else
     pass "port $EPI_PORT free"
+  fi
+  if [ -n "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; then
+    [ -r "$EPI_OIDC_CLIENT_SECRET_PATH" ] && pass "OIDC client secret file readable" || fail "EPI_OIDC_CLIENT_SECRET_PATH not readable"
+    [ -n "${EPI_OIDC_ISSUER:-}" ] && [ -n "${EPI_PUBLIC_URL:-}" ] || fail "OIDC needs EPI_OIDC_ISSUER and EPI_PUBLIC_URL"
+    if [ -n "${EPI_OIDC_ISSUER:-}" ]; then
+      if curl -fsS --max-time 10 "$EPI_OIDC_ISSUER/.well-known/openid-configuration" >/dev/null 2>&1; then
+        pass "OIDC issuer reachable: $EPI_OIDC_ISSUER"
+      else
+        fail "OIDC issuer not reachable from this host: $EPI_OIDC_ISSUER (DNS/firewall/CA? set NODE_EXTRA_CA_CERTS for an internal CA)"
+      fi
+    fi
+  else
+    pass "OIDC not configured (demo sign-in only)"
   fi
   if [ "$EPI_BIND" != "127.0.0.1" ]; then warn "EPI_BIND=$EPI_BIND exposes EPI beyond localhost — requires approval and TLS"; fi
   if docker image inspect "$EPI_IMAGE" >/dev/null 2>&1; then pass "image $EPI_IMAGE present"; else warn "image $EPI_IMAGE not built yet — run ./epi.sh build"; fi

@@ -1,0 +1,16 @@
+# Optional overlay: enables OIDC sign-in against an existing Keycloak/OIDC provider.
+# Used automatically by ./epi.sh when EPI_OIDC_CLIENT_SECRET_PATH is set. The client secret is
+# mounted as a file; it is never passed as an environment value.
+services:
+  epi:
+    environment:
+      EPI_PUBLIC_URL: ${EPI_PUBLIC_URL:?EPI_PUBLIC_URL is required for OIDC (the URL users open)}
+      EPI_OIDC_ISSUER: ${EPI_OIDC_ISSUER:?EPI_OIDC_ISSUER is required, e.g. https://sso.example/realms/epi}
+      EPI_OIDC_CLIENT_ID: ${EPI_OIDC_CLIENT_ID:-epi-web}
+      EPI_OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      EPI_OIDC_LINK_BY_VERIFIED_EMAIL: ${EPI_OIDC_LINK_BY_VERIFIED_EMAIL:-false}
+    secrets: [db_password, oidc_client_secret]
+
+secrets:
+  oidc_client_secret:
+    file: ${EPI_OIDC_CLIENT_SECRET_PATH}
