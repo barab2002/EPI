@@ -70,7 +70,7 @@ describe('RBAC & data isolation (integration)', () => {
 
     it('invalidates the session on logout', async () => {
       const s = await login(app, ds, 'Eli Engineer');
-      await s.post('/api/v1/auth/logout').expect(204);
+      await s.post('/api/v1/auth/logout').expect(200);
       await s.get('/api/v1/me').expect(401);
     });
 

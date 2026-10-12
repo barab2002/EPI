@@ -20,7 +20,15 @@ const en = {
   loginTitle: 'Sign in to EPI',
   loginDemoHint: 'Choose a synthetic person to explore what each role can see.',
   loginNoMethod:
-    'No sign-in method is configured. Production sign-in (Keycloak) is not available yet.',
+    'No sign-in method is configured. Ask your administrator to configure single sign-on.',
+  loginSso: 'Sign in with your organization account',
+  loginOr: 'or explore the demo',
+  loginErrorNotProvisioned:
+    'You signed in successfully, but you do not have an EPI account yet. Ask your EPI administrator to add you.',
+  loginErrorInactive: 'Your EPI account is deactivated. Contact your EPI administrator.',
+  loginErrorExpired: 'The sign-in attempt expired or was interrupted. Please try again.',
+  loginErrorIdp: 'Sign-in was not completed by the identity provider. Please try again.',
+  loginErrorUnavailable: 'Single sign-on is temporarily unavailable. Please try again later.',
   window: 'Window',
   howCalculated: 'How calculated?',
   sample: 'Sample',

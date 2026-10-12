@@ -15,8 +15,9 @@ if [ -d apps/web ] && [ -f apps/web/package.json ]; then
   step "web tests";        pnpm --filter @epi/web run test
 fi
 if [ "${1:-}" != "--no-integration" ]; then
-  step "integration tests (PostgreSQL)"
-  bash scripts/test-db.sh run -- pnpm --filter @epi/api run test:int
+  step "integration tests (PostgreSQL + Keycloak)"
+  EPI_REQUIRE_KEYCLOAK=1 bash scripts/test-db.sh run -- bash scripts/test-keycloak.sh run -- \
+    pnpm --filter @epi/api run test:int
 fi
 step "build";              pnpm run build
 echo; echo "CI: ALL CHECKS PASSED"

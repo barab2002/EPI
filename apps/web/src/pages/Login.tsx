@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api, DemoUser } from '../api';
 import { ErrorState, Loading } from '../components/States';
-import { t } from '../i18n';
+import { MessageKey, t } from '../i18n';
 import { useApi } from '../useApi';
 
 const ROLE_ORDER = ['ADMIN', 'ENGINEERING_MANAGER', 'GROUP_MANAGER', 'TEAM_LEAD', 'DEVELOPER'];
@@ -13,8 +13,37 @@ const ROLE_LABEL: Record<string, string> = {
   DEVELOPER: 'Developers',
 };
 
-export function Login({ demo, onSignedIn }: { demo: boolean; onSignedIn: () => void }) {
+const LOGIN_ERRORS: Record<string, MessageKey> = {
+  not_provisioned: 'loginErrorNotProvisioned',
+  inactive_user: 'loginErrorInactive',
+  expired_or_invalid_request: 'loginErrorExpired',
+  idp_error: 'loginErrorIdp',
+  oidc_unavailable: 'loginErrorUnavailable',
+};
+
+/** Reads `?login_error=` set by the OIDC callback; unknown codes get a generic message. */
+export function loginErrorMessage(search: string): string | null {
+  const code = new URLSearchParams(search).get('login_error');
+  if (!code) return null;
+  return t(LOGIN_ERRORS[code] ?? 'loginErrorIdp');
+}
+
+export function ssoLoginHref(path: string): string {
+  return `/api/v1/auth/login?return_to=${encodeURIComponent(path)}`;
+}
+
+export function Login({
+  demo,
+  oidc,
+  onSignedIn,
+}: {
+  demo: boolean;
+  oidc: boolean;
+  onSignedIn: () => void;
+}) {
   const users = useApi<DemoUser[]>(demo ? '/api/v1/auth/demo-users' : null);
+  const loginError = loginErrorMessage(window.location.search);
+  const returnTo = window.location.pathname === '/' ? '/' : window.location.pathname;
   const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -37,9 +66,22 @@ export function Login({ demo, onSignedIn }: { demo: boolean; onSignedIn: () => v
     <main className="login">
       <div className="login-card">
         <h1>{t('loginTitle')}</h1>
-        {!demo && <p>{t('loginNoMethod')}</p>}
+        {loginError && (
+          <p role="alert" className="error-text">
+            {loginError}
+          </p>
+        )}
+        {!demo && !oidc && <p>{t('loginNoMethod')}</p>}
+        {oidc && (
+          <p>
+            <a className="btn btn-primary btn-block" href={ssoLoginHref(returnTo)}>
+              {t('loginSso')}
+            </a>
+          </p>
+        )}
         {demo && (
           <>
+            {oidc && <p className="muted small">{t('loginOr')}</p>}
             <p className="banner inline">{t('syntheticBanner')}</p>
             <p className="muted">{t('loginDemoHint')}</p>
             {error && <ErrorState error={error} />}

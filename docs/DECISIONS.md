@@ -59,3 +59,14 @@ Per the owner's standing instruction ("any change … under my name only"), comm
 ## ADR-013 · 2026-10-12 · Accepted — License: Apache-2.0
 
 Owner delegated the choice. Apache-2.0: permissive, OSI-approved, explicit patent grant, compatible with the MIT/ISC/BSD/Apache dependencies used so far (NestJS, TypeORM, React, Vite, pg). `LICENSE` + `NOTICE` at repo root; dependency license inventory (SBOM) follows in EPI-012.
+
+## ADR-014 · 2026-10-12 · Accepted — Hourly resume via a Claude Code Routine in this cloud environment
+
+Owner approved the hourly resume scheduler. The dev container is ephemeral (reclaimed when idle), so an in-container cron would not survive. The scheduler is therefore a Claude Code Routine (`EPI hourly resume`, trigger `trig_01KXpTGZKMatHx36donkyqXL`, minute :32 hourly) that wakes the same session; queued wakes cannot overlap a running turn. Its prompt applies the same guards as `scripts/resume.sh`: skip when blocked/awaiting approval/complete, one bounded task, feature branches only, no merges/PRs/network exposure/real data without explicit approval, stop after a repeated failure. `scripts/setup_scheduler.sh --approved` remains the mechanism for an always-on on-prem host. Stop: ask in chat or delete the Routine.
+
+## ADR-015 · 2026-10-12 · Accepted — OIDC as BFF with openid-client v6; no token storage
+
+- `openid-client` (MIT, OpenID-certified) handles discovery, PKCE, code exchange and ID-token validation. It is ESM-only; Node 22 loads it from the CommonJS build natively, and Jest transpiles only it and its two dependencies (`oauth4webapi`, `jose`) for tests.
+- No access/refresh/ID tokens are stored; EPI only needs identity. Trade-off: Keycloak shows a logout confirmation (no `id_token_hint`).
+- No auto-provisioning; mapping by `sub`, optional verified-e-mail linking (default off).
+- Demo Compose does not bundle Keycloak: browser and container would see different issuer hosts. Real deployments point to the corporate/dedicated Keycloak via `deploy/compose.oidc.yaml`; tests use an ephemeral Keycloak on the host.
