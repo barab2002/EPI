@@ -201,20 +201,24 @@ export class JiraSync {
     const written = await rows<{ id: string; inserted: boolean }>(
       m,
       `INSERT INTO work_items(connection_id, external_key, project_key, issue_type, work_type,
-         assignee_user_id, story_points, status, created_at, started_at, done_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+         assignee_user_id, story_points, status, created_at, started_at, done_at, updated_at,
+         assignee_external_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        ON CONFLICT (connection_id, external_key) DO UPDATE SET
+         assignee_external_id = EXCLUDED.assignee_external_id,
          project_key = EXCLUDED.project_key, issue_type = EXCLUDED.issue_type,
          work_type = EXCLUDED.work_type, assignee_user_id = EXCLUDED.assignee_user_id,
          story_points = EXCLUDED.story_points, status = EXCLUDED.status,
          started_at = EXCLUDED.started_at, done_at = EXCLUDED.done_at, updated_at = EXCLUDED.updated_at
        WHERE (work_items.project_key, work_items.issue_type, work_items.work_type,
               work_items.assignee_user_id, work_items.story_points, work_items.status,
-              work_items.started_at, work_items.done_at, work_items.updated_at)
+              work_items.started_at, work_items.done_at, work_items.updated_at,
+              work_items.assignee_external_id)
          IS DISTINCT FROM
              (EXCLUDED.project_key, EXCLUDED.issue_type, EXCLUDED.work_type,
               EXCLUDED.assignee_user_id, EXCLUDED.story_points, EXCLUDED.status,
-              EXCLUDED.started_at, EXCLUDED.done_at, EXCLUDED.updated_at)
+              EXCLUDED.started_at, EXCLUDED.done_at, EXCLUDED.updated_at,
+              EXCLUDED.assignee_external_id)
        RETURNING id, (xmax = 0) AS inserted`,
       [
         connectionId,
@@ -229,8 +233,20 @@ export class JiraSync {
         i.startedAt,
         i.doneAt,
         i.updatedAt,
+        i.assigneeExternalId,
       ],
     );
+    if (i.assigneeExternalId) {
+      await m.query(
+        `INSERT INTO source_accounts(source, external_id, display_name, last_seen_at)
+         VALUES ('jira', $1, $2, now())
+         ON CONFLICT (source, external_id) DO UPDATE
+           SET display_name = EXCLUDED.display_name, last_seen_at = now()
+         WHERE source_accounts.display_name IS DISTINCT FROM EXCLUDED.display_name
+            OR source_accounts.last_seen_at < now() - interval '1 hour'`,
+        [i.assigneeExternalId, i.assigneeDisplayName],
+      );
+    }
     let itemId: string;
     if (written[0]) {
       itemId = written[0].id;

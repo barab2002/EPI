@@ -31,6 +31,8 @@ export interface MappedMergeRequest {
     linkSource: 'branch' | 'title' | 'description' | null;
   };
   events: MappedReviewEvent[];
+  /** Accounts seen on this MR (for the admin identity-mapping screen). */
+  accounts: { externalId: string; displayName: string; isBot: boolean }[];
 }
 
 const KNOWN_BOTS = /^(dependabot|renovate|renovatebot|ghost|alert-bot|support-bot|gitlab-bot)$/i;
@@ -129,6 +131,14 @@ export function mapMergeRequest(
     });
   }
   const link = findIssueKey(mr, ctx.issueKeyPattern);
+  const accounts = new Map<string, { externalId: string; displayName: string; isBot: boolean }>();
+  for (const u of [mr.author, ...(mr.reviewers ?? []), ...notes.map((n) => n.author)]) {
+    accounts.set(String(u.id), {
+      externalId: String(u.id),
+      displayName: u.name ? `${u.name} (@${u.username})` : `@${u.username}`,
+      isBot: isBotUser(u, ctx.botUsernames),
+    });
+  }
   return {
     mr: {
       projectExternalId: String(mr.project_id),
@@ -142,5 +152,6 @@ export function mapMergeRequest(
       linkSource: link?.source ?? null,
     },
     events,
+    accounts: [...accounts.values()],
   };
 }
