@@ -2,7 +2,7 @@
   "name": "epi",
   "private": true,
   "description": "EPI — Engineering Performance & Improvement",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=22 <23"

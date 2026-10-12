@@ -8,10 +8,10 @@ Status legend: ✅ available · ⏳ requested · ❓ unknown · ⛔ blocked
 
 | # | Requirement | Mandatory? | Owner | Least privilege | Why | Status | Secure handoff |
 |---|---|---|---|---|---|---|---|
-| A1 | Confirm stack: NestJS backend instead of spec's FastAPI (ADR-001) | Yes | Product sponsor | — | Changes agreed architecture | ⏳ assumed approved from owner's stated preference | Reply in chat |
+| A1 | Confirm stack: NestJS backend instead of spec's FastAPI (ADR-001) | Yes | Product sponsor | — | Changes agreed architecture | ✅ confirmed by owner 2026-10-12 | Reply in chat |
 | A2 | Merge policy for `main`: who reviews/merges PRs; enable branch protection on GitHub | Yes before first merge | Repo owner | Push to feature branches only | `main` must stay protected | ❓ protection status unknown | GitHub settings |
 | A3 | Is GitHub (`barab2002/EPI`) the approved remote, or will code move to internal GitLab? | Yes | Repo owner | — | CI and push target | ✅ GitHub push works for feature branches | Reply in chat |
-| A5 | Open-source license for EPI code (proposal: Apache-2.0) | Yes before release | Product sponsor | — | Spec §16 "Core code: Open Source" | ⏳ `UNLICENSED` placeholder | Reply in chat |
+| A5 | Open-source license for EPI code (proposal: Apache-2.0) | Yes before release | Product sponsor | — | Spec §16 "Core code: Open Source" | ✅ Apache-2.0 (owner delegated, ADR-013) | Reply in chat |
 | A4 | Use of synthetic data only until privacy sign-off (default assumed) | Yes | Privacy/HR | — | Spec §12F | ✅ assumed: synthetic only | Reply in chat |
 
 ## Needed for real-data integration (EPI-006/007/008) — not blocking current work
@@ -41,7 +41,7 @@ Status legend: ✅ available · ⏳ requested · ❓ unknown · ⛔ blocked
 | C7 | Security owner: who may read private reviews; small-group suppression threshold (default 5) | Yes | Security/HR | — | RBAC policy | ❓ default 5 | Chat |
 | C8 | Data retention period and privacy sign-off for real employee data | Yes before real data | Privacy/HR | — | Compliance | ❓ | Written approval |
 | C9 | Pilot teams (spec: 2), languages (EN + HE?), grade ladder, review rubric confirmation | Yes | Sponsor | — | Product config | ❓ default: EN, Junior/Mid/Senior/Tech Lead | Chat |
-| C10 | Approval to enable the hourly resume scheduler (implemented, **disabled**) | No | Owner | — | Unattended automation | ❓ not enabled | Reply |
+| C10 | Approval to enable the hourly resume scheduler (implemented, **disabled**) | No | Owner | — | Unattended automation | ✅ approved 2026-10-12 (see ADR-014) | Reply |
 
 ## Open questions
 

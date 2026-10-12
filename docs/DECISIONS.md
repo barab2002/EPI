@@ -2,12 +2,12 @@
 
 Format: ID · date · status · decision · rationale · consequences. Newest last.
 
-## ADR-001 · 2026-10-12 · Accepted — Backend in NestJS (TypeScript) instead of FastAPI
+## ADR-001 · 2026-10-12 · Accepted (owner confirmed 2026-10-12) — Backend in NestJS (TypeScript) instead of FastAPI
 
 - **Context:** Master Spec §2/§6/§11 names FastAPI + SQLAlchemy/Alembic/Pydantic. The project owner's standing preference is JS/TS with **NestJS and Swagger**, and there is one developer who must maintain the code.
 - **Decision:** `epi-api` is NestJS 11 (TypeScript 5.9) with `@nestjs/swagger` for the generated, versioned OpenAPI document, TypeORM 0.3 with **hand-written SQL migrations** for PostgreSQL, and `class-validator` DTOs in place of Pydantic.
 - **Why:** one language across frontend and backend; the owner can maintain it; every spec requirement (OpenAPI, migrations, RBAC service layer, ingestion jobs, KPI engine) is covered. Licenses: NestJS MIT, TypeORM MIT, pg MIT.
-- **Consequences:** Spec references to Python tooling (pytest, Ruff, mypy, `Protocol`) map to Jest, ESLint/Prettier, `tsc --noEmit` and TS interfaces. The architecture shape is unchanged: single API + single UI + PostgreSQL + Keycloak. **Reversible only cheaply now** — owner should object before EPI-004 if FastAPI is required.
+- **Consequences:** Spec references to Python tooling (pytest, Ruff, mypy, `Protocol`) map to Jest, ESLint/Prettier, `tsc --noEmit` and TS interfaces. The architecture shape is unchanged: single API + single UI + PostgreSQL + Keycloak. Owner confirmed NestJS on 2026-10-12.
 
 ## ADR-002 · 2026-10-12 · Accepted — Doc set: CLAUDE.md list is canonical
 
@@ -55,3 +55,7 @@ Review Waiting Time is shown for team/group/org only. Spec: never interpret revi
 ## ADR-012 · 2026-10-12 · Accepted — Commits authored solely by the project owner
 
 Per the owner's standing instruction ("any change … under my name only"), commits use the owner's GitHub identity via repo-local git config and carry no co-author trailer.
+
+## ADR-013 · 2026-10-12 · Accepted — License: Apache-2.0
+
+Owner delegated the choice. Apache-2.0: permissive, OSI-approved, explicit patent grant, compatible with the MIT/ISC/BSD/Apache dependencies used so far (NestJS, TypeORM, React, Vite, pg). `LICENSE` + `NOTICE` at repo root; dependency license inventory (SBOM) follows in EPI-012.
