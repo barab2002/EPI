@@ -9,6 +9,11 @@ export interface OidcConfig {
   clientSecret: string;
   /** Allow http:// issuer. Only for local test realms; refused in production mode. */
   allowHttp: boolean;
+  /**
+   * Optional server-side base URL for the provider (split horizon, e.g. `http://keycloak:8080`
+   * inside Compose). Only EPI's back-channel calls are routed there; the issuer is unchanged.
+   */
+  internalUrl: string | null;
   /** Link a first-time login to an existing EPI user by verified e-mail (security-owner decision). */
   linkByVerifiedEmail: boolean;
 }
@@ -108,8 +113,17 @@ function resolveOidc(env: NodeJS.ProcessEnv): OidcConfig | null {
       'Config: EPI_OIDC_ISSUER must use https (EPI_OIDC_ALLOW_HTTP=true only for local test realms)',
     );
   }
+  let internalUrl: string | null = null;
+  if (env.EPI_OIDC_INTERNAL_URL) {
+    try {
+      internalUrl = new URL(env.EPI_OIDC_INTERNAL_URL).origin;
+    } catch {
+      throw new Error('Config: EPI_OIDC_INTERNAL_URL is not a valid URL');
+    }
+  }
   return {
     issuer: issuer.replace(/\/+$/, ''),
+    internalUrl,
     clientId,
     clientSecret: readSecretFile('EPI_OIDC_CLIENT_SECRET_FILE', secretFile),
     allowHttp,

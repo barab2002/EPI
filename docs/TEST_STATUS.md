@@ -4,6 +4,8 @@ Environment: cloud dev container, Ubuntu 24.04, Node 22.22.0, pnpm 10.28.0, Dock
 
 | When (UTC) | Command | Result |
 |---|---|---|
+| 2026-10-12 20:15 | `bash scripts/ci.sh` (branch `feature/demo-keycloak`) | ✅ ALL CHECKS PASSED — 72 unit, 17 web, 39 integration (PostgreSQL + Keycloak), build |
+| 2026-10-12 20:12 | `./epi.sh demo` (with bundled Keycloak, clean volumes) + `pnpm run e2e` with demo user `taylor` | ✅ 9 passed, 1 skipped by design — SSO via demo Keycloak on desktop + mobile, all demo flows; Taylor linked by verified e-mail (audited) |
 | 2026-10-12 20:05 | `EPI_IMAGE_REGISTRY=mirror.gcr.io bash scripts/ci.sh` (branch `feature/keycloak-oidc`) | ✅ ALL CHECKS PASSED — secret scan, format, lint, typecheck, **70 API unit**, **17 web**, **38 integration** (PostgreSQL + ephemeral Keycloak 26.3.3: 23 RBAC + 15 OIDC), build |
 | 2026-10-12 20:00 | `bash scripts/e2e-oidc.sh` (Postgres + Keycloak + EPI with OIDC, Playwright) | ✅ 2 passed — sign-in via Keycloak login page → requested page, sign-out of EPI and Keycloak; refused-login message |
 | 2026-10-12 20:02 | `./epi.sh build && ./epi.sh start` on the existing demo volume, then `pnpm run e2e` | ✅ new migration applied on restart (upgrade path); 5 passed, 5 skipped by design (mutating flow desktop-only; OIDC specs need e2e-oidc.sh) |

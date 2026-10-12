@@ -1,0 +1,54 @@
+# DEMO-ONLY overlay: bundles a Keycloak (dev mode, file database) with the generated `epi-demo`
+# realm so the demo can be tried with real single sign-on. Real deployments use an existing
+# Keycloak via deploy/compose.oidc.yaml instead. Ports bind to localhost by default.
+services:
+  keycloak:
+    image: ${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}
+    command: ['start-dev', '--import-realm']
+    restart: unless-stopped
+    env_file: [../.epi/keycloak/admin.env]
+    environment:
+      KC_HOSTNAME: http://127.0.0.1:${EPI_KC_PORT:-8081}
+      KC_HTTP_ENABLED: 'true'
+      KC_HEALTH_ENABLED: 'true'
+    volumes:
+      # Volume at data/ (owned by the keycloak user in the image); realm file mounted inside it.
+      - kc-data:/opt/keycloak/data
+      - ../.epi/keycloak/epi-demo-realm.json:/opt/keycloak/data/import/epi-demo-realm.json:ro
+    ports:
+      - '${EPI_BIND:-127.0.0.1}:${EPI_KC_PORT:-8081}:8080'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    deploy:
+      resources:
+        limits: { memory: 1g }
+
+  epi:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      EPI_PUBLIC_URL: http://127.0.0.1:${EPI_PORT:-8080}
+      EPI_OIDC_ISSUER: http://127.0.0.1:${EPI_KC_PORT:-8081}/realms/epi-demo
+      EPI_OIDC_INTERNAL_URL: http://keycloak:8080
+      EPI_OIDC_ALLOW_HTTP: 'true'
+      EPI_OIDC_CLIENT_ID: epi-web
+      EPI_OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      EPI_OIDC_LINK_BY_VERIFIED_EMAIL: 'true'
+    secrets: [db_password, oidc_client_secret]
+
+secrets:
+  oidc_client_secret:
+    file: ../.epi/keycloak/client_secret
+
+volumes:
+  kc-data:

@@ -7,7 +7,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
   use: {
-    baseURL: process.env.EPI_E2E_URL ?? 'http://localhost:8080',
+    baseURL: process.env.EPI_E2E_URL ?? 'http://127.0.0.1:8080',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
