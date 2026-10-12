@@ -10,6 +10,7 @@ import { SessionService } from './auth/session.service';
 import { ErrorFilter } from './common/correlation';
 import { EPI_CONFIG, EpiConfig } from './config';
 import { DATA_SOURCE } from './db/data-source';
+import { GitLabSync } from './ingestion/gitlab/gitlab.sync';
 import { JiraSync } from './ingestion/jira/jira.sync';
 import { HealthController } from './health/health.controller';
 import { KpiController } from './kpi/kpi.controller';
@@ -50,6 +51,11 @@ export class AppModule {
         {
           provide: JiraSync,
           useFactory: (ds: DataSource) => new JiraSync(ds),
+          inject: [DATA_SOURCE],
+        },
+        {
+          provide: GitLabSync,
+          useFactory: (ds: DataSource) => new GitLabSync(ds),
           inject: [DATA_SOURCE],
         },
       ],

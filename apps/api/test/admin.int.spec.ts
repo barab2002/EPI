@@ -95,6 +95,35 @@ describe('Admin integration API (integration)', () => {
       .expect(403);
   });
 
+  it('dispatches background syncs for GitLab connections too', async () => {
+    const { FakeGitLab } = await import('./fake-gitlab');
+    const gl = new FakeGitLab(token);
+    gl.addMergeRequest(42, 1, { author: { id: 1, username: 'a' }, createdAt: new Date() });
+    await gl.start();
+    process.env.EPI_GITLAB_TOKEN = token;
+    try {
+      await ds.query(
+        `INSERT INTO integration_connections(kind, name, endpoint, config_json, secret_ref)
+         VALUES ('gitlab', 'gitlab-main', $1, '{"projectIds":["42"]}', 'EPI_GITLAB_TOKEN')`,
+        [gl.url],
+      );
+      const res = await admin.post('/api/v1/admin/sync', { connection: 'gitlab-main' }).expect(202);
+      let status = 'running';
+      for (let i = 0; i < 50 && status === 'running'; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+        const runs = await admin.get('/api/v1/admin/sync-runs?connection=gitlab-main').expect(200);
+        status = runs.body.find((r: { id: string }) => r.id === res.body.runId)?.status;
+      }
+      expect(status).toBe('succeeded');
+      const list = await admin.get('/api/v1/admin/integrations').expect(200);
+      expect(list.body.map((c: { name: string }) => c.name)).toEqual(['gitlab-main', 'jira-main']);
+      expect(list.body[0].last_success_at).not.toBeNull();
+    } finally {
+      delete process.env.EPI_GITLAB_TOKEN;
+      await gl.stop();
+    }
+  });
+
   it('lets an admin override a status mapping (validated, audited)', async () => {
     const list = await admin.get('/api/v1/admin/status-mappings?connection=jira-main').expect(200);
     expect(

@@ -25,7 +25,9 @@ import { AuditService } from '../audit/audit.service';
 import { CurrentScope } from '../auth/current-scope.decorator';
 import { DATA_SOURCE } from '../db/data-source';
 import { rows } from '../db/rows';
-import { JiraSync, SyncAlreadyRunningError } from '../ingestion/jira/jira.sync';
+import { GitLabSync } from '../ingestion/gitlab/gitlab.sync';
+import { JiraSync } from '../ingestion/jira/jira.sync';
+import { SyncAlreadyRunningError } from '../ingestion/sync-runs';
 import type { Scope } from '../org/scope.service';
 
 const CATEGORIES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'REVIEW', 'QA', 'DONE'] as const;
@@ -70,6 +72,7 @@ export class AdminController {
     @Inject(DATA_SOURCE) private readonly ds: DataSource,
     private readonly audit: AuditService,
     private readonly jira: JiraSync,
+    private readonly gitlab: GitLabSync,
   ) {}
 
   @Get('integrations')
@@ -78,11 +81,10 @@ export class AdminController {
     requireAdmin(scope);
     return this.ds.query(
       `SELECT c.id, c.kind, c.name, c.endpoint, c.enabled, c.config_json AS config, c.secret_ref,
-              cur.last_success_at,
+              (SELECT max(last_success_at) FROM sync_cursors WHERE connection_id = c.id) AS last_success_at,
               (SELECT row_to_json(r) FROM (SELECT status, started_at, finished_at, error_summary
                  FROM sync_runs WHERE connection_id = c.id ORDER BY started_at DESC LIMIT 1) r) AS last_run
        FROM integration_connections c
-       LEFT JOIN sync_cursors cur ON cur.connection_id = c.id AND cur.resource = 'issues'
        WHERE c.kind <> 'synthetic' ORDER BY c.name`,
     );
   }
@@ -102,16 +104,17 @@ export class AdminController {
 
   @Post('sync')
   @HttpCode(202)
-  @ApiOperation({ summary: 'Start a Jira sync in the background; poll sync-runs for the result' })
+  @ApiOperation({ summary: 'Start a Jira or GitLab sync in the background; poll sync-runs' })
   async startSync(@CurrentScope() scope: Scope, @Body() dto: StartSyncDto) {
     requireAdmin(scope);
     const [conn] = await this.ds.query(
-      `SELECT id FROM integration_connections WHERE name = $1 AND kind = 'jira'`,
+      `SELECT id, kind FROM integration_connections WHERE name = $1 AND kind IN ('jira','gitlab')`,
       [dto.connection],
     );
     if (!conn) throw new NotFoundException('Unknown connection');
+    const collector = conn.kind === 'jira' ? this.jira : this.gitlab;
     const runId = await new Promise<string>((resolve, reject) => {
-      this.jira
+      collector
         .run(dto.connection, { fullBackfill: dto.full === true, onStarted: resolve })
         .catch(reject);
     }).catch((e: unknown) => {

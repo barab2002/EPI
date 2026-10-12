@@ -83,3 +83,12 @@ Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `depl
 - **Status mapping by status ID** (names can be renamed), inferred from Jira status categories, admin-overridable; admin rows are never overwritten.
 - **Attribution:** current assignee (documented limitation). Story Points stored only when the field is confirmed or unambiguous.
 - **Tests:** an in-process fake Jira DC server (synthetic data, documented response shapes, fault injection) — real-instance reconciliation (spec §14: 20 issues) awaits access B1–B3.
+
+## ADR-018 · 2026-10-12 · Accepted — GitLab collector: REST, review events from system notes
+
+- **REST v4, not MCP** (no approved local GitLab MCP server; same rule as ADR-017). Token scope `read_api` only.
+- **Reviewer-request time** comes from GitLab's "requested review from @…" system notes (GitLab ≥ 13.8), one event per requested reviewer; this enables the preferred KPI-03 definition rather than the proxy. Approvals come from "approved this merge request" system notes; all other system notes are dropped as non-substantive.
+- **Metadata only:** titles, descriptions and note bodies are never stored; bodies are read in memory only to classify system notes.
+- **Bots:** GitLab `bot` flag, project/group bot naming, well-known bot names and a configurable list.
+- **Unmapped reviewers:** requests and notes keep the GitLab user ID (`actor_external_id`), so waits are measured for the author's team even before every reviewer is mapped; individual attribution still requires a verified identity.
+- **Shared sync-run helpers** (`ingestion/sync-runs.ts`) enforce the same cursor/overlap/one-run rules for Jira and GitLab.

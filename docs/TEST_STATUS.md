@@ -4,6 +4,7 @@ Environment: cloud dev container, Ubuntu 24.04, Node 22.22.0, pnpm 10.28.0, Dock
 
 | When (UTC) | Command | Result |
 |---|---|---|
+| 2026-10-12 21:20 | `bash scripts/ci.sh` (branch `feature/gitlab-collector`) | ✅ ALL CHECKS PASSED — **119 unit** (incl. 20 GitLab mapper), 17 web, **62 integration** (RBAC 23, OIDC 16, Jira 10, GitLab 7, admin API 6), build |
 | 2026-10-12 20:45 | `bash scripts/ci.sh` (branch `feature/jira-collector`) | ✅ ALL CHECKS PASSED — **98 unit**, 17 web, **54 integration** (RBAC 23, OIDC 16, Jira collector 10, admin API 5), build |
 | 2026-10-12 20:40 | CLI smoke: `migrate`, `jira-add` (http refused / https saved), `jira-check` (missing secret), `jira-sync` (unreachable host) | ✅ actionable errors, non-zero exit codes, failed run recorded |
 | 2026-10-12 20:15 | `bash scripts/ci.sh` (branch `feature/demo-keycloak`) | ✅ ALL CHECKS PASSED — 72 unit, 17 web, 39 integration (PostgreSQL + Keycloak), build |
