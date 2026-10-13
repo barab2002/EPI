@@ -16,3 +16,6 @@
 |---|---|---|
 | 2026-10-13 05:20 | baseline `ux-capture` (demo, pre-redesign) | 40 captures; findings UX-001…015 |
 | 2026-10-13 05:25 | overflow probe at 390 px | `scrollWidth` 424 on `/`, `/kpis`, `/reviews` → UX-001 |
+| 2026-10-13 06:05 | `e2e/layout.spec.ts` (before slice 1) | ❌ as expected: `/` 424 px at 320 px |
+| 2026-10-13 06:30 | layout guard after slice 1 | ❌ `/admin/audit` 461 px at 320 → unwrapped tables (UX-016) fixed; ❌ `/admin/people` 350 px → field groups (UX-018) fixed; then ✅ |
+| 2026-10-13 06:40 | web unit · demo e2e · admin e2e ×2 · 40 captures | ✅ 33/33 · 6 passed, 20 skipped by design · 2/2 ×2 · reviewed |
