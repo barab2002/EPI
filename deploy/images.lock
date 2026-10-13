@@ -1,0 +1,7 @@
+# Pinned third-party images (EPI-012). Sourced by epi.sh and the test scripts; refresh with
+# scripts/pin-images.sh (needs registry access) and review the diff. Digests are multi-arch
+# index digests, identical on Docker Hub and its mirrors; `library/…` refs are prefixed with
+# EPI_IMAGE_REGISTRY at use, so an internal mirror works unchanged.
+EPI_NODE_REF='library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402'
+EPI_POSTGRES_REF='library/postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea'
+EPI_KEYCLOAK_PINNED='quay.io/keycloak/keycloak:26.3.3@sha256:6a7217a100bd3e5de4063a27a538ef999a3c5a88c4b4ec0ffc0a642aee7b2597'

@@ -7,6 +7,7 @@ step() { printf '\n==> %s\n' "$*"; }
 step "install (frozen lockfile)"
 pnpm install --frozen-lockfile --prefer-offline
 step "secret scan";        bash scripts/secret-scan.sh
+step "pinned images";      bash scripts/check-pins.sh
 step "format check";       pnpm run format:check
 step "lint";               pnpm run lint
 step "typecheck";          pnpm run typecheck

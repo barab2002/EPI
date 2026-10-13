@@ -4,6 +4,7 @@
 services:
   keycloak:
     image: ${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}
+    pull_policy: ${EPI_PULL_POLICY:-missing}
     command: ['start-dev', '--import-realm']
     restart: unless-stopped
     env_file: [../.epi/keycloak/admin.env]

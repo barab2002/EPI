@@ -10,6 +10,8 @@ export EPI_IMAGE="${EPI_IMAGE:-epi:local}"
 export EPI_PORT="${EPI_PORT:-8080}"
 export EPI_BIND="${EPI_BIND:-127.0.0.1}"
 export EPI_DB_PASSWORD_PATH="$STATE_DIR/db_password"
+# Pinned third-party images (deploy/images.lock) → EPI_NODE_IMAGE, EPI_POSTGRES_IMAGE, EPI_KEYCLOAK_IMAGE.
+. "$ROOT/scripts/images.sh"
 
 if [ -t 1 ]; then G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; B=$'\e[1m'; N=$'\e[0m'; else G= Y= R= B= N=; fi
 pass() { printf '  %sPASS%s %s\n' "$G" "$N" "$*"; }
@@ -101,10 +103,9 @@ cmd_doctor() {
   if [ "$EPI_BIND" != "127.0.0.1" ]; then warn "EPI_BIND=$EPI_BIND exposes EPI beyond localhost — requires approval and TLS"; fi
   if docker image inspect "$EPI_IMAGE" >/dev/null 2>&1; then pass "image $EPI_IMAGE present"; else warn "image $EPI_IMAGE not built yet — run ./epi.sh build"; fi
   if demo_sso_enabled; then
-    kc_image="${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}"
-    if docker image inspect "$kc_image" >/dev/null 2>&1; then pass "keycloak image present (demo SSO)"; else warn "keycloak image not present locally — will be pulled ($kc_image)"; fi
+    if docker image inspect "$EPI_KEYCLOAK_IMAGE" >/dev/null 2>&1; then pass "keycloak image present (demo SSO)"; else warn "keycloak image not present locally — will be pulled ($EPI_KEYCLOAK_IMAGE)"; fi
   fi
-  if docker image inspect "$EPI_IMAGE_REGISTRY/library/postgres:16-alpine" >/dev/null 2>&1; then pass "postgres image present"; else warn "postgres image not present locally — will be pulled from $EPI_IMAGE_REGISTRY"; fi
+  if docker image inspect "$EPI_POSTGRES_IMAGE" >/dev/null 2>&1; then pass "postgres image present"; else warn "postgres image not present locally — will be pulled ($EPI_POSTGRES_IMAGE)"; fi
   if command -v node >/dev/null && command -v pnpm >/dev/null; then pass "build tools: node $(node --version), pnpm $(pnpm --version)"; else warn "node/pnpm missing — needed only for ./epi.sh build"; fi
   printf '\nResult: %d failure(s), %d warning(s)\n' "$FAILURES" "$WARNINGS"
   [ "$FAILURES" -eq 0 ]
@@ -122,7 +123,7 @@ cmd_build() {
   rm -rf "$ROOT/build/api/src" "$ROOT/build/api/test"
   cp -r "$ROOT/apps/web/dist" "$ROOT/build/web"
   info "Building image $EPI_IMAGE"
-  docker build -f "$ROOT/deploy/Dockerfile" --build-arg EPI_IMAGE_REGISTRY="$EPI_IMAGE_REGISTRY" -t "$EPI_IMAGE" "$ROOT"
+  docker build -f "$ROOT/deploy/Dockerfile" --build-arg EPI_NODE_IMAGE="$EPI_NODE_IMAGE" -t "$EPI_IMAGE" "$ROOT"
 }
 
 wait_healthy() {
