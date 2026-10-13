@@ -46,7 +46,7 @@ cp /path/to/corp-ca.pem .epi/sso/ldap-ca.pem
 **First administrator** (an empty installation has no people, and sign-in never creates accounts):
 
 ```bash
-docker compose exec epi node dist/cli.js setup-admin --name "Your Name" --email you@corp.example --org "Your Company"
+./epi.sh cli setup-admin --name "Your Name" --email you@corp.example --org "Your Company"
 ```
 
 It creates the organization and makes that person an administrator (an existing person with the same e-mail is reused; repeatable; audited as `admin.bootstrap`). Use the e-mail that AD holds for your account: you are linked on first sign-in. Then, in Administration: Organization (groups and teams) → Directory (map AD groups to teams, preview, apply) → People (roles).
@@ -107,7 +107,7 @@ Sessions are not revoked when a Keycloak account is disabled; they end at EPI's 
 
 With production sign-in configured, EPI also reads the same team groups (same read-only account, same CA) to keep team membership in step with AD:
 
-1. Check access: `docker compose exec epi node dist/cli.js directory-check` lists each team group with its member count (and members without an e-mail, who cannot sign in).
+1. Check access: `./epi.sh cli directory-check` lists each team group with its member count (and members without an e-mail, who cannot sign in).
 2. **Administration › Directory**: choose the EPI team each AD group feeds ("Not imported" leaves a team managed by hand).
 3. **Preview import** shows every change: new people, people linked by e-mail, name/e-mail updates, people joining or leaving a team, and skipped people with the reason. Nothing changes yet.
 4. **Apply** runs exactly that preview (if AD or EPI changed meanwhile, EPI asks you to preview again). Leavers' memberships end today with history kept; nobody is deactivated and roles are never imported — assign roles under People.

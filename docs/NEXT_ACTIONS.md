@@ -10,7 +10,7 @@ Engineering (Claude, unattended via the hourly routine; each on its own branch �
 5. **Hebrew UI** — stages 1–2 done (ADR-035: per-user language, RTL, all screens incl. administration); next: stage 3 KPI definitions/explanations and server messages in Hebrew.
 5b. ✅ **Source tokens on the server** (ADR-036): `./epi.sh source-token EPI_JIRA_TOKEN|EPI_GITLAB_TOKEN` and `./epi.sh source-ca <pem>`; the running app, scheduler and CLI read them (before: only the CLI with `<REF>_FILE`).
 5c. ✅ **First setup** (ADR-037): `setup-admin` creates the organization and the first administrator; administrators see empty organizations/groups to build them.
-6. **Pilot install guide** (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind; Jira PAT and GitLab token via `./epi.sh source-token`), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
+6. ✅ **Pilot install guide** — `docs/PILOT_INSTALL.md` (+ `./epi.sh cli`). Original scope (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind; Jira PAT and GitLab token via `./epi.sh source-token`), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
 
 Owner (when each step is reached, Claude asks for the non-secret details one at a time):
 
