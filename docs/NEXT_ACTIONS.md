@@ -6,7 +6,7 @@ Engineering (Claude, unattended via the hourly routine; each on its own branch �
    Original scope (~2.5 d): Keycloak (production mode, its own PostgreSQL database, health checks) in `deploy/compose.keycloak.yaml`; realm/client provisioned at install; **LDAPS user federation to AD, read-only** (bind password from a secret file, internal CA trust, user search limited to the pilot team groups); EPI uses it via OIDC. Tests: ephemeral OpenLDAP (synthetic users/groups) + Keycloak.
 2. ✅ **EPI-004c AD team import** — done (ADR-030): EPI reads the team groups directly over LDAPS (same read-only account), admin maps group → team, preview → apply exactly the previewed plan, dated memberships, audited; no automatic deactivation (deliberate), roles stay manual. Follow-up: optional daily import on the sync schedule.
 3. ✅ **EPI-012c `upgrade` + rollback** — done (ADR-031): `./epi.sh upgrade <bundle>` verifies, backs up (incl. Keycloak DB), loads images, swaps files, migrates on start, health-checks and rolls back automatically; `scripts/test-upgrade.sh`.
-4. **Retention job** (~0.5 d): delete raw activity, sessions and audit entries older than 24 months (configurable), daily, audited counts.
+4. ✅ **Retention job** — done (ADR-032): 24 months (configurable), daily, audited; assessments/people kept pending HR (open question).
 5. **Hebrew UI** (~1.5 d): translation catalog, language switch per user, RTL layout check, screenshots.
 6. **Pilot install guide** (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind, Jira PAT, GitLab token), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
 

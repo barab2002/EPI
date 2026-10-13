@@ -7,3 +7,4 @@
 - **Secrets:** DB password via file (`EPI_DB_PASSWORD_FILE`), generated per install into `.epi/` (dir 0700, gitignored). No secrets in Git (secret scan in CI). Error responses carry a correlation ID and never echo driver errors.
 - **Network:** demo binds to `127.0.0.1` only. Helmet CSP: same-origin scripts, no external sources.
 - **Demo login** is a deliberate demo-only backdoor: route returns 404 unless `EPI_MODE=demo`, and only accepts users flagged `is_synthetic`. Production mode refuses to start until OIDC exists.
+- **Retention (ADR-032):** source activity, sync history, KPI snapshots and audit entries older than `EPI_RETENTION_MONTHS` (default 24) are deleted daily; expired sessions at any age; assessments and people are kept until HR decides.

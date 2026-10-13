@@ -34,7 +34,7 @@ EPI_JIRA_TOKEN_FILE=/etc/epi/jira_token node dist/cli.js jira-sync --name jira-m
 
 ## Daily automatic sync
 
-Administration › Integrations › **Daily sync** (or `GET|PUT /api/v1/admin/sync-schedule`) runs every enabled Jira and GitLab connection once a day at a local hour in an IANA time zone (off by default). Runs go one after another; a connection already syncing is skipped; a failure never stops the others or advances that connection's cursor. Each daily run is audited (`sync.scheduled`, counts only). If EPI was down at the hour it catches up later the same day; DST gaps/repeats run exactly once. With several EPI processes on one database only one claims each day. `EPI_SYNC_SCHEDULER=off` disables the in-process scheduler (e.g. when an external cron calls `jira-sync`/`gitlab-sync`).
+Administration › Integrations › **Daily sync** (or `GET|PUT /api/v1/admin/sync-schedule`) runs every enabled Jira and GitLab connection once a day at a local hour in an IANA time zone (off by default). Runs go one after another; a connection already syncing is skipped; a failure never stops the others or advances that connection's cursor. Each daily run is audited (`sync.scheduled`, counts only). If EPI was down at the hour it catches up later the same day; DST gaps/repeats run exactly once. With several EPI processes on one database only one claims each day. `EPI_SYNC_SCHEDULER=off` disables the in-process scheduler (e.g. when an external cron calls `jira-sync`/`gitlab-sync`); it also stops the daily retention job (run `retention` from cron then).
 
 ## How sync works
 

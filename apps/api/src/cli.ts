@@ -1,7 +1,9 @@
 import 'reflect-metadata';
 import { loadConfig } from './config';
 import { createDataSource } from './db/data-source';
+import { AuditService } from './audit/audit.service';
 import { DirectoryClient } from './directory/directory.client';
+import { RetentionService } from './retention/retention.service';
 import { checkGitLabConnection, GitLabSync } from './ingestion/gitlab/gitlab.sync';
 import { checkJiraConnection, JiraSync } from './ingestion/jira/jira.sync';
 import { hasDemoData, seedDemo } from './seed/demo-seed';
@@ -21,7 +23,8 @@ const USAGE = `Usage: node dist/cli.js <command> [options]
                                   create or update a read-only GitLab connection
   gitlab-check --name N           verify access: version, projects, recent merge requests
   gitlab-sync --name N [--full]   sync merge requests and review activity
-  directory-check                 verify the read-only AD/LDAP account: team groups and member counts`;
+  directory-check                 verify the read-only AD/LDAP account: team groups and member counts
+  retention [--dry-run]           delete data older than EPI_RETENTION_MONTHS now (normally daily)`;
 
 function parseArgs(argv: string[]): Record<string, string | true> {
   const out: Record<string, string | true> = {};
@@ -54,6 +57,7 @@ const COMMANDS = [
   'gitlab-check',
   'gitlab-sync',
   'directory-check',
+  'retention',
 ];
 
 async function main(cmd: string | undefined, rest: string[]): Promise<number> {
@@ -93,6 +97,26 @@ async function main(cmd: string | undefined, rest: string[]): Promise<number> {
       case 'status': {
         const pending = await ds.showMigrations();
         console.log(`status: database reachable; pending migrations: ${pending ? 'yes' : 'no'}`);
+        return 0;
+      }
+      case 'retention': {
+        const svc = new RetentionService(ds, config, new AuditService(ds));
+        const d = await svc.describe();
+        if (d.months === null) {
+          console.log('retention: switched off (EPI_RETENTION_MONTHS=off)');
+          return 0;
+        }
+        const label = (k: string) => d.categories.find((c) => c.key === k)?.label ?? k;
+        if (args['dry-run'] === true) {
+          console.log(`retention (dry run): ${d.months} months, cutoff ${d.cutoff}`);
+          for (const [k, n] of Object.entries(d.due ?? {}))
+            console.log(`  ${String(n).padStart(6)}  ${label(k)}`);
+          return 0;
+        }
+        const r = await svc.run(null);
+        console.log(`retention: ${d.months} months, cutoff ${r.cutoff}; deleted:`);
+        for (const [k, n] of Object.entries(r.counts))
+          console.log(`  ${String(n).padStart(6)}  ${label(k)}`);
         return 0;
       }
       case 'jira-add': {
