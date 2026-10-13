@@ -13,6 +13,8 @@
   --text-tertiary: #6f7682;
   --separator: rgb(20 24 31 / 9%);
   --field-border: rgb(20 24 31 / 18%);
+  /* Inputs carry no label inside them: their edge must reach 3:1 (WCAG 1.4.11). */
+  --input-border: rgb(20 24 31 / 50%);
   --accent: #0a63d6;
   --accent-hover: #0855b8;
   --on-accent: #ffffff;
@@ -78,6 +80,7 @@
     --text-tertiary: #8b919b;
     --separator: rgb(255 255 255 / 10%);
     --field-border: rgb(255 255 255 / 18%);
+    --input-border: rgb(255 255 255 / 36%);
     --accent: #4d9bff;
     --accent-hover: #73b0ff;
     --on-accent: #06101f;
@@ -946,7 +949,7 @@ textarea {
   line-height: 1.4;
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--field-border);
+  border: 1px solid var(--input-border);
   border-radius: var(--r-control);
   min-height: var(--control-h);
   padding: 0 var(--s-3);
@@ -1094,6 +1097,7 @@ input[type='radio'] {
   list-style: none;
 }
 .flash {
+  scroll-margin-block: 96px;
   border-radius: var(--r-control);
   padding: var(--s-2) var(--s-3);
   margin: var(--s-2) 0 var(--s-3);
@@ -1398,6 +1402,45 @@ textarea[aria-invalid='true'] {
 .table td:first-child {
   padding-inline-start: 0;
 }
+/* Phones: each row becomes a short labelled list, so the overview never scrolls sideways. */
+@media (max-width: 599px) {
+  .table-stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .table-stack,
+  .table-stack tbody,
+  .table-stack tr,
+  .table-stack th,
+  .table-stack td {
+    display: block;
+  }
+  .table-stack tr {
+    padding: var(--s-3) 0;
+    border-bottom: 1px solid var(--separator);
+  }
+  .table-stack tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .table-stack th,
+  .table-stack td {
+    border: 0;
+    padding: var(--s-1) 0;
+  }
+  .table-stack td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--s-4);
+    font-size: var(--text-footnote);
+  }
+  .table-stack td[data-label]::before {
+    content: attr(data-label);
+    color: var(--text-secondary);
+  }
+}
 
 /* ---------- Facts / definitions ---------- */
 .facts {
@@ -1537,6 +1580,7 @@ textarea[aria-invalid='true'] {
 }
 .evidence {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Sign-in ---------- */

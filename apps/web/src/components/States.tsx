@@ -40,7 +40,9 @@ export function ErrorState({ error, onRetry }: { error: Error; onRetry?: () => v
       <h2>{t('errorTitle')}</h2>
       <p>{error.message}</p>
       {error instanceof ApiError && error.correlationId && (
-        <p className="muted">Reference: {error.correlationId}</p>
+        <p className="muted">
+          Reference: <code translate="no">{error.correlationId}</code>
+        </p>
       )}
       {onRetry && (
         <button type="button" className="btn" onClick={onRetry}>

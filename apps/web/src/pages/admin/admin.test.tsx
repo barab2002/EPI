@@ -115,7 +115,7 @@ describe('DataQualityTab', () => {
         <DataQualityTab />
       </MemoryRouter>,
     );
-    expect(await screen.findByText('Stale (> 26 h)')).toBeInTheDocument();
+    expect(await screen.findByText('Stale: last sync over 26 h ago')).toBeInTheDocument();
     expect(screen.getByText('Last run failed: HTTP 401')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getAllByText('N/A')).toHaveLength(2);

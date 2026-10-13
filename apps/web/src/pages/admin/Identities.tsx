@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, PersonOption, SourceAccount } from '../../api';
-import { Empty, ErrorState, Loading } from '../../components/States';
+import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { Flash, FlashMessage } from './shared';
 import { formatTime } from './Admin';
@@ -74,8 +74,11 @@ export function IdentitiesTab() {
     `/api/v1/admin/accounts?status=${status}${source ? `&source=${source}` : ''}`,
   );
   const [message, setMessage] = useState<Flash>(null);
+  const busy = useRef(false);
 
   async function map(a: SourceAccount, p: PersonOption) {
+    if (busy.current) return; // one mapping at a time: no double PUT from a double click
+    busy.current = true;
     setMessage(null);
     try {
       const r = await api.put<{ reattributed: number }>(
@@ -89,6 +92,8 @@ export function IdentitiesTab() {
       accounts.reload();
     } catch (e) {
       setMessage({ kind: 'error', text: (e as Error).message });
+    } finally {
+      busy.current = false;
     }
   }
 
@@ -143,7 +148,7 @@ export function IdentitiesTab() {
         </label>
       </div>
       <FlashMessage flash={message} />
-      {accounts.state === 'loading' && <Loading />}
+      {accounts.state === 'loading' && <Skeleton lines={4} />}
       {accounts.state === 'error' && (
         <ErrorState error={accounts.error} onRetry={accounts.reload} />
       )}
@@ -161,7 +166,9 @@ export function IdentitiesTab() {
               <tr>
                 <th scope="col">Account</th>
                 <th scope="col">Source</th>
-                <th scope="col">Activity</th>
+                <th scope="col" className="num">
+                  Activity
+                </th>
                 <th scope="col">Last seen</th>
                 <th scope="col">{status === 'unmapped' ? 'Map to person' : 'Mapped to'}</th>
               </tr>
@@ -172,11 +179,11 @@ export function IdentitiesTab() {
                   <td>
                     <strong>{a.display_name ?? '—'}</strong>
                     <div className="muted small">
-                      <code>{a.external_id}</code>
+                      <code translate="no">{a.external_id}</code>
                     </div>
                   </td>
                   <td>{a.source === 'jira' ? 'Jira' : 'GitLab'}</td>
-                  <td>{a.activity}</td>
+                  <td className="num">{a.activity}</td>
                   <td>{formatTime(a.last_seen_at)}</td>
                   <td>
                     {a.user_id ? (

@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { api, GroupNode, Membership, OrgNode, PersonOption, TeamNode } from '../../api';
-import { ErrorState, Loading } from '../../components/States';
+import { ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import {
   dateToIso,
@@ -22,11 +22,17 @@ function InlineName({
   onSave: (name: string) => Promise<void>;
 }) {
   const [value, setValue] = useState('');
+  const [busy, setBusy] = useState(false);
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!value.trim()) return;
-    await onSave(value.trim());
-    setValue('');
+    if (!value.trim() || busy) return;
+    setBusy(true);
+    try {
+      await onSave(value.trim());
+      setValue('');
+    } finally {
+      setBusy(false);
+    }
   }
   return (
     <form className="inline-form" onSubmit={submit}>
@@ -40,7 +46,7 @@ function InlineName({
           autoComplete="off"
         />
       </label>
-      <button type="submit" className="btn" disabled={!value.trim()}>
+      <button type="submit" className="btn" disabled={busy || !value.trim()}>
         {action}
       </button>
     </form>
@@ -122,7 +128,7 @@ function TeamMembers({
           Deactivate team
         </button>
       </div>
-      {members.state === 'loading' && <Loading />}
+      {members.state === 'loading' && <Skeleton lines={4} />}
       {members.state === 'error' && <ErrorState error={members.error} onRetry={members.reload} />}
       {members.state === 'ready' && (
         <div className="table-wrap">
@@ -184,7 +190,7 @@ function TeamMembers({
           </ul>
         </details>
       )}
-      <h4>Add a member</h4>
+      <h3>Add a member</h3>
       {person ? (
         <form
           className="inline-form"
@@ -225,7 +231,7 @@ function TeamMembers({
             />{' '}
             Transfer (end their other team memberships)
           </label>
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" disabled={run.pending} className="btn btn-primary">
             Add
           </button>
           <button type="button" className="btn" onClick={() => setPerson(null)}>
@@ -245,7 +251,7 @@ export function OrganizationTab() {
   const [flash, setFlash] = useState<Flash>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const run = useMutation(setFlash);
-  if (tree.state === 'loading') return <Loading />;
+  if (tree.state === 'loading') return <Skeleton lines={4} />;
   if (tree.state === 'error') return <ErrorState error={tree.error} onRetry={tree.reload} />;
   const groups = tree.data.flatMap((o) => o.groups);
   const team = groups.flatMap((g) => g.teams).find((t) => t.id === selected);
@@ -317,7 +323,9 @@ export function OrganizationTab() {
                           {t.name}
                         </button>
                         {t.memberCount !== null && (
-                          <span className="muted small">{t.memberCount} members</span>
+                          <span className="muted small">
+                            {t.memberCount} {t.memberCount === 1 ? 'member' : 'members'}
+                          </span>
                         )}
                       </li>
                     ))}

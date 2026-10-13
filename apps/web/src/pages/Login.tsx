@@ -55,17 +55,18 @@ export function Login({
   const loginError = loginErrorMessage(window.location.search);
   const returnTo = window.location.pathname === '/' ? '/' : window.location.pathname;
   const [error, setError] = useState<Error | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [signingIn, setSigningIn] = useState<string | null>(null);
+  const busy = signingIn !== null;
 
   async function signIn(id: string) {
-    setBusy(true);
+    setSigningIn(id);
     setError(null);
     try {
       await api.post('/api/v1/auth/demo-login', { userId: id });
       onSignedIn();
     } catch (e) {
       setError(e as Error);
-      setBusy(false);
+      setSigningIn(null);
     }
   }
 
@@ -126,10 +127,15 @@ export function Login({
                             type="button"
                             className="user-btn"
                             disabled={busy}
+                            aria-busy={signingIn === u.id}
                             onClick={() => signIn(u.id)}
                           >
                             <span>{u.display_name}</span>
-                            {u.team && <span className="muted small">{u.team}</span>}
+                            {signingIn === u.id ? (
+                              <span className="muted small">{t('signingIn')}</span>
+                            ) : (
+                              u.team && <span className="muted small">{u.team}</span>
+                            )}
                           </button>
                         </li>
                       ))}

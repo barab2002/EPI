@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { api, OrgNode, PersonDetail, PersonOption } from '../../api';
-import { ErrorState, Loading } from '../../components/States';
+import { ErrorState, Skeleton } from '../../components/States';
 import { useSession } from '../../session';
 import { useApi } from '../../useApi';
 import {
@@ -56,7 +56,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
     onChanged();
   };
 
-  if (person.state === 'loading') return <Loading />;
+  if (person.state === 'loading') return <Skeleton lines={4} />;
   if (person.state === 'error') return <ErrorState error={person.error} onRetry={person.reload} />;
   const p = person.data;
   const isSelf = p.id === me.user.id;
@@ -104,7 +104,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
             spellCheck={false}
           />
         </label>
-        <button type="submit" className="btn">
+        <button type="submit" disabled={run.pending} className="btn">
           Save details
         </button>
         {!isSelf && (
@@ -267,7 +267,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
               </select>
             </label>
           )}
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" disabled={run.pending} className="btn btn-primary">
             Assign role
           </button>
         </form>
@@ -322,7 +322,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
             required
           />
         </label>
-        <button type="submit" className="btn">
+        <button type="submit" disabled={run.pending} className="btn">
           Set grade
         </button>
       </form>
@@ -384,7 +384,7 @@ export function PeopleTab() {
                 spellCheck={false}
               />
             </label>
-            <button type="submit" className="btn">
+            <button type="submit" disabled={run.pending} className="btn">
               Add person
             </button>
           </form>

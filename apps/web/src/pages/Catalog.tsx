@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { KpiCard } from '../api';
 import { KpiDrawer } from '../components/KpiDrawer';
 import { Breadcrumb, PageTitle } from '../components/Layout';
-import { ErrorState, Loading } from '../components/States';
+import { ErrorState, Skeleton } from '../components/States';
 import { t } from '../i18n';
 import { useApi } from '../useApi';
 
@@ -49,7 +49,7 @@ export function CatalogPage() {
       <Breadcrumb items={[{ label: t('navCatalog') }]} />
       <PageTitle>{t('navCatalog')}</PageTitle>
       <p className="muted">{t('kpiDisclaimer')}</p>
-      {list.state === 'loading' && <Loading />}
+      {list.state === 'loading' && <Skeleton lines={4} />}
       {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
       {list.state === 'ready' && (
         <section className="panel" aria-label={t('navCatalog')}>

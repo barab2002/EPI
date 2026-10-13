@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, AuditEvent, AuditPage, PersonOption } from '../../api';
-import { Empty, ErrorState, Loading } from '../../components/States';
+import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 import { PersonSearch } from './shared';
@@ -176,7 +176,7 @@ export function AuditTab() {
         </label>
       </div>
       {error && <ErrorState error={error} onRetry={() => setTick((n) => n + 1)} />}
-      {!error && items === null && <Loading />}
+      {!error && items === null && <Skeleton lines={4} />}
       {items !== null && items.length === 0 && <Empty>No audit events match these filters.</Empty>}
       {items !== null && items.length > 0 && (
         <>
@@ -201,7 +201,9 @@ export function AuditTab() {
                     <td>
                       {actionLabel(e.action)}
                       <div>
-                        <code className="nowrap small">{e.action}</code>
+                        <code className="nowrap small" translate="no">
+                          {e.action}
+                        </code>
                       </div>
                     </td>
                     <td>
@@ -210,7 +212,7 @@ export function AuditTab() {
                       )}
                     </td>
                     <td className="small">
-                      <ul className="detail-list">
+                      <ul className="detail-list" translate="no">
                         {details(e.metadata).map((d) => (
                           <li key={d}>{d}</li>
                         ))}

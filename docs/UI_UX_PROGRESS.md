@@ -18,4 +18,6 @@
 - **Slice 4 done:** assessment form per Web Interface Guidelines (enabled actions, inline errors + focus, `aria-invalid`, submit note, unsaved-changes warning), draft prefill (fixes overwrite bug UX-038), per-cycle form visibility via `/reviews/due` (fixes UX-039), lasting confirmation, reviews page title/skeleton/section, no boxed empty states inside sections.
 - **Slice 4 merged:** PR #20.
 - **Slice 5 done:** administration per Web Interface Guidelines: stacked caption labels, People split into find/add groups, danger styling + confirmation for destructive actions, readable audit actions, one flash component, no middle dots left, org tree alignment, history lists; SSO sign-in button overflow at 320 px fixed (UX-045…052). Capture spec now covers every admin tab.
-- **Next:** Slice 6 — full audit (Vercel guidelines + Impeccable), contrast table, UX-037 stacked phone table, UX-032 decision, refresh screenshots, close issues.
+- **Slice 5 merged:** PR #21.
+- **Slice 6 done:** Web Interface Guidelines audit of every page (sub-agent) → UX-053…064 (9 fixed incl. two real date bugs and double-submit protection, 3 low items open); contrast check in CI (ADR-029) fixed input borders; stacked team overview on phones (UX-037); disclaimer decision (ADR-028); committed screenshot spec and refreshed `docs/SCREENSHOTS.md`.
+- **UX-01 status:** complete for the pilot. Open low items: UX-062…064.

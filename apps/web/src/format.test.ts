@@ -1,4 +1,4 @@
-import { formatPct, formatValue, roleLabel, valueParts } from './format';
+import { formatMonth, formatPct, formatValue, roleLabel, valueParts } from './format';
 
 describe('formatValue', () => {
   it('renders missing values as N/A, never as zero', () => {
@@ -37,5 +37,12 @@ describe('roleLabel', () => {
     expect(roleLabel(['TEAM_LEAD', 'ADMIN'])).toBe('Administrator, Team lead');
     expect(roleLabel(['DEVELOPER'])).toBe('Developer');
     expect(roleLabel([])).toBe('Developer');
+  });
+});
+
+describe('formatMonth', () => {
+  it('formats a DATE sent as UTC midnight in UTC, so no time zone shifts it a month back', () => {
+    expect(formatMonth('2026-10-01T00:00:00.000Z')).toBe('October 2026');
+    expect(formatMonth(null)).toBe('No data yet');
   });
 });

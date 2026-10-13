@@ -3,7 +3,7 @@ import type { Assessment } from '../api';
 import { KpiPanel } from '../components/KpiPanel';
 import { Breadcrumb, Crumb, PageTitle } from '../components/Layout';
 import { Empty, ErrorState, Skeleton } from '../components/States';
-import { formatDate } from '../format';
+import { formatDate, formatMonth } from '../format';
 import { t } from '../i18n';
 import { useSession } from '../session';
 import { useApi } from '../useApi';
@@ -46,7 +46,7 @@ export function AssessmentList({
           <div className="assessment-head">
             {showSubject && <strong>{a.subject_name}</strong>}
             <span className="muted small">
-              {formatDate(a.period_start)}, {t('by')} {a.reviewer_name}
+              {formatMonth(a.period_start)}, {t('by')} {a.reviewer_name}
             </span>
             <span className={`badge ${a.status === 'submitted' ? 'badge-managed' : 'badge-warn'}`}>
               {a.status === 'submitted' ? t('submittedStatus') : t('draft')}

@@ -77,17 +77,19 @@ existing copy and Hebrew). No ALL-CAPS labels, no eyebrows.
 | `--chrome` | `#f9fafb` | `#131416` | sidebar / top bar layer |
 | `--text` | `#15171a` | `#f2f3f5` | primary text |
 | `--text-secondary` | `#5a616c` | `#a3a9b3` | secondary text (≥4.5:1 on surface) |
-| `--text-tertiary` | `#79808b` | `#7f8690` | captions only (≥4.5:1 on surface light) |
+| `--text-tertiary` | `#6f7682` | `#8b919b` | captions only (≥4.5:1 on surface) |
 | `--separator` | `rgb(20 24 31 / 9%)` | `rgb(255 255 255 / 10%)` | hairlines |
+| `--field-border` | `rgb(20 24 31 / 18%)` | `rgb(255 255 255 / 18%)` | button edges (text identifies them) |
+| `--input-border` | `rgb(20 24 31 / 50%)` | `rgb(255 255 255 / 36%)` | input/select/textarea edges (≥3:1, WCAG 1.4.11) |
 | `--accent` | `#0a63d6` | `#4d9bff` | links, primary action, selection, focus |
 | `--accent-soft` | `rgb(10 99 214 / 9%)` | `rgb(77 155 255 / 16%)` | selected rows, secondary buttons |
-| `--positive` | `#17784a` | `#4fcf8a` | "Improved", success |
+| `--positive` | `#126a3f` | `#4fcf8a` | "Improved", success |
 | `--caution` | `#8a5a00` | `#f2c25b` | warnings, low confidence |
 | `--critical` | `#bf2a1f` | `#ff8378` | "Needs attention", errors, destructive |
 | `--notice-bg` / `--notice-text` | `#fff5d9` / `#5c4300` | `#2e2610` / `#f6d98a` | demo banner, inline notices |
 
 Restrained: accent only for actions, current selection, links and focus. Status colors only for
-status. Contrast: body and secondary text ≥4.5:1, large text ≥3:1 (checked in `docs/UI_UX_TESTS.md`).
+status. Contrast: body and secondary text ≥4.5:1, input edges ≥3:1 — enforced in CI by `scripts/check-contrast.mjs` (table in `docs/UI_UX_TESTS.md`).
 
 ### Space, radius, elevation, motion
 
@@ -138,7 +140,7 @@ loading and error states.
 | **Segmented control** | Sunken track, raised surface thumb with small shadow, 13/500 labels, `role=group` + `aria-pressed`. |
 | **Section** | `.section`: surface, radius 12, hairline border, padding 20/24; header row = headline title + actions. Not nestable. |
 | **KPI tile** | Name (headline) · value (`--text-metric`, tabular) · one-line status sentence (trend word coloured, rest secondary) · facts row (sample, confidence, data as of) as caption labels over footnote values · "How calculated?" plain link. Synthetic badge as caption pill. N/A: value "N/A" in secondary + reason. |
-| **Table** | Hairline rows, 44 px row height, header 13/600 secondary, numbers right-aligned tabular, wraps in `.table-wrap` (horizontal scroll inside section only). |
+| **Table** | Hairline rows, 44 px row height, header 13/600 secondary, numbers right-aligned tabular, wraps in `.table-wrap` (horizontal scroll inside section only). Overview tables use `.table-stack`: below 600 px each row becomes a labelled list (`data-label`). |
 | **Tabs (admin)** | Underline tabs, single row, horizontally scrollable on narrow screens. |
 | **Sheet (KPI drawer)** | Right side sheet ≥768 px (max 520 px), bottom sheet below; radius 16; `role=dialog`, focus trapped, Esc closes, icon close button with `aria-label`. Definition list with caption labels. |
 | **Badge** | Caption pill: neutral, accent (managed), caution, critical. |
