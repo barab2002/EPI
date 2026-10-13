@@ -65,6 +65,12 @@ echo "$check" | sed 's/^/    /'
 echo "$check" | grep -q '2 member(s)  Team-Payments' && echo "$check" | grep -q '1 member(s)  Team-Platform' ||
   { echo "FAIL: directory-check did not read the team groups" >&2; exit 1; }
 
+echo "==> First administrator with setup-admin (existing person, same e-mail as in the directory)"
+out=$(docker compose -p "$project" exec -T epi node dist/cli.js setup-admin --name "Gal Groupman" --email gal.groupman@example.invalid)
+echo "$out" | sed 's/^/    /'
+echo "$out" | grep -q 'existing person; administrator role granted' ||
+  { echo "FAIL: setup-admin did not grant the role" >&2; exit 1; }
+
 echo "==> Browser sign-in"
 cd "$ROOT"
 EPI_E2E_URL="http://127.0.0.1:$EPI_PORT" EPI_E2E_SSO_LDAP=1 LDAP_PW_TAYLOR="$LDAP_PW_TAYLOR" \

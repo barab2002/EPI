@@ -28,6 +28,8 @@ test('a team member signs in with their directory password and lands in EPI', as
 test('members of another pilot team group can sign in too', async ({ page }) => {
   await signIn(page, 'gal', pw.gal!);
   await expect(page.getByText('Gal Groupman').first()).toBeVisible();
+  // Made administrator with `setup-admin` by scripts/e2e-sso-ldap.sh before the browser run.
+  await expect(page.getByRole('link', { name: 'Administration' })).toBeVisible();
 });
 
 test('a wrong password is refused by the directory', async ({ page }) => {
