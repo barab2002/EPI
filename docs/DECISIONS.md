@@ -119,3 +119,11 @@ Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `depl
 - **Decision:** admins get `GET /api/v1/admin/audit-events` (filters: exact action or `prefix.`, actor, from/to; newest first; opaque keyset cursor on `(at, id)` with microsecond timestamps, so paging never skips or repeats events with equal times) and `GET /api/v1/admin/audit-actions`, shown as an "Audit log" tab. Spec §4.9 "Audit & Operations".
 - **Privacy:** audit metadata never holds review text or personal values (ADR-020). For `assessment.*` events the viewer additionally withholds the subject and resource ID — admins see who acted and when, never about whom (spec §5: administrators do not see private reviews).
 - **Read-only:** no edit/delete endpoint exists; the table stays append-only. Retention/export are later work (needs an owner decision on retention period).
+
+## ADR-023 · 2026-10-13 · Accepted — Offline bundle: pinned images, docker save/load, checksums
+
+- **Pins:** node (build base), PostgreSQL and the demo Keycloak are pinned by multi-arch index digest in `deploy/images.lock`; `epi.sh`, the test scripts and `.gitlab-ci.yml` use the pins and `scripts/check-pins.sh` (CI) keeps them in sync. `scripts/pin-images.sh` refreshes them deliberately.
+- **Bundle:** one tar per CPU architecture with the EPI image, the pinned images re-tagged `epi-bundle/*` (platform-specific `docker save`), Compose files, `epi.sh`, docs, `THIRD_PARTY_LICENSES.md` and `SHA256SUMS`, plus a sidecar `.sha256`. No registry, Node or pnpm needed on the target.
+- **Install:** `offline-install` verifies the outer and inner checksums, loads images, checks each loaded image's identity (manifest or config digest recorded at bundle time) and writes `deploy/offline.env` so the installation only uses bundled images (`pull_policy: never`). It does not start services; the operator chooses demo or production.
+- **Why not a private registry or OCI layout tool:** `docker save/load` exists on every Docker host and needs no extra component (lean architecture). Signing (cosign/GPG) is planned once a tool is approved; until then the sidecar hash must come through a trusted channel.
+- **Licenses:** `scripts/license-report.mjs` (CI) fails on any production dependency license outside a reviewed permissive allowlist.

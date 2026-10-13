@@ -17,7 +17,7 @@ Dependency graph: `001 → 002 → {003, 006, 007}`; `003 → {004, 005}`; `{006
 | EPI-006 | P0 | Jira collector + mapping | 2.5 | Done against fake Jira DC; real reconciliation needs B1–B3 | Pagination, cursor, 48h overlap, idempotent upserts, retries; failed sync doesn't advance cursor. |
 | EPI-007 | P0 | GitLab collector + MR/review mapping | 2.0 | Done against fake GitLab; real reconciliation needs B4–B6 | Same as 006; bots/self comments excluded; MR↔issue regex links with confidence. |
 | EPI-008 | P0 | Identity mapping + data-quality view | 1.0 | Done (API + admin UI, tested with fake sources) | Coverage %, unmapped identities listed; manual mapping audited. |
-| EPI-012 | P0 | Offline bundle, install tests, security/UAT | 3.0 | Planned | `bundle` + egress-blocked install; backup/restore tested; SBOM; pinned digests. |
+| EPI-012 | P0 | Offline bundle, install tests, security/UAT | 3.0 | 012a done (pins, bundle, offline-install, no-egress test, license check); 012b SBOM/CVE needs C11; `upgrade` pending | `bundle` + egress-blocked install; backup/restore tested; SBOM; pinned digests. |
 | EPI-013..016 | P1 | Competencies, self-review, dev plans, more KPIs, calibration | 12 | Phase 2 | Per spec §3 Phase 2. |
 | OPS-01 | P2 | Hourly resume scheduler scripts (`--dry-run`, **not enabled**) | 0.5 | Done (not enabled) | Lock, skip-when-active, bounded retries, logs; enablement requires approval C10. |
 | OPS-02 | P1 | Scheduled daily sync (in-process, admin-set hour/time zone) | 1.0 | Done (ADR-021) | Once per local day incl. DST; one claim across processes; failures isolated, cursor safe; admin-only, validated, audited; off by default. |
