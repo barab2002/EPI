@@ -267,6 +267,21 @@ time,
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   min-height: calc(100vh - 34px);
+  /* The sticky sidebar is one screen tall; this paints its column down the whole page. */
+  background: linear-gradient(
+    to right,
+    var(--chrome) calc(var(--sidebar-w) - 1px),
+    var(--separator) calc(var(--sidebar-w) - 1px) var(--sidebar-w),
+    transparent var(--sidebar-w)
+  );
+}
+[dir='rtl'] .shell {
+  background: linear-gradient(
+    to left,
+    var(--chrome) calc(var(--sidebar-w) - 1px),
+    var(--separator) calc(var(--sidebar-w) - 1px) var(--sidebar-w),
+    transparent var(--sidebar-w)
+  );
 }
 .sidebar {
   background: var(--chrome);
@@ -392,9 +407,11 @@ time,
 
 /* Tablet and phone: compact top bar, scrollable nav, no sidebar. */
 @media (max-width: 1023px) {
-  .shell {
+  .shell,
+  [dir='rtl'] .shell {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
+    background: none;
   }
   .sidebar {
     position: sticky;
@@ -530,13 +547,6 @@ time,
     padding: var(--s-4);
     border-radius: var(--r-control);
   }
-  .kpi-grid {
-    margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
-    border-radius: 0 0 var(--r-control) var(--r-control);
-  }
-  .kpi-card {
-    padding: var(--s-4);
-  }
 }
 /* Catalog: one definition per row inside a section. */
 .catalog {
@@ -582,6 +592,33 @@ time,
 }
 .page-title h1 {
   margin: 0;
+}
+.page-title:has(+ .page-lead) {
+  margin-bottom: var(--s-1);
+}
+.page-lead {
+  margin: 0 0 var(--s-6);
+  font-size: var(--text-body);
+}
+.due-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.due-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--s-4);
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 1px solid var(--separator);
+}
+.due-list li:last-child {
+  border-bottom: 0;
+}
+.due-list a {
+  font-weight: 500;
+  padding-block: var(--s-2);
 }
 @media (max-width: 599px) {
   .page-title {
@@ -708,6 +745,16 @@ time,
   margin: 0;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+/* Phone: the strip spans the narrower section padding (after the base rules above). */
+@media (max-width: 599px) {
+  .kpi-grid {
+    margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
+    border-radius: 0 0 var(--r-control) var(--r-control);
+  }
+  .kpi-card {
+    padding: var(--s-4);
+  }
 }
 .metric-label {
   margin: 0;
@@ -1374,7 +1421,33 @@ input[type='radio'] {
   width: min(680px, 100%);
 }
 .login-card h1 {
-  margin-bottom: var(--s-3);
+  margin: var(--s-6) 0 var(--s-2);
+}
+.login-brand {
+  display: flex;
+  gap: var(--s-3);
+  align-items: center;
+}
+.login-purpose {
+  margin-bottom: var(--s-6);
+}
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--text-secondary);
+  font-size: var(--text-footnote);
+  margin: var(--s-6) 0 var(--s-4);
+}
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--separator);
+}
+.login-hint {
+  margin: calc(-1 * var(--s-1)) 0 var(--s-2);
 }
 .login-group h2 {
   font-size: var(--text-footnote);

@@ -19,7 +19,7 @@ visible inconsistency or friction · **Low** polish. Close an issue only with ev
 | UX-010 | Medium | mobile header | Brand + nav + user block take ~190 px before content. | `03-team--mobile.png` | §4 compact top bar | Fixed (slice 1) — compact top bar |
 | UX-011 | Low | segmented control | Full blue fill on the active period is loud for a frequent, low-stakes control. | captures | §5 Segmented control | Fixed (slice 1) |
 | UX-012 | Low | KPI drawer | Weak label/value hierarchy; text "Close" button; formula code wraps mid-token; no bottom sheet on mobile. | `04-kpi-drawer--*.png` | §5 Sheet | Fixed (slice 1) — icon close, side/bottom sheet, focus trap + return |
-| UX-013 | Low | login | Long undifferentiated grid; no product identity; sign-in purpose unclear. | `01-login--desktop.png` | Slice 3 | Open |
+| UX-013 | Low | login | Long undifferentiated grid; no product identity; sign-in purpose unclear. | `01-login--desktop.png` | Slice 3 | Fixed (slice 3) — brand + purpose line, SSO primary with divider, role hints per demo group |
 | UX-014 | Low | copy | "…" written as "..." in placeholders ("Find a person..."); middle-dot meta strings ("Platform · 7 members"); "→" suffix on links (generic tells per frontend-design). | code grep | §6 Copy | Open |
 | UX-015 | Low | brand | Generic "E" square mark; tagline wraps in sidebar. | captures | §5 | Fixed (slice 1) — authored mark, brand links home |
 
@@ -53,3 +53,13 @@ probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence sk
 | UX-030 | Low | Middle dots / arrow in UI copy (B) | Fixed on these pages and the rubric; admin run summaries remain (slice 5) |
 | UX-031 | Low | Duplicate h2 "Monthly assessments"/"Monthly assessment" (B) | Fixed — form title "Write this month’s assessment" |
 | UX-032 | Low | KPI disclaimer repeated per panel (A) | Open — kept (ethics copy); revisit with owner |
+
+## Slice 3 (home + sign-in)
+
+| ID | Sev | Issue | Status |
+|---|---|---|---|
+| UX-033 | High | Home did not lead with the manager's main monthly action (assessments) | Fixed — "Assessments to write for <month>" from new scoped `GET /reviews/due` (alphabetical to-do, drafts marked) |
+| UX-034 | Medium | Managed teams shown as tiles without status | Fixed — shared `TeamOverview` table (same as group page) |
+| UX-035 | Medium | Desktop sidebar background ended after one screen on long pages | Fixed — column painted on `.shell` (RTL aware) |
+| UX-036 | Medium | Phone KPI strip overflowed its section (mobile rule overridden by later base rule) | Fixed — mobile override placed after base rules |
+| UX-037 | Low | Team overview table scrolls horizontally on phones | Open — acceptable (scrolls inside its section); revisit with a stacked mobile layout in slice 6 |

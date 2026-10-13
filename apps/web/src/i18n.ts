@@ -19,6 +19,8 @@ const en = {
   notFoundBody: 'This item does not exist or is outside your access.',
   sessionExpired: 'Your session has ended. Please sign in again.',
   loginTitle: 'Sign in to EPI',
+  loginPurpose:
+    'See how work flows across your teams, with every number explained, and keep monthly assessments in one place.',
   loginDemoHint: 'Choose a synthetic person to explore what each role can see.',
   loginNoMethod:
     'No sign-in method is configured. Ask your administrator to configure single sign-on.',
@@ -52,6 +54,13 @@ const en = {
   teams: 'Teams',
   team: 'Team',
   history: 'History',
+  assessmentsDue: 'Assessments to write',
+  noOpenCycle: 'There is no open monthly review cycle right now.',
+  allAssessmentsDone: 'All assessments for this month are submitted.',
+  notStarted: 'Not started',
+  orgKpis: 'Organization KPIs',
+  openDataQuality: 'Check data quality',
+  openMyProfile: 'Open my profile and assessments',
   unit: 'Unit',
   direction: 'Direction',
   shownFor: 'Shown for',

@@ -46,6 +46,8 @@ test('team lead submits a monthly assessment; the developer sees it; a peer does
 }, info) => {
   test.skip(info.project.name !== 'desktop', 'mutating flow runs once');
   await signInAs(page, 'Rae Lead');
+  // Home leads with the month's assessments still to write (scoped to Rae's team).
+  await expect(page.getByRole('heading', { name: /^Assessments to write/ })).toBeVisible();
   await page
     .getByRole('link', { name: /^Mobile/ })
     .first()
