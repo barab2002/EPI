@@ -43,6 +43,14 @@ cp /path/to/corp-ca.pem .epi/sso/ldap-ca.pem
 ./epi.sh start         # PostgreSQL + Keycloak + EPI
 ```
 
+**First administrator** (an empty installation has no people, and sign-in never creates accounts):
+
+```bash
+docker compose exec epi node dist/cli.js setup-admin --name "Your Name" --email you@corp.example --org "Your Company"
+```
+
+It creates the organization and makes that person an administrator (an existing person with the same e-mail is reused; repeatable; audited as `admin.bootstrap`). Use the e-mail that AD holds for your account: you are linked on first sign-in. Then, in Administration: Organization (groups and teams) → Directory (map AD groups to teams, preview, apply) → People (roles).
+
 People must exist in EPI with the same e-mail as in AD (the AD team import below creates them); they are linked automatically on first sign-in (verified e-mail from the directory). Keycloak's admin console is for emergencies only (`admin`, password in `.epi/sso/kc_admin_password`). Keycloak imports the realm on its **first** start; to change the team groups later, edit the realm's "directory" provider in the admin console (an `sso-apply` command is planned).
 
 Security properties: read-only federation (`editMode READ_ONLY`), password reset/registration disabled, LDAPS enforced (plain LDAP refused unless explicitly allowed), the bind password stays in Keycloak's file vault (`${vault.ldapbind}`), disabled AD accounts excluded, brute-force protection on. Verified by `scripts/e2e-sso-ldap.sh` against a synthetic LDAPS directory: team members sign in with their directory password, wrong passwords and non-team users are refused, and the realm holds no stored credentials.

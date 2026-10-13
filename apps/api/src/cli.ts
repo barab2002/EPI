@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { loadConfig } from './config';
 import { createDataSource } from './db/data-source';
+import { setupAdmin } from './admin/setup-admin';
 import { AuditService } from './audit/audit.service';
 import { DirectoryClient } from './directory/directory.client';
 import { RetentionService } from './retention/retention.service';
@@ -24,7 +25,9 @@ const USAGE = `Usage: node dist/cli.js <command> [options]
   gitlab-check --name N           verify access: version, projects, recent merge requests
   gitlab-sync --name N [--full]   sync merge requests and review activity
   directory-check                 verify the read-only AD/LDAP account: team groups and member counts
-  retention [--dry-run]           delete data older than EPI_RETENTION_MONTHS now (normally daily)`;
+  retention [--dry-run]           delete data older than EPI_RETENTION_MONTHS now (normally daily)
+  setup-admin --name "Full Name" --email you@corp [--org "Organization"]
+                                  first setup: the organization and an administrator (same e-mail as in AD)`;
 
 function parseArgs(argv: string[]): Record<string, string | true> {
   const out: Record<string, string | true> = {};
@@ -58,6 +61,7 @@ const COMMANDS = [
   'gitlab-sync',
   'directory-check',
   'retention',
+  'setup-admin',
 ];
 
 async function main(cmd: string | undefined, rest: string[]): Promise<number> {
@@ -117,6 +121,24 @@ async function main(cmd: string | undefined, rest: string[]): Promise<number> {
         console.log(`retention: ${d.months} months, cutoff ${r.cutoff}; deleted:`);
         for (const [k, n] of Object.entries(r.counts))
           console.log(`  ${String(n).padStart(6)}  ${label(k)}`);
+        return 0;
+      }
+      case 'setup-admin': {
+        const r = await setupAdmin(ds, new AuditService(ds), {
+          name: required(args, 'name'),
+          email: required(args, 'email'),
+          organization: typeof args.org === 'string' ? args.org : undefined,
+        });
+        console.log(
+          [
+            `setup-admin: organization "${r.organization}"${r.organizationCreated ? ' created' : ''}`,
+            r.userCreated ? 'person created' : 'existing person',
+            r.roleGranted ? 'administrator role granted' : 'already an administrator',
+          ].join('; '),
+        );
+        console.log(
+          'Next: sign in with this AD account, then Administration › Organization (groups, teams) and › Directory.',
+        );
         return 0;
       }
       case 'jira-add': {

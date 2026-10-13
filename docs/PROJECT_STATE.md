@@ -4,6 +4,8 @@
 
 ## Working and verified (tests in `TEST_STATUS.md`)
 
+- **First setup (ADR-037):** `docker compose exec epi node dist/cli.js setup-admin --name … --email … --org …` creates the organization and the first administrator on an empty installation; administrators then build groups/teams in the UI (empty ones are listed for them).
+
 - **Source tokens and company CA (ADR-036):** `./epi.sh source-token EPI_JIRA_TOKEN` / `EPI_GITLAB_TOKEN` (hidden input) and `./epi.sh source-ca <pem>`; the running app, its scheduler, Settings › Test connection and the CLI read them from `.epi/sources` (read-only mount). Verified in the offline install test.
 
 - **One-command demo:** `./epi.sh demo` builds the image, starts PostgreSQL + EPI via Compose (localhost only), migrates, seeds labeled synthetic data, waits for `/health/ready`. `doctor`, `start/stop/status/logs`, `backup`, `restore` verified.

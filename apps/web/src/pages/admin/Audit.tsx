@@ -51,6 +51,7 @@ const ACTION_LABELS: Record<string, AdminKey> = {
   'directory.link': 'actDirectoryLink',
   'directory.import': 'actDirectoryImport',
   'retention.run': 'actRetentionRun',
+  'admin.bootstrap': 'actAdminBootstrap',
 };
 export const actionLabel = (a: string) => (ACTION_LABELS[a] ? ta(ACTION_LABELS[a]) : a);
 
