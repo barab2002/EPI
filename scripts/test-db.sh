@@ -7,7 +7,8 @@ set -euo pipefail
 if [ -n "${EPI_TEST_DATABASE_URL:-}" ]; then exec "$@"; fi
 command -v docker >/dev/null || { echo "test-db: docker not found and EPI_TEST_DATABASE_URL unset" >&2; exit 2; }
 docker info >/dev/null 2>&1 || { echo "test-db: docker daemon not reachable (start Docker or set EPI_TEST_DATABASE_URL)" >&2; exit 2; }
-image="${EPI_IMAGE_REGISTRY:-docker.io}/library/postgres:16-alpine"
+. "$(dirname "${BASH_SOURCE[0]}")/images.sh"
+image="$EPI_POSTGRES_IMAGE"
 name="epi-test-db-$$"
 pw="test-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
 docker run -d --rm --name "$name" -e POSTGRES_USER=epi_test -e POSTGRES_PASSWORD="$pw" \

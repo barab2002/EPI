@@ -41,6 +41,7 @@ Status legend: ✅ available · ⏳ requested · ❓ unknown · ⛔ blocked
 | C7 | Security owner: who may read private reviews; small-group suppression threshold (default 5) | Yes | Security/HR | — | RBAC policy | ❓ default 5 | Chat |
 | C8 | Data retention period and privacy sign-off for real employee data | Yes before real data | Privacy/HR | — | Compliance | ❓ | Written approval |
 | C9 | Pilot teams (spec: 2), languages (EN + HE?), grade ladder, review rubric confirmation | Yes | Sponsor | — | Product config | ❓ default: EN, Junior/Mid/Senior/Tech Lead | Chat |
+| C11 | Approval to use an SBOM/vulnerability scanner (e.g. Syft + Grype or Trivy, Apache-2.0) with an offline vulnerability DB | No (P1) | Security | Read-only scan of images | EPI-012b SBOM + CVE report | ❓ | Reply |
 | C10 | Approval to enable the hourly resume scheduler (implemented, **disabled**) | No | Owner | — | Unattended automation | ✅ approved 2026-10-12 (see ADR-014) | Reply |
 
 ## Open questions

@@ -34,4 +34,4 @@ Jira/GitLab (or synthetic seed) → `work_items`, `work_events`, `merge_requests
 
 ## Deployment
 
-`./epi.sh demo` → Docker Compose (`deploy/compose.yaml`): `postgres` + `epi` (api + web). Production/offline modes and Keycloak are added in EPI-003/EPI-012. See `docs/BACKLOG.md`.
+`./epi.sh demo` → Docker Compose (`deploy/compose.yaml`): `postgres` + `epi` (api + web). Third-party images are pinned by digest in `deploy/images.lock`. Air-gapped hosts: `./epi.sh bundle` → `./epi.sh offline-install` (`docs/OFFLINE_INSTALL.md`, ADR-023); the installation only uses bundled images (`pull_policy: never`). Keycloak: `deploy/compose.oidc.yaml` (production) or the demo overlay.

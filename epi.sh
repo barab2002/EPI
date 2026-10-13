@@ -3,6 +3,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Installed from an offline bundle: use only the bundled images (never pull).
+if [ -f "$ROOT/deploy/offline.env" ]; then set -a; . "$ROOT/deploy/offline.env"; set +a; fi
 STATE_DIR="$ROOT/.epi"                       # local runtime state (gitignored), mode 0700
 COMPOSE_FILE="$ROOT/deploy/compose.yaml"
 export EPI_IMAGE_REGISTRY="${EPI_IMAGE_REGISTRY:-docker.io}"
@@ -10,7 +12,10 @@ export EPI_IMAGE="${EPI_IMAGE:-epi:local}"
 export EPI_PORT="${EPI_PORT:-8080}"
 export EPI_BIND="${EPI_BIND:-127.0.0.1}"
 export EPI_DB_PASSWORD_PATH="$STATE_DIR/db_password"
+# Pinned third-party images (deploy/images.lock) → EPI_NODE_IMAGE, EPI_POSTGRES_IMAGE, EPI_KEYCLOAK_IMAGE.
+. "$ROOT/scripts/images.sh"
 
+WARNINGS=0 FAILURES=0
 if [ -t 1 ]; then G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; B=$'\e[1m'; N=$'\e[0m'; else G= Y= R= B= N=; fi
 pass() { printf '  %sPASS%s %s\n' "$G" "$N" "$*"; }
 warn() { printf '  %sWARN%s %s\n' "$Y" "$N" "$*"; WARNINGS=$((WARNINGS + 1)); }
@@ -20,6 +25,8 @@ info() { printf '%s==>%s %s\n' "$B" "$N" "$*"; }
 KC_DIR="$STATE_DIR/keycloak"
 demo_sso_enabled() { [ "${EPI_DEMO_SSO:-true}" != "false" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; }
 compose() {
+  # EPI_COMPOSE_EXTRA: optional extra Compose override file (site tweaks; used by the offline test).
+  set -- ${EPI_COMPOSE_EXTRA:+-f "$EPI_COMPOSE_EXTRA"} "$@"
   if [ -n "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; then
     docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.oidc.yaml" "$@"
   elif demo_sso_enabled && [ -f "$KC_DIR/epi-demo-realm.json" ]; then
@@ -40,14 +47,16 @@ Usage: ./epi.sh <command> [options]
   demo                Build if needed and start a demo with SYNTHETIC data on http://$EPI_BIND:$EPI_PORT
                       (includes a demo Keycloak on :${EPI_KC_PORT:-8081}; EPI_DEMO_SSO=false to skip)
   credentials         Show this install's demo sign-in users and passwords
-  start | stop        Start / stop the stack (data volume is kept)
+  start [--no-wait] | stop   Start / stop the stack (data volume is kept)
   status              Show containers and application health
   logs                Follow application logs
   test [--no-integration]   Run the CI checks (scripts/ci.sh)
   backup              Write a compressed database dump to ./backups/
   restore <file> [--yes]    Replace the database with a backup (destructive; asks first)
-  install | upgrade | offline-install | bundle
-                      Not implemented yet (backlog EPI-003 / EPI-012)
+  bundle [--no-keycloak]    Build an offline bundle in dist/ (EPI + pinned images, checksums)
+  offline-install <bundle.tar> [--dir DIR]
+                      Verify and install a bundle on a host without internet (no start)
+  install | upgrade   Not implemented yet (backlog EPI-012)
 
 Environment: EPI_IMAGE_REGISTRY (image mirror, default docker.io), EPI_PORT (8080),
 EPI_BIND (127.0.0.1 — binding to other interfaces requires approval).
@@ -101,16 +110,16 @@ cmd_doctor() {
   if [ "$EPI_BIND" != "127.0.0.1" ]; then warn "EPI_BIND=$EPI_BIND exposes EPI beyond localhost — requires approval and TLS"; fi
   if docker image inspect "$EPI_IMAGE" >/dev/null 2>&1; then pass "image $EPI_IMAGE present"; else warn "image $EPI_IMAGE not built yet — run ./epi.sh build"; fi
   if demo_sso_enabled; then
-    kc_image="${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}"
-    if docker image inspect "$kc_image" >/dev/null 2>&1; then pass "keycloak image present (demo SSO)"; else warn "keycloak image not present locally — will be pulled ($kc_image)"; fi
+    if docker image inspect "$EPI_KEYCLOAK_IMAGE" >/dev/null 2>&1; then pass "keycloak image present (demo SSO)"; else warn "keycloak image not present locally — will be pulled ($EPI_KEYCLOAK_IMAGE)"; fi
   fi
-  if docker image inspect "$EPI_IMAGE_REGISTRY/library/postgres:16-alpine" >/dev/null 2>&1; then pass "postgres image present"; else warn "postgres image not present locally — will be pulled from $EPI_IMAGE_REGISTRY"; fi
+  if docker image inspect "$EPI_POSTGRES_IMAGE" >/dev/null 2>&1; then pass "postgres image present"; else warn "postgres image not present locally — will be pulled ($EPI_POSTGRES_IMAGE)"; fi
   if command -v node >/dev/null && command -v pnpm >/dev/null; then pass "build tools: node $(node --version), pnpm $(pnpm --version)"; else warn "node/pnpm missing — needed only for ./epi.sh build"; fi
   printf '\nResult: %d failure(s), %d warning(s)\n' "$FAILURES" "$WARNINGS"
   [ "$FAILURES" -eq 0 ]
 }
 
 cmd_build() {
+  [ -z "${EPI_OFFLINE:-}" ] || die "this is an offline install: the image comes from the bundle (nothing to build)"
   command -v pnpm >/dev/null || die "pnpm is required to build (Node 22 + pnpm 10)"
   info "Installing dependencies (frozen lockfile)"
   (cd "$ROOT" && pnpm install --frozen-lockfile --prefer-offline)
@@ -122,7 +131,7 @@ cmd_build() {
   rm -rf "$ROOT/build/api/src" "$ROOT/build/api/test"
   cp -r "$ROOT/apps/web/dist" "$ROOT/build/web"
   info "Building image $EPI_IMAGE"
-  docker build -f "$ROOT/deploy/Dockerfile" --build-arg EPI_IMAGE_REGISTRY="$EPI_IMAGE_REGISTRY" -t "$EPI_IMAGE" "$ROOT"
+  docker build -f "$ROOT/deploy/Dockerfile" --build-arg EPI_NODE_IMAGE="$EPI_NODE_IMAGE" -t "$EPI_IMAGE" "$ROOT"
 }
 
 wait_healthy() {
@@ -134,13 +143,58 @@ wait_healthy() {
   return 1
 }
 
+# Demo realm generator runs with the host's node, or with node inside the EPI image (offline hosts).
+gen_demo_realm() {
+  mkdir -p "$KC_DIR" && chmod 700 "$KC_DIR"
+  if command -v node >/dev/null; then
+    node "$ROOT/scripts/kc-demo-realm.mjs" "$KC_DIR" "http://127.0.0.1:$EPI_PORT"
+  else
+    docker run --rm --network none --entrypoint node -u "$(id -u):$(id -g)" \
+      -v "$ROOT/scripts/kc-demo-realm.mjs:/realm.mjs:ro" -v "$KC_DIR:/out" \
+      "$EPI_IMAGE" /realm.mjs /out "http://127.0.0.1:$EPI_PORT"
+  fi
+}
+
+cmd_offline_install() {
+  local bundle="" dir="$PWD/epi"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --dir) dir="${2:?--dir needs a path}"; shift 2 ;;
+      *) bundle="$1"; shift ;;
+    esac
+  done
+  [ -n "$bundle" ] && [ -f "$bundle" ] || die "usage: ./epi.sh offline-install <epi-bundle-….tar> [--dir DIR]"
+  docker info >/dev/null 2>&1 || die "docker daemon not reachable — start Docker first (./epi.sh doctor)"
+  docker compose version >/dev/null 2>&1 || die "docker compose v2 plugin missing"
+  [ ! -e "$dir/epi.sh" ] || die "$dir already contains an installation (upgrade is not implemented yet)"
+  if [ -f "$bundle.sha256" ]; then
+    info "Verifying bundle checksum"
+    (cd "$(dirname "$bundle")" && sha256sum -c --quiet "$(basename "$bundle").sha256") || die "bundle checksum mismatch — copy it again"
+  else
+    warn "no $bundle.sha256 next to the bundle; checking the contents' checksums only"
+  fi
+  info "Extracting to $dir"
+  mkdir -p "$dir"
+  tar -xf "$bundle" -C "$dir" --strip-components=1 --no-same-owner
+  (cd "$dir" && sha256sum -c --quiet SHA256SUMS) || die "bundle contents are corrupt (SHA256SUMS mismatch)"
+  local tag file manifest_id config_id id
+  while IFS=$'\t' read -r tag file manifest_id config_id; do
+    info "Loading $tag"
+    docker load -q -i "$dir/$file" >/dev/null || die "docker load failed for $file"
+    id="$(docker image inspect --format '{{.Id}}' "$tag" 2>/dev/null)" || die "$tag missing after load"
+    [ "$id" = "$manifest_id" ] || [ "$id" = "$config_id" ] || die "$tag has unexpected identity $id"
+    rm -f "$dir/$file"
+  done <"$dir/images/manifest.tsv"
+  printf '\n%sEPI %s installed in %s%s (images loaded and verified; nothing was downloaded).\n' "$G" "$(sed -n 's/^EPI_VERSION=//p' "$dir/deploy/offline.env")" "$dir" "$N"
+  printf 'Next:\n  cd %s && ./epi.sh doctor\n  ./epi.sh demo    # synthetic demo\nProduction (your Keycloak): see docs/OFFLINE_INSTALL.md\n' "$dir"
+}
+
 cmd_demo() {
   cmd_doctor || die "doctor reported failures; fix them and retry"
   docker image inspect "$EPI_IMAGE" >/dev/null 2>&1 || cmd_build
   ensure_state
   if demo_sso_enabled; then
-    command -v node >/dev/null || die "node is required to generate the demo Keycloak realm (or set EPI_DEMO_SSO=false)"
-    node "$ROOT/scripts/kc-demo-realm.mjs" "$KC_DIR" "http://127.0.0.1:$EPI_PORT"
+    gen_demo_realm
   fi
   info "Starting demo stack (synthetic data)"
   EPI_MODE=demo compose up -d
@@ -201,7 +255,10 @@ case "${1:-help}" in
   doctor) cmd_doctor ;;
   build) cmd_build ;;
   demo) cmd_demo ;;
-  start) ensure_state; compose up -d; wait_healthy && echo "EPI is up on http://$EPI_BIND:$EPI_PORT" ;;
+  start)
+    ensure_state
+    if [ "${2:-}" = "--no-wait" ]; then compose up -d; exit 0; fi
+    compose up -d; wait_healthy && echo "EPI is up on http://$EPI_BIND:$EPI_PORT" ;;
   stop) compose stop ;;
   status) cmd_status ;;
   logs) compose logs -f epi ;;
@@ -213,8 +270,10 @@ case "${1:-help}" in
   restore) shift; cmd_restore "$@" ;;
   install) not_yet install "production config + Keycloak, backlog EPI-003/EPI-012" ;;
   upgrade) not_yet upgrade "backlog EPI-012" ;;
-  offline-install) not_yet offline-install "backlog EPI-012" ;;
-  bundle) not_yet bundle "backlog EPI-012" ;;
+  offline-install) shift; cmd_offline_install "$@" ;;
+  bundle)
+    [ -z "${EPI_OFFLINE:-}" ] || die "bundles are built from the source repository, not an installation"
+    shift; bash "$ROOT/scripts/bundle.sh" "$@" ;;
   help | -h | --help) usage ;;
   *) usage; exit 64 ;;
 esac

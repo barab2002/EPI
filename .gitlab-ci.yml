@@ -3,9 +3,9 @@
 stages: [check]
 check:
   stage: check
-  image: ${EPI_IMAGE_REGISTRY}/library/node:22-alpine
+  image: ${EPI_IMAGE_REGISTRY}/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 # pinned: deploy/images.lock
   services:
-    - name: ${EPI_IMAGE_REGISTRY}/library/postgres:16-alpine
+    - name: ${EPI_IMAGE_REGISTRY}/library/postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea # pinned: deploy/images.lock
       alias: postgres
   variables:
     POSTGRES_USER: epi_test

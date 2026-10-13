@@ -8,3 +8,4 @@
 - **2026-10-12** — EPI-003 Keycloak SSO: OIDC BFF with openid-client (PKCE/state/nonce, browser binding, no token storage, no auto-provisioning), production gating, IdP logout, compose overlay, doctor checks; tested against an ephemeral Keycloak (15 integration + browser E2E).
 - **2026-10-13** — Scheduled daily sync (ADR-021): `app_settings` table, pure DST-safe due logic, `SyncScheduler` with per-day DB claim, admin schedule API + Integrations card; unit, integration, web and browser E2E tests.
 - **2026-10-13** — Audit-log viewer (ADR-022): admin API with filters and keyset paging, assessment redaction, Audit log tab; integration, web and browser E2E tests.
+- **2026-10-13** — EPI-012a (ADR-023): images pinned by digest with CI check, license allowlist check, `bundle`/`offline-install` with checksum and image identity verification, offline install test on a no-egress network.

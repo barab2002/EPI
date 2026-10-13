@@ -1,7 +1,7 @@
 # Runtime image only. Artifacts are built on the host by `./epi.sh build` (pnpm deploy), so this
 # image build needs no network access beyond the pinned base image (offline-bundle friendly).
-ARG EPI_IMAGE_REGISTRY=docker.io
-FROM ${EPI_IMAGE_REGISTRY}/library/node:22-alpine
+ARG EPI_NODE_IMAGE=docker.io/library/node:22-alpine
+FROM ${EPI_NODE_IMAGE}
 ENV NODE_ENV=production \
     PORT=8080 \
     EPI_WEB_DIST=/app/web

@@ -2,7 +2,8 @@
 name: epi
 services:
   postgres:
-    image: ${EPI_IMAGE_REGISTRY:-docker.io}/library/postgres:16-alpine
+    image: ${EPI_POSTGRES_IMAGE:-docker.io/library/postgres:16-alpine}
+    pull_policy: ${EPI_PULL_POLICY:-missing}
     restart: unless-stopped
     environment:
       POSTGRES_USER: epi
@@ -22,6 +23,7 @@ services:
 
   epi:
     image: ${EPI_IMAGE:-epi:local}
+    pull_policy: never
     restart: unless-stopped
     depends_on:
       postgres:

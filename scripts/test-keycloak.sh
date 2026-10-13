@@ -7,7 +7,8 @@ set -euo pipefail
 [ "${1:-}" = "run" ] && shift; [ "${1:-}" = "--" ] && shift
 if [ -n "${EPI_TEST_KEYCLOAK_URL:-}" ]; then exec "$@"; fi
 docker info >/dev/null 2>&1 || { echo "test-keycloak: docker daemon not reachable" >&2; exit 2; }
-image="${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}"
+. "$(dirname "${BASH_SOURCE[0]}")/images.sh"
+image="$EPI_KEYCLOAK_IMAGE"
 name="epi-test-kc-$$"
 pw="kc-$(od -An -N12 -tx1 /dev/urandom | tr -d ' \n')"
 docker run -d --rm --name "$name" -p 127.0.0.1::8080 \
