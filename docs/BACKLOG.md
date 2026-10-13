@@ -22,3 +22,4 @@ Dependency graph: `001 → 002 → {003, 006, 007}`; `003 → {004, 005}`; `{006
 | OPS-01 | P2 | Hourly resume scheduler scripts (`--dry-run`, **not enabled**) | 0.5 | Done (not enabled) | Lock, skip-when-active, bounded retries, logs; enablement requires approval C10. |
 | OPS-02 | P1 | Scheduled daily sync (in-process, admin-set hour/time zone) | 1.0 | Done (ADR-021) | Once per local day incl. DST; one claim across processes; failures isolated, cursor safe; admin-only, validated, audited; off by default. |
 | OPS-03 | P1 | Audit-log viewer (admin, read-only) | 0.5 | Done (ADR-022) | Admin-only; filters action/actor/date; gap-free paging; no review text or subject; e2e + screenshot. |
+| EPI-003b | P0 | Production sign-in with AD (bundled Keycloak, LDAPS, read-only) | 2.5 | Done on synthetic directory (ADR-025); real AD in pilot install | Read-only federation, LDAPS + CA, vault bind password, only team-group members, no stored passwords; e2e sign-in/refusals. |

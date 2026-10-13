@@ -32,7 +32,7 @@ Status legend: ✅ available · ⏳ requested · ❓ unknown · ⛔ blocked
 
 | # | Requirement | Mandatory? | Owner | Least privilege | Why | Status | Secure handoff |
 |---|---|---|---|---|---|---|---|
-| C1 | Keycloak: dedicated test realm + client, or existing realm; issuer URL, redirect URIs, test users | Yes | IdP admin | Realm-admin on **test realm only** | Login | ✅ decided: EPI-bundled production Keycloak federated read-only to AD over LDAPS; owner obtains read-only bind account | Client secret in secret file |
+| C1 | Keycloak: dedicated test realm + client, or existing realm; issuer URL, redirect URIs, test users | Yes | IdP admin | Realm-admin on **test realm only** | Login | ✅ decided: bundled production Keycloak → AD over LDAPS (implemented, ADR-025). Owner/IT to provide at install: read-only bind DN + password file, LDAPS URL, CA PEM, users/groups OUs, team group DNs | Client secret in secret file |
 | C2 | Target host: OS, CPU/RAM/disk (proposed ≥4 vCPU, 8 GB, 50 GB), Docker Engine + Compose v2 | Yes | Infra | Non-root docker group | Install | ✅ internal Linux server with Docker + Compose available | Chat |
 | C3 | Internal DNS name, TLS certificate/ingress, allowed ports, firewall routes to Jira/GitLab/IdP | Yes | Infra/Network | Only required routes | HTTPS access | ❓ | Cert files on host |
 | C4 | Internal registry/mirror for images & npm (or connected build host for offline bundle) | Yes | Infra | Pull-only | Offline install | ✅ internal registry mirror for images; bundle built on owner's connected machine and copied as a file | Chat |

@@ -1,6 +1,6 @@
 # Project state — what actually works (2026-10-13)
 
-**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector (PR #4), screenshots (PR #6), EPI-007 GitLab collector, EPI-008 identity mapping & admin screens, EPI-004b organization admin, scheduled daily sync, audit-log viewer, offline bundle (EPI-012a). Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
+**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector (PR #4), screenshots (PR #6), EPI-007 GitLab collector, EPI-008 identity mapping & admin screens, EPI-004b organization admin, scheduled daily sync, audit-log viewer, offline bundle (EPI-012a), production sign-in with AD via bundled Keycloak (EPI-003b). Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
 
 ## Working and verified (tests in `TEST_STATUS.md`)
 
@@ -15,6 +15,7 @@
 - **Scheduled daily sync (ADR-021):** admin-set local hour + IANA time zone (off by default) on the Integrations tab / `GET|PUT /api/v1/admin/sync-schedule`; in-process minute timer runs all enabled Jira/GitLab connections sequentially, once per local day (DB claim — safe with several processes, DST-safe, same-day catch-up), failures isolated, audited; `EPI_SYNC_SCHEDULER=off` disables it.
 - **Audit-log viewer (ADR-022):** admin-only, read-only Audit log tab and API; filter by action group/exact action, person and dates; keyset paging; review subjects and text never shown.
 - **Offline installation (EPI-012a, ADR-023):** images pinned by digest; `./epi.sh bundle` and `./epi.sh offline-install` (checksums, image identity check, bundled images only); verified by `scripts/test-offline-install.sh` on a no-egress Docker network incl. refusal of corrupted/tampered bundles. Production dependency licenses checked in CI (216 packages, all permissive).
+- **Production sign-in with AD (EPI-003b, ADR-025):** `./epi.sh sso-setup` + `deploy/compose.sso.yaml` — Keycloak in production mode with its own database, read-only LDAPS federation limited to pilot team groups, bind password in Keycloak's file vault, customer CA trust. Verified end to end against a synthetic LDAPS directory (`scripts/e2e-sso-ldap.sh`); not yet against the real AD.
 - **Demo SSO:** bundled dev-mode Keycloak with generated per-install users (`./epi.sh credentials`).
 - **Auth & RBAC:** opaque server-side sessions (HttpOnly, SameSite=Lax, CSRF header for mutations); demo login only in demo mode. Scope resolution from EPI DB; out-of-scope = 404; small-group suppression (default 5) for aggregate-only viewers; admin sees structure but not KPIs/reviews.
 - **API:** `/health/*`, `/api/v1/me`, organization tree, groups/teams/developers, KPI cards + catalog + explanation, reviews (list, create/update/submit), demo auth. OpenAPI/Swagger at `/api/docs`.
@@ -23,7 +24,7 @@
 
 ## Not implemented yet / known limitations
 
-- No real Keycloak realm connected yet (needs C1); the demo bundles a dev-mode Keycloak (ADR-016).
+- Not yet run against the real AD (needs the owner's server, bind account and CA); `sso-apply` for realm changes after first start; Keycloak DB not in `./epi.sh backup`; TLS front end is the customer's.
 - No real Jira/GitLab connected (needs B1–B6); deleted-issue reconciliation; sprint data.
 - `install` and `upgrade` (EPI-012) — commands exit 2 with a message. Bundle signing; clean-VM offline test.
 - KPIs computed on request; `kpi_snapshots` not populated yet. Stratification by work type/complexity not shown in UI yet.
