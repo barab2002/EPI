@@ -2,6 +2,7 @@
 # Builds the offline installation bundle (EPI-012): one tarball with the EPI image, the pinned
 # PostgreSQL (and demo Keycloak) images, Compose files, epi.sh, licenses and checksums.
 #   ./epi.sh bundle [--no-keycloak]     → dist/epi-bundle-<version>-<arch>.tar (+ .sha256)
+# --no-keycloak only when an EXTERNAL Keycloak is used: AD sign-in (sso-setup) needs the bundled one.
 # Needs network only to pull pinned images not yet present; the target host needs none.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -52,7 +53,8 @@ done
 echo "==> Adding deployment files"
 cp "$ROOT/epi.sh" "$ROOT/LICENSE" "$ROOT/NOTICE" "$stage/"
 cp "$ROOT"/deploy/compose*.yaml "$ROOT/deploy/images.lock" "$stage/deploy/"
-cp "$ROOT/scripts/images.sh" "$ROOT/scripts/kc-demo-realm.mjs" "$stage/scripts/"
+cp "$ROOT/scripts/images.sh" "$ROOT/scripts/kc-demo-realm.mjs" "$ROOT/scripts/kc-prod-realm.mjs" "$stage/scripts/"
+cp "$ROOT/deploy/sso.conf.example" "$stage/deploy/"
 cp "$ROOT/docs/OFFLINE_INSTALL.md" "$ROOT/docs/KEYCLOAK.md" "$stage/docs/"
 node "$ROOT/scripts/license-report.mjs" --out "$stage/THIRD_PARTY_LICENSES.md" >/dev/null
 {

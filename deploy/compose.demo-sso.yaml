@@ -7,7 +7,7 @@ services:
     pull_policy: ${EPI_PULL_POLICY:-missing}
     command: ['start-dev', '--import-realm']
     restart: unless-stopped
-    env_file: [../.epi/keycloak/admin.env]
+    env_file: ['${EPI_STATE_DIR:-../.epi}/keycloak/admin.env']
     environment:
       KC_HOSTNAME: http://127.0.0.1:${EPI_KC_PORT:-8081}
       KC_HTTP_ENABLED: 'true'
@@ -15,7 +15,7 @@ services:
     volumes:
       # Volume at data/ (owned by the keycloak user in the image); realm file mounted inside it.
       - kc-data:/opt/keycloak/data
-      - ../.epi/keycloak/epi-demo-realm.json:/opt/keycloak/data/import/epi-demo-realm.json:ro
+      - ${EPI_STATE_DIR:-../.epi}/keycloak/epi-demo-realm.json:/opt/keycloak/data/import/epi-demo-realm.json:ro
     ports:
       - '${EPI_BIND:-127.0.0.1}:${EPI_KC_PORT:-8081}:8080'
     healthcheck:
@@ -49,7 +49,7 @@ services:
 
 secrets:
   oidc_client_secret:
-    file: ../.epi/keycloak/client_secret
+    file: ${EPI_STATE_DIR:-../.epi}/keycloak/client_secret
 
 volumes:
   kc-data:

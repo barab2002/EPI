@@ -13,6 +13,7 @@ step "format check";       pnpm run format:check
 step "lint";               pnpm run lint
 step "typecheck";          pnpm run typecheck
 step "unit tests";         pnpm --filter @epi/api run test:unit
+step "script tests";       node --test scripts/*.test.mjs
 if [ -d apps/web ] && [ -f apps/web/package.json ]; then
   step "web tests";        pnpm --filter @epi/web run test
 fi

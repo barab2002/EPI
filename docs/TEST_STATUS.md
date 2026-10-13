@@ -4,6 +4,9 @@ Environment: cloud dev container, Ubuntu 24.04, Node 22.22.0, pnpm 10.28.0, Dock
 
 | When (UTC) | Command | Result |
 |---|---|---|
+| 2026-10-13 04:35 | `bash scripts/e2e-sso-ldap.sh` ×3 | ✅ PASS (after 1 fix) — synthetic OpenLDAP over LDAPS (test CA) → Keycloak production mode (own DB, vault, truststore) → EPI: 4 browser tests (team member signs in with directory password; second team group; wrong password refused; non-team user refused); bind password not in realm file; realm `epi` has 2 directory-linked users and 0 stored credentials. First run's credential check counted the master-realm emergency admin — check scoped to realm `epi` |
+| 2026-10-13 04:30 | `./epi.sh demo` + `pnpm run e2e` (demo SSO user); `scripts/test-offline-install.sh` ×2 | ✅ 9 passed (13 skipped by design: specs needing their own scripts); offline install PASS incl. SSO files in the bundle |
+| 2026-10-13 04:05 | `node --test scripts/*.test.mjs` | ✅ 5/5 realm generator tests (AD nested-group filter, escaping, vault reference, unsafe config refused) |
 | 2026-10-13 03:55 | `bash scripts/ci.sh` (branch `feature/offline-bundle`) | ✅ ALL CHECKS PASSED — new steps `check-pins` (node/postgres/keycloak pinned) and `license-report` (216 production packages, all on the permissive allowlist); 142 unit, 31 web, 96 integration, build |
 | 2026-10-13 03:50 | `bash scripts/test-offline-install.sh` ×3 | ✅ PASS — bundle (184 MB, amd64, no Keycloak) → bundle image tags removed → `offline-install` (checksums, image identity) → stack healthy on an `internal: true` network, egress to a registry fails, 26 synthetic users seeded; corrupted bundle (sidecar mismatch) and tampered bundle (SHA256SUMS mismatch) refused. First run failed only because Docker Hub rate-limited the build (fixed by `EPI_IMAGE_REGISTRY=mirror.gcr.io`) |
 | 2026-10-13 03:58 | `./epi.sh demo` (pinned images, demo SSO) + `pnpm run e2e` with demo user `taylor` | ✅ 9 passed, 5 skipped by design |

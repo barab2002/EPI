@@ -17,7 +17,37 @@ EPI uses Keycloak **only for authentication**. Who can see what is decided by EP
 
 Keycloak admin console: `http://127.0.0.1:8081/admin`, user `admin`, password also in `./epi.sh credentials`. Open EPI at **http://127.0.0.1:8080** (if you open `localhost`, EPI switches to `127.0.0.1` before sign-in). Disable with `EPI_DEMO_SSO=false`. The demo Keycloak runs in dev mode with a file database: never use it for real users.
 
-## 1. Keycloak client (IdP admin)
+## A. Production: sign in with Active Directory (bundled Keycloak, recommended for the pilot)
+
+People use their **Windows/AD username and password**. EPI ships its own Keycloak (production mode, own database in EPI's PostgreSQL) that checks passwords against AD over **LDAPS, read-only**; Keycloak never stores AD passwords and cannot change anything in AD. Only members of the AD groups you list (the pilot **team groups**, nested groups included) can sign in. EPI still decides what each person may see.
+
+**What IT provides** (nothing of it goes into chat or Git):
+
+| Item | Where it goes |
+|---|---|
+| Read-only AD bind account (DN) | `EPI_LDAP_BIND_DN` in `.epi/sso.conf` |
+| Its password | file `.epi/sso/ldap_bind_password` (one line, created by root) |
+| LDAPS URL of a domain controller (`ldaps://dc1.corp…:636`) | `EPI_LDAP_URL` |
+| CA certificate that signed the DCs' LDAPS certificates (PEM) | file `.epi/sso/ldap-ca.pem` |
+| Users OU, groups OU, the team groups' DNs | `EPI_LDAP_USERS_DN`, `EPI_LDAP_GROUPS_DN`, `EPI_LDAP_TEAM_GROUPS` |
+| HTTPS names for EPI and the sign-in page (TLS front end) | `EPI_PUBLIC_URL`, `EPI_SSO_PUBLIC_URL` |
+
+**Steps on the EPI server:**
+
+```bash
+mkdir -p .epi/sso && chmod 700 .epi .epi/sso
+cp deploy/sso.conf.example .epi/sso.conf && vi .epi/sso.conf     # non-secret values
+sudo install -m 600 /dev/null .epi/sso/ldap_bind_password && sudo vi .epi/sso/ldap_bind_password
+cp /path/to/corp-ca.pem .epi/sso/ldap-ca.pem
+./epi.sh sso-setup     # validates inputs, generates the realm, Keycloak secrets
+./epi.sh start         # PostgreSQL + Keycloak + EPI
+```
+
+People must exist in EPI with the same e-mail as in AD (the AD import, EPI-004c, creates them); they are linked automatically on first sign-in (verified e-mail from the directory). Keycloak's admin console is for emergencies only (`admin`, password in `.epi/sso/kc_admin_password`). Keycloak imports the realm on its **first** start; to change the team groups later, edit the realm's "directory" provider in the admin console (an `sso-apply` command is planned).
+
+Security properties: read-only federation (`editMode READ_ONLY`), password reset/registration disabled, LDAPS enforced (plain LDAP refused unless explicitly allowed), the bind password stays in Keycloak's file vault (`${vault.ldapbind}`), disabled AD accounts excluded, brute-force protection on. Verified by `scripts/e2e-sso-ldap.sh` against a synthetic LDAPS directory: team members sign in with their directory password, wrong passwords and non-team users are refused, and the realm holds no stored credentials.
+
+## 1. Alternative: an existing Keycloak — client (IdP admin)
 
 In a dedicated realm (or the existing corporate realm, if approved), create a client:
 
