@@ -7,6 +7,8 @@ import { AdminPage } from './pages/admin/Admin';
 import { DataQualityTab } from './pages/admin/DataQuality';
 import { IdentitiesTab } from './pages/admin/Identities';
 import { IntegrationsTab } from './pages/admin/Integrations';
+import { OrganizationTab } from './pages/admin/Organization';
+import { PeopleTab } from './pages/admin/People';
 import { StatusesTab } from './pages/admin/Statuses';
 import { CatalogPage } from './pages/Catalog';
 import { DeveloperPage } from './pages/Developer';
@@ -90,6 +92,8 @@ export function App() {
             <Route path="kpis" element={<CatalogPage />} />
             <Route path="admin" element={<AdminPage />}>
               <Route index element={<Navigate to="/admin/data-quality" replace />} />
+              <Route path="organization" element={<OrganizationTab />} />
+              <Route path="people" element={<PeopleTab />} />
               <Route path="integrations" element={<IntegrationsTab />} />
               <Route path="identities" element={<IdentitiesTab />} />
               <Route path="statuses" element={<StatusesTab />} />
