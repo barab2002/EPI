@@ -14,6 +14,9 @@ die() { echo "bundle: $*" >&2; exit 1; }
 command -v node >/dev/null || die "node is required to build a bundle"
 version="$(node -p "require('$ROOT/apps/api/package.json').version")-$(git -C "$ROOT" rev-parse --short HEAD)"
 [ -z "$(git -C "$ROOT" status --porcelain)" ] || version="$version-dirty"
+# Test hooks (scripts/test-upgrade.sh only): a fixed version label, and an existing image instead of
+# a fresh build (to bundle a deliberately broken version for the rollback test).
+version="${EPI_BUNDLE_VERSION:-$version}"
 arch="$(docker version -f '{{.Server.Arch}}')"
 platform="linux/$arch"
 name="epi-bundle-$version-$arch"
@@ -21,9 +24,14 @@ work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 stage="$work/$name"
 mkdir -p "$stage/deploy" "$stage/scripts" "$stage/images" "$stage/docs"
 
-echo "==> Building EPI image (version $version)"
-EPI_IMAGE="epi:local" bash "$ROOT/epi.sh" build >/dev/null
-docker tag epi:local "epi-bundle/epi:$version"
+if [ -n "${EPI_BUNDLE_SOURCE_IMAGE:-}" ]; then
+  echo "==> Using image $EPI_BUNDLE_SOURCE_IMAGE (version $version)"
+  docker tag "$EPI_BUNDLE_SOURCE_IMAGE" "epi-bundle/epi:$version"
+else
+  echo "==> Building EPI image (version $version)"
+  EPI_IMAGE="epi:local" bash "$ROOT/epi.sh" build >/dev/null
+  docker tag epi:local "epi-bundle/epi:$version"
+fi
 
 # source ref → bundle tag
 refs=("epi-bundle/epi:$version=epi-bundle/epi:$version" "$EPI_POSTGRES_IMAGE=epi-bundle/postgres:16-alpine")

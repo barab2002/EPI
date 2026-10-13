@@ -48,7 +48,35 @@ read it over the phone or from a signed ticket). Cryptographic signing of bundle
   in front and approval.
 - Operations: `status`, `logs`, `stop`, `backup`, `restore` work as in any installation.
 
+## 4. Upgrade to a newer bundle
+
+Copy the new bundle (and its `.sha256`) to the host, then, in the installation directory with EPI
+running:
+
+```
+./epi.sh upgrade epi-bundle-<new-version>-amd64.tar
+```
+
+It verifies the bundle, refuses the installed version and older ones (downgrades are not supported:
+restore a backup instead), asks for confirmation (`--yes` skips it), then:
+
+1. backs up the database to `backups/` (and Keycloak's database when AD sign-in is set up);
+2. loads and verifies the new images;
+3. replaces the installation files (`epi.sh`, `deploy/`, `scripts/`, `docs/`), keeping `.epi/`
+   (settings, secrets) and `backups/`; the previous files stay in `.epi/upgrade/previous/`;
+4. starts the new version — database migrations run on start — and waits for the health check.
+
+If the new version does not become healthy, EPI **rolls back automatically**: previous files, the
+database restored from the backup taken in step 1, previous version started. The failed version's
+logs are kept in `.epi/upgrade/failed-version.log`. Plan the upgrade for a quiet moment: EPI is
+unavailable for about a minute, and data written between the backup and a rollback is lost.
+
 ## Verification
+
+`scripts/test-upgrade.sh` installs bundle v1, adds data, upgrades to v2 (data kept, new image),
+checks that the same version and an older bundle are refused, then upgrades to a deliberately
+broken v3 that changes the database and fails to start: EPI must roll back to v2 with the data
+from before the upgrade.
 
 `scripts/test-offline-install.sh` builds a bundle, removes the bundle's image tags, installs into
 a temporary directory and starts the stack on a Compose network marked `internal: true` (no route
@@ -58,5 +86,4 @@ a separate clean VM without network is still recommended before the pilot.
 
 ## Not yet
 
-`upgrade` (in-place version change with backup and migration check) and an SBOM/vulnerability
-report (needs an approved scanner) are planned (EPI-012b).
+An SBOM/vulnerability report (needs an approved scanner, EPI-012b) and bundle signing.

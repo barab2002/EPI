@@ -189,3 +189,12 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 - **Safety:** preview reads and plans without changing anything; apply re-reads the directory, re-plans inside one transaction under an advisory lock and runs only if the plan's SHA-256 equals the previewed one (else 409 "preview again"). Ambiguous people (two teams, shared e-mail, inactive in EPI, e-mail linked to another directory account) are skipped and listed. Every change is audited with `source: directory`; `directory.import` records the counts.
 - **Manual for the pilot:** no scheduled import yet (can reuse the daily-sync schedule later).
 - **Found while wiring:** `epi.sh` loaded `sso.conf` with `source`, which cut `EPI_LDAP_TEAM_GROUPS` at `;` and would fail on DNs with spaces (`OU=Service Accounts`). Replaced by a literal `KEY=value` reader that matches the realm generator (test: `scripts/epi-conf.test.mjs`).
+
+## ADR-031 · 2026-10-13 · Accepted — `./epi.sh upgrade`: backup, migrate on start, automatic rollback
+
+- **Scope:** installations made from a bundle (`EPI_OFFLINE`), matching the owner's delivery (a copied file, ADR-024). Source checkouts use `git pull && ./epi.sh build && ./epi.sh start`.
+- **Flow:** verify the bundle (outer `.sha256`, inner `SHA256SUMS`, image identities) → refuse the same version and older base versions (no down-migrations; restore a backup instead) → `pg_dump` of `epi` (and `keycloak` with AD sign-in) → load images → replace only the installation files (state in `.epi/` and `backups/` untouched; previous files kept) → `start` (the image's entrypoint runs migrations) → health check.
+- **Rollback:** on any start/health failure: previous files back, `public` schema dropped and recreated, backup restored (so objects created by the failed version also go), previous version started; the failed version's logs are kept. Data written between the backup and the rollback is lost (documented: upgrade at a quiet time).
+- **Self-replacement:** `upgrade` re-executes from a temporary copy of `epi.sh` because bash reads scripts while running and the upgrade replaces `epi.sh` itself.
+- **Test hooks:** `scripts/bundle.sh` accepts `EPI_BUNDLE_VERSION` and `EPI_BUNDLE_SOURCE_IMAGE` (used only by `scripts/test-upgrade.sh` to bundle a deliberately broken release).
+- **Not in CI:** the test builds three bundles (~6 min); it runs before release like `test-offline-install.sh`.
