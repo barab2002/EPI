@@ -6,6 +6,7 @@ import { useSession } from '../../session';
 const TABS = [
   ['organization', 'Organization'],
   ['people', 'People'],
+  ['directory', 'Directory'],
   ['integrations', 'Integrations'],
   ['identities', 'Identity mapping'],
   ['statuses', 'Status mappings'],
@@ -17,7 +18,11 @@ const TABS = [
 export function AdminPage() {
   const { me } = useSession();
   if (!me.roles.includes('ADMIN')) {
-    return <Empty>Administrator role required.</Empty>;
+    return (
+      <Empty>
+        Administration needs the Administrator role. Ask an EPI administrator to assign it.
+      </Empty>
+    );
   }
   return (
     <>
@@ -36,10 +41,11 @@ export function AdminPage() {
 }
 
 export function formatTime(iso: string | null): string {
-  if (!iso) return 'never';
+  if (!iso) return 'Never';
   return new Date(iso).toLocaleString('en-GB', {
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });

@@ -5,7 +5,27 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Installed from an offline bundle: use only the bundled images (never pull).
 if [ -f "$ROOT/deploy/offline.env" ]; then set -a; . "$ROOT/deploy/offline.env"; set +a; fi
-STATE_DIR="$ROOT/.epi"                       # local runtime state (gitignored), mode 0700
+STATE_DIR="${EPI_STATE_DIR:-$ROOT/.epi}"      # local runtime state (gitignored), mode 0700
+export EPI_STATE_DIR="$STATE_DIR"
+SSO_DIR="$STATE_DIR/sso"
+# Reads KEY=value lines literally (same rules as scripts/kc-prod-realm.mjs parseConf): never
+# executed as shell, so ";" in group lists and spaces in DNs ("OU=Service Accounts") are kept.
+load_conf() {
+  local line key value
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
+    case "$line" in ''|'#'*) continue ;; esac
+    [[ "$line" =~ ^([A-Z0-9_]+)=(.*)$ ]] || { echo "epi: $1: cannot parse line: $line" >&2; exit 1; }
+    key="${BASH_REMATCH[1]}"; value="${BASH_REMATCH[2]}"
+    if [[ "$value" =~ ^\"(.*)\"$ || "$value" =~ ^\'(.*)\'$ ]]; then value="${BASH_REMATCH[1]}"; fi
+    export "$key=$value"
+  done <"$1"
+}
+# Production SSO configured (./epi.sh sso-setup): export its non-secret settings for Compose.
+if [ -f "$SSO_DIR/epi-realm.json" ] && [ -f "$STATE_DIR/sso.conf" ]; then
+  load_conf "$STATE_DIR/sso.conf"
+fi
 COMPOSE_FILE="$ROOT/deploy/compose.yaml"
 export EPI_IMAGE_REGISTRY="${EPI_IMAGE_REGISTRY:-docker.io}"
 export EPI_IMAGE="${EPI_IMAGE:-epi:local}"
@@ -23,12 +43,15 @@ fail() { printf '  %sFAIL%s %s\n' "$R" "$N" "$*"; FAILURES=$((FAILURES + 1)); }
 die() { printf '%serror:%s %s\n' "$R" "$N" "$*" >&2; exit 1; }
 info() { printf '%s==>%s %s\n' "$B" "$N" "$*"; }
 KC_DIR="$STATE_DIR/keycloak"
-demo_sso_enabled() { [ "${EPI_DEMO_SSO:-true}" != "false" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; }
+prod_sso_enabled() { [ -f "$SSO_DIR/epi-realm.json" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; }
+demo_sso_enabled() { [ "${EPI_DEMO_SSO:-true}" != "false" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ] && ! prod_sso_enabled; }
 compose() {
   # EPI_COMPOSE_EXTRA: optional extra Compose override file (site tweaks; used by the offline test).
   set -- ${EPI_COMPOSE_EXTRA:+-f "$EPI_COMPOSE_EXTRA"} "$@"
   if [ -n "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; then
     docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.oidc.yaml" "$@"
+  elif prod_sso_enabled; then
+    docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.sso.yaml" "$@"
   elif demo_sso_enabled && [ -f "$KC_DIR/epi-demo-realm.json" ]; then
     docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.demo-sso.yaml" "$@"
   else
@@ -47,6 +70,7 @@ Usage: ./epi.sh <command> [options]
   demo                Build if needed and start a demo with SYNTHETIC data on http://$EPI_BIND:$EPI_PORT
                       (includes a demo Keycloak on :${EPI_KC_PORT:-8081}; EPI_DEMO_SSO=false to skip)
   credentials         Show this install's demo sign-in users and passwords
+  sso-setup           Configure sign-in with Active Directory (.epi/sso.conf; see docs/KEYCLOAK.md)
   start [--no-wait] | stop   Start / stop the stack (data volume is kept)
   status              Show containers and application health
   logs                Follow application logs
@@ -155,6 +179,55 @@ gen_demo_realm() {
   fi
 }
 
+random_secret() { od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; }
+
+# Configures production sign-in with Active Directory (EPI-003b). Inputs, all in the state dir:
+#   sso.conf (non-secret, from deploy/sso.conf.example), sso/ldap_bind_password, sso/ldap-ca.pem
+cmd_sso_setup() {
+  ensure_state
+  local conf="$STATE_DIR/sso.conf" bind="$SSO_DIR/ldap_bind_password" ca="$SSO_DIR/ldap-ca.pem"
+  mkdir -p "$SSO_DIR/vault" "$SSO_DIR/ca"; chmod 700 "$SSO_DIR"
+  [ -f "$conf" ] || die "missing $conf — copy deploy/sso.conf.example there and fill in your AD details"
+  [ -s "$bind" ] || die "missing $bind — put the read-only AD bind account's password there (one line; never in Git or chat)"
+  if grep -q '^EPI_LDAP_URL=ldaps://' "$conf"; then
+    [ -s "$ca" ] || die "missing $ca — the PEM certificate of the CA that issued your domain controllers' LDAPS certificates"
+    grep -q 'BEGIN CERTIFICATE' "$ca" || die "$ca is not a PEM certificate"
+    cp "$ca" "$SSO_DIR/ca/ldap-ca.pem"
+  fi
+  # Keycloak file vault: realm "epi", key "ldapbind". Readable by the non-root container (0700 dir).
+  tr -d '\r\n' <"$bind" >"$SSO_DIR/vault/epi_ldapbind"
+  local f
+  for f in kc_db_password kc_admin_password; do
+    [ -s "$SSO_DIR/$f" ] || (umask 077 && random_secret >"$SSO_DIR/$f")
+  done
+  chmod 644 "$SSO_DIR/vault/epi_ldapbind" "$SSO_DIR/kc_db_password" "$SSO_DIR/kc_admin_password" "$SSO_DIR"/ca/* 2>/dev/null || true
+  chmod 755 "$SSO_DIR/vault" "$SSO_DIR/ca"
+  info "Generating Keycloak realm 'epi' (read-only directory federation)"
+  if command -v node >/dev/null; then
+    node "$ROOT/scripts/kc-prod-realm.mjs" "$conf" "$SSO_DIR"
+  else
+    docker run --rm --network none --entrypoint node -u "$(id -u):$(id -g)" \
+      -v "$ROOT/scripts/kc-prod-realm.mjs:/realm.mjs:ro" -v "$conf:/sso.conf:ro" -v "$SSO_DIR:/out" \
+      "$EPI_IMAGE" /realm.mjs /sso.conf /out
+  fi
+  printf '\nSingle sign-on configured. Start with: ./epi.sh start\n'
+  printf 'Keycloak admin console (emergency only): user "admin", password in %s\n' "$SSO_DIR/kc_admin_password"
+  printf 'Note: Keycloak imports the realm on its FIRST start only.\n'
+}
+
+# Creates Keycloak's database and role in the shared PostgreSQL (idempotent).
+ensure_keycloak_db() {
+  prod_sso_enabled || return 0
+  compose up -d --wait postgres >/dev/null
+  { printf "\\set pw '%s'\n" "$(cat "$SSO_DIR/kc_db_password")"
+    cat <<'SQL'
+SELECT 'CREATE ROLE keycloak LOGIN' WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'keycloak')\gexec
+ALTER ROLE keycloak WITH LOGIN PASSWORD :'pw';
+SELECT 'CREATE DATABASE keycloak OWNER keycloak' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'keycloak')\gexec
+SQL
+  } | compose exec -T postgres psql -q -U epi -d postgres -v ON_ERROR_STOP=1 >/dev/null
+}
+
 cmd_offline_install() {
   local bundle="" dir="$PWD/epi"
   while [ $# -gt 0 ]; do
@@ -257,11 +330,13 @@ case "${1:-help}" in
   demo) cmd_demo ;;
   start)
     ensure_state
+    ensure_keycloak_db
     if [ "${2:-}" = "--no-wait" ]; then compose up -d; exit 0; fi
     compose up -d; wait_healthy && echo "EPI is up on http://$EPI_BIND:$EPI_PORT" ;;
   stop) compose stop ;;
   status) cmd_status ;;
   logs) compose logs -f epi ;;
+  sso-setup) cmd_sso_setup ;;
   credentials)
     [ -f "$KC_DIR/demo-credentials.txt" ] || die "no demo credentials yet — run ./epi.sh demo"
     cat "$KC_DIR/demo-credentials.txt" ;;

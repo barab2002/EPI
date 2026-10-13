@@ -31,10 +31,13 @@ describe('SyncScheduleCard', () => {
     render(<SyncScheduleCard />);
     const enabled = await screen.findByRole('checkbox', { name: /Sync daily/ });
     expect(enabled).not.toBeChecked();
-    expect(screen.getByText(/Next run: —/)).toBeInTheDocument();
+    expect(screen.getByText(/Next run: not scheduled/)).toBeInTheDocument();
     await userEvent.click(enabled);
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: /at/ }), '03:00');
-    const tz = screen.getByRole('combobox', { name: /time zone/ });
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: /^Time(?! zone)/ }),
+      '03:00',
+    );
+    const tz = screen.getByRole('combobox', { name: /Time zone/ });
     await userEvent.clear(tz);
     await userEvent.type(tz, 'Asia/Jerusalem');
     await userEvent.click(screen.getByRole('button', { name: 'Save schedule' }));
@@ -44,7 +47,7 @@ describe('SyncScheduleCard', () => {
     expect(saved).toEqual({ enabled: true, hourLocal: 3, timezone: 'Asia/Jerusalem' });
     expect(headers['x-csrf-token']).toBe('csrf-9');
     expect(await screen.findByText(/Last scheduled run: never/)).toBeInTheDocument();
-    expect(screen.queryByText(/Next run: —/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Next run: not scheduled/)).not.toBeInTheDocument();
   });
 
   it('shows server validation errors', async () => {

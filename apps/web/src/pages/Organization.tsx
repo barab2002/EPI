@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import type { Access, OrgNode } from '../api';
 import { KpiPanel } from '../components/KpiPanel';
-import { Breadcrumb } from '../components/Layout';
-import { Empty, ErrorState, Loading } from '../components/States';
+import { Breadcrumb, PageTitle } from '../components/Layout';
+import { Empty, ErrorState, Skeleton } from '../components/States';
+import { useKpiWindow, withWindow } from '../components/useKpiWindow';
 import { t } from '../i18n';
 import { useApi } from '../useApi';
 
+/** Shows access only when it is an exception: "Managed" is the normal case and stays quiet. */
 export function AccessBadge({ access }: { access: Access | null }) {
-  if (!access) return null;
+  if (!access || access === 'managed') return null;
   const label = {
     managed: t('accessManaged'),
     aggregate: t('accessAggregate'),
@@ -18,11 +20,12 @@ export function AccessBadge({ access }: { access: Access | null }) {
 
 export function OrganizationPage() {
   const tree = useApi<OrgNode[]>('/api/v1/organization/tree');
+  const [window] = useKpiWindow();
   return (
     <>
       <Breadcrumb items={[{ label: t('navOrganization') }]} />
       <h1>{t('navOrganization')}</h1>
-      {tree.state === 'loading' && <Loading />}
+      {tree.state === 'loading' && <Skeleton lines={6} />}
       {tree.state === 'error' && <ErrorState error={tree.error} onRetry={tree.reload} />}
       {tree.state === 'ready' && tree.data.length === 0 && <Empty>{t('emptyOrg')}</Empty>}
       {tree.state === 'ready' &&
@@ -30,7 +33,7 @@ export function OrganizationPage() {
           <section key={org.id} className="panel">
             <h2>
               {org.access === 'managed' ? (
-                <Link to={`/organizations/${org.id}`}>{org.name}</Link>
+                <Link to={withWindow(`/organizations/${org.id}`, window)}>{org.name}</Link>
               ) : (
                 org.name
               )}{' '}
@@ -38,22 +41,25 @@ export function OrganizationPage() {
             </h2>
             <ul className="tree">
               {org.groups.map((g) => (
-                <li key={g.id}>
-                  <div className="tree-row">
+                <li key={g.id} className="tree-group">
+                  <div className="tree-row tree-group-row">
                     {g.access ? (
-                      <Link to={`/groups/${g.id}`}>{g.name}</Link>
+                      <Link to={withWindow(`/groups/${g.id}`, window)}>{g.name}</Link>
                     ) : (
                       <span>{g.name}</span>
                     )}
                     <AccessBadge access={g.access} />
+                    <span className="tree-meta">
+                      {g.teams.length} {g.teams.length === 1 ? 'team' : t('teams').toLowerCase()}
+                    </span>
                   </div>
                   <ul>
                     {g.teams.map((tm) => (
                       <li key={tm.id} className="tree-row">
-                        <Link to={`/teams/${tm.id}`}>{tm.name}</Link>
+                        <Link to={withWindow(`/teams/${tm.id}`, window)}>{tm.name}</Link>
                         <AccessBadge access={tm.access} />
                         {tm.memberCount !== null && (
-                          <span className="muted small">
+                          <span className="tree-meta">
                             {tm.memberCount} {t('members').toLowerCase()}
                           </span>
                         )}
@@ -77,7 +83,7 @@ export function OrganizationDetailPage({ id }: { id: string }) {
       <Breadcrumb
         items={[{ label: t('navOrganization'), to: '/organization' }, { label: org?.name ?? '…' }]}
       />
-      <h1>{org?.name ?? t('navOrganization')}</h1>
+      <PageTitle>{org?.name ?? t('navOrganization')}</PageTitle>
       {/* KpiPanel loads independently and enforces access server-side. */}
       <KpiPanel entityType="organization" entityId={id} />
     </>

@@ -9,3 +9,5 @@
 - **2026-10-13** — Scheduled daily sync (ADR-021): `app_settings` table, pure DST-safe due logic, `SyncScheduler` with per-day DB claim, admin schedule API + Integrations card; unit, integration, web and browser E2E tests.
 - **2026-10-13** — Audit-log viewer (ADR-022): admin API with filters and keyset paging, assessment redaction, Audit log tab; integration, web and browser E2E tests.
 - **2026-10-13** — EPI-012a (ADR-023): images pinned by digest with CI check, license allowlist check, `bundle`/`offline-install` with checksum and image identity verification, offline install test on a no-egress network.
+- **2026-10-13** — Owner decisions (ADR-024). EPI-003b (ADR-025): production realm generator, `sso-setup`, `compose.sso.yaml` (Keycloak prod mode, own DB, vault, truststore), synthetic LDAPS directory fixture and SSO e2e.
+- **2026-10-13** — UX-01 UI/UX pass complete (PRs #17–#22: design system, 6 slices, CI contrast check, refreshed screenshots). EPI-004c AD team import (ADR-030): `planImport`, directory mappings migration, admin API (preview/apply with plan hash), Directory tab, `directory-check`, compose wiring; fixed `sso.conf` loading in `epi.sh`.

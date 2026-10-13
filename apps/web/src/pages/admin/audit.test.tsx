@@ -37,7 +37,8 @@ describe('AuditTab', () => {
     expect(await screen.findByText('Dana Dev')).toBeInTheDocument();
     expect(screen.getByText('role: TEAM_LEAD')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Load older events' }));
-    expect(await screen.findAllByText('role.assign')).toHaveLength(3); // 2 rows + option
+    expect(await screen.findAllByText('role.assign')).toHaveLength(2); // one code per row
+    expect(screen.getAllByText('Role assigned')).toHaveLength(2); // plain-language action name
     expect(screen.queryByRole('button', { name: 'Load older events' })).not.toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: /Action/ }), 'Role changes');

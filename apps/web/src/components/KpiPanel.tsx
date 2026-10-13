@@ -1,12 +1,12 @@
 import { useState } from 'react';
+import { formatDate } from '../format';
 import type { KpiCard } from '../api';
 import { t } from '../i18n';
 import { useApi } from '../useApi';
 import { KpiCardView } from './KpiCard';
 import { KpiDrawer } from './KpiDrawer';
-import { ErrorState, Loading } from './States';
-
-const WINDOWS = ['30d', '90d', '180d'] as const;
+import { ErrorState, Skeleton } from './States';
+import { useKpiWindow, WINDOWS } from './useKpiWindow';
 
 export function KpiPanel({
   entityType,
@@ -17,7 +17,7 @@ export function KpiPanel({
   entityId: string;
   title?: string;
 }) {
-  const [window, setWindow] = useState<(typeof WINDOWS)[number]>('90d');
+  const [window, setWindow] = useKpiWindow();
   const [open, setOpen] = useState<KpiCard | null>(null);
   const cards = useApi<KpiCard[]>(
     `/api/v1/kpis?entity_type=${entityType}&entity_id=${entityId}&window=${window}`,
@@ -40,13 +40,30 @@ export function KpiPanel({
           ))}
         </div>
       </div>
-      <p className="muted small">{t('kpiDisclaimer')}</p>
-      {cards.state === 'loading' && <Loading />}
+      <p className="muted small">
+        {cards.state === 'ready' && cards.data[0] && (
+          <>
+            <time dateTime={cards.data[0].window.start}>
+              {formatDate(cards.data[0].window.start)}
+            </time>{' '}
+            –{' '}
+            <time dateTime={cards.data[0].window.end}>{formatDate(cards.data[0].window.end)}</time>
+            .{' '}
+          </>
+        )}
+        {t('kpiDisclaimer')}
+      </p>
+      {cards.state === 'loading' && <Skeleton lines={4} />}
       {cards.state === 'error' && <ErrorState error={cards.error} onRetry={cards.reload} />}
       {cards.state === 'ready' && (
         <div className="kpi-grid">
           {cards.data.map((c) => (
-            <KpiCardView key={c.code} card={c} onExplain={setOpen} />
+            <KpiCardView
+              key={c.code}
+              card={c}
+              onExplain={setOpen}
+              neutralTrend={entityType === 'developer'}
+            />
           ))}
         </div>
       )}

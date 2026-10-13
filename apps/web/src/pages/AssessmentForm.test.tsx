@@ -6,16 +6,38 @@ import { AssessmentForm } from './AssessmentForm';
 describe('AssessmentForm', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('requires both ratings and 20+ characters of evidence before saving', async () => {
+  it('keeps actions enabled and explains every missing field, focusing the first', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
     render(<AssessmentForm subjectUserId="u1" onSaved={() => undefined} />);
     const submit = screen.getByRole('button', { name: 'Submit' });
-    expect(submit).toBeDisabled();
-    await userEvent.click(screen.getByLabelText('3 · Meets grade expectations'));
-    await userEvent.click(screen.getByLabelText('4 · Ahead of plan'));
-    await userEvent.type(screen.getByRole('textbox'), 'too short');
-    expect(submit).toBeDisabled();
-    await userEvent.type(screen.getByRole('textbox'), ' — now long enough evidence');
     expect(submit).toBeEnabled();
+    await userEvent.click(submit);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText('Choose an independence rating.')).toBeInTheDocument();
+    expect(screen.getByText('Choose a growth rating.')).toBeInTheDocument();
+    expect(screen.getByText(/at least 20 characters/)).toBeInTheDocument();
+    expect(document.activeElement).toBe(screen.getByLabelText('1: Substantially dependent'));
+    await userEvent.click(screen.getByLabelText('3: Meets grade expectations'));
+    await userEvent.click(screen.getByLabelText('4: Ahead of plan'));
+    await userEvent.type(screen.getByRole('textbox'), 'too short');
+    await userEvent.click(submit);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.queryByText('Choose an independence rating.')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true');
+    expect(document.activeElement).toBe(screen.getByRole('textbox'));
+  });
+
+  it('starts from my saved draft', () => {
+    render(
+      <AssessmentForm
+        subjectUserId="u1"
+        onSaved={() => undefined}
+        initial={{ independence: 2, growth: 4, evidence: 'Draft evidence from earlier this week.' }}
+      />,
+    );
+    expect(screen.getByLabelText('2: Needs frequent guidance')).toBeChecked();
+    expect(screen.getByLabelText('4: Ahead of plan')).toBeChecked();
+    expect(screen.getByRole('textbox')).toHaveValue('Draft evidence from earlier this week.');
   });
 
   it('submits with the CSRF header and reports success', async () => {
@@ -27,8 +49,8 @@ describe('AssessmentForm', () => {
       );
     const onSaved = vi.fn();
     render(<AssessmentForm subjectUserId="u1" onSaved={onSaved} />);
-    await userEvent.click(screen.getByLabelText('3 · Meets grade expectations'));
-    await userEvent.click(screen.getByLabelText('3 · Progressing as agreed'));
+    await userEvent.click(screen.getByLabelText('3: Meets grade expectations'));
+    await userEvent.click(screen.getByLabelText('3: Progressing as agreed'));
     await userEvent.type(
       screen.getByRole('textbox'),
       'Led the incident review and fixed root cause.',
@@ -54,8 +76,8 @@ describe('AssessmentForm', () => {
       }),
     );
     render(<AssessmentForm subjectUserId="u1" onSaved={() => undefined} />);
-    await userEvent.click(screen.getByLabelText('3 · Meets grade expectations'));
-    await userEvent.click(screen.getByLabelText('3 · Progressing as agreed'));
+    await userEvent.click(screen.getByLabelText('3: Meets grade expectations'));
+    await userEvent.click(screen.getByLabelText('3: Progressing as agreed'));
     await userEvent.type(screen.getByRole('textbox'), 'Evidence that is long enough to pass.');
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('already submitted');

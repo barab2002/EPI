@@ -41,8 +41,9 @@ read it over the phone or from a signed ticket). Cryptographic signing of bundle
 - **Synthetic demo:** `./epi.sh demo` — demo data and, unless built with `--no-keycloak`, the
   demo Keycloak with generated users (`./epi.sh credentials`). The realm generator runs inside
   the EPI image when the host has no Node.
-- **Production:** connect your organization's Keycloak as described in `docs/KEYCLOAK.md`
-  (`EPI_OIDC_ISSUER`, `EPI_PUBLIC_URL`, `EPI_OIDC_CLIENT_SECRET_PATH`), then `./epi.sh start`.
+- **Production:** sign-in with Active Directory through the bundled Keycloak — `docs/KEYCLOAK.md`
+  section A (`./epi.sh sso-setup`, then `./epi.sh start`). Build the bundle **with** Keycloak (no
+  `--no-keycloak`). An existing corporate Keycloak is the alternative (section 1).
   Internal CAs: set `NODE_EXTRA_CA_CERTS`. Exposing EPI beyond localhost (`EPI_BIND`) needs TLS
   in front and approval.
 - Operations: `status`, `logs`, `stop`, `backup`, `restore` work as in any installation.

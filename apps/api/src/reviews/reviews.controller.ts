@@ -61,6 +61,14 @@ export class ReviewsController {
     return this.reviews.list(scope, q.subject_user_id);
   }
 
+  @Get('due')
+  @ApiOperation({
+    summary: 'People the caller may assess with no submitted assessment in the open monthly cycle',
+  })
+  due(@CurrentScope() scope: Scope) {
+    return this.reviews.due(scope);
+  }
+
   @Post()
   @ApiOperation({
     summary: 'Create or update (draft) / submit a monthly assessment for a managed member',

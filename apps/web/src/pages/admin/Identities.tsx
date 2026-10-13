@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, PersonOption, SourceAccount } from '../../api';
-import { Empty, ErrorState, Loading } from '../../components/States';
+import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
+import { Flash, FlashMessage } from './shared';
 import { formatTime } from './Admin';
 
 type Status = 'unmapped' | 'mapped';
@@ -72,9 +73,12 @@ export function IdentitiesTab() {
   const accounts = useApi<SourceAccount[]>(
     `/api/v1/admin/accounts?status=${status}${source ? `&source=${source}` : ''}`,
   );
-  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<Flash>(null);
+  const busy = useRef(false);
 
   async function map(a: SourceAccount, p: PersonOption) {
+    if (busy.current) return; // one mapping at a time: no double PUT from a double click
+    busy.current = true;
     setMessage(null);
     try {
       const r = await api.put<{ reattributed: number }>(
@@ -88,6 +92,8 @@ export function IdentitiesTab() {
       accounts.reload();
     } catch (e) {
       setMessage({ kind: 'error', text: (e as Error).message });
+    } finally {
+      busy.current = false;
     }
   }
 
@@ -118,7 +124,7 @@ export function IdentitiesTab() {
         mappings — never by matching display names. Each change is audited and applies to data
         already synced.
       </p>
-      <div className="toolbar">
+      <div className="inline-form">
         <div className="segmented" role="group" aria-label="Mapping status">
           {(['unmapped', 'mapped'] as const).map((s) => (
             <button
@@ -133,7 +139,7 @@ export function IdentitiesTab() {
           ))}
         </div>
         <label className="inline-field">
-          Source{' '}
+          Source
           <select value={source} onChange={(e) => setSource(e.target.value as typeof source)}>
             <option value="">All</option>
             <option value="jira">Jira</option>
@@ -141,15 +147,8 @@ export function IdentitiesTab() {
           </select>
         </label>
       </div>
-      {message && (
-        <p
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={message.kind === 'error' ? 'error-text' : 'ok-text'}
-        >
-          {message.text}
-        </p>
-      )}
-      {accounts.state === 'loading' && <Loading />}
+      <FlashMessage flash={message} />
+      {accounts.state === 'loading' && <Skeleton lines={4} />}
       {accounts.state === 'error' && (
         <ErrorState error={accounts.error} onRetry={accounts.reload} />
       )}
@@ -161,44 +160,52 @@ export function IdentitiesTab() {
         </Empty>
       )}
       {accounts.state === 'ready' && accounts.data.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Account</th>
-              <th scope="col">Source</th>
-              <th scope="col">Activity</th>
-              <th scope="col">Last seen</th>
-              <th scope="col">{status === 'unmapped' ? 'Map to person' : 'Mapped to'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts.data.map((a) => (
-              <tr key={`${a.source}:${a.external_id}`}>
-                <td>
-                  <strong>{a.display_name ?? '—'}</strong>
-                  <div className="muted small">
-                    <code>{a.external_id}</code>
-                  </div>
-                </td>
-                <td>{a.source === 'jira' ? 'Jira' : 'GitLab'}</td>
-                <td>{a.activity}</td>
-                <td>{formatTime(a.last_seen_at)}</td>
-                <td>
-                  {a.user_id ? (
-                    <>
-                      {a.user_name}{' '}
-                      <button type="button" className="btn" onClick={() => unmap(a)}>
-                        Unmap
-                      </button>
-                    </>
-                  ) : (
-                    <PersonPicker account={a} onPick={(p) => map(a, p)} />
-                  )}
-                </td>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Account</th>
+                <th scope="col">Source</th>
+                <th scope="col" className="num">
+                  Activity
+                </th>
+                <th scope="col">Last seen</th>
+                <th scope="col">{status === 'unmapped' ? 'Map to person' : 'Mapped to'}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {accounts.data.map((a) => (
+                <tr key={`${a.source}:${a.external_id}`}>
+                  <td>
+                    <strong>{a.display_name ?? '—'}</strong>
+                    <div className="muted small">
+                      <code translate="no">{a.external_id}</code>
+                    </div>
+                  </td>
+                  <td>{a.source === 'jira' ? 'Jira' : 'GitLab'}</td>
+                  <td className="num">{a.activity}</td>
+                  <td>{formatTime(a.last_seen_at)}</td>
+                  <td>
+                    {a.user_id ? (
+                      <>
+                        {a.user_name}{' '}
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger"
+                          onClick={() => unmap(a)}
+                        >
+                          Unmap
+                        </button>
+                      </>
+                    ) : (
+                      <PersonPicker account={a} onPick={(p) => map(a, p)} />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, DemoUser } from '../api';
-import { ErrorState, Loading } from '../components/States';
+import { MarkIcon } from '../components/Icons';
+import { ErrorState, Skeleton } from '../components/States';
 import { MessageKey, t } from '../i18n';
 import { useApi } from '../useApi';
 
@@ -11,6 +12,15 @@ const ROLE_LABEL: Record<string, string> = {
   GROUP_MANAGER: 'Group managers',
   TEAM_LEAD: 'Team leads',
   DEVELOPER: 'Developers',
+};
+
+/** What each demo role can see — the point of trying several people. */
+const ROLE_HINT: Record<string, string> = {
+  ADMIN: 'Structure, integrations and data quality. No KPIs or private reviews.',
+  ENGINEERING_MANAGER: 'The whole organization and all KPIs.',
+  GROUP_MANAGER: 'Their group’s teams and people.',
+  TEAM_LEAD: 'Their team’s members and KPIs. Writes monthly assessments.',
+  DEVELOPER: 'Their own KPIs and assessments. Their team only as a total.',
 };
 
 const LOGIN_ERRORS: Record<string, MessageKey> = {
@@ -45,17 +55,18 @@ export function Login({
   const loginError = loginErrorMessage(window.location.search);
   const returnTo = window.location.pathname === '/' ? '/' : window.location.pathname;
   const [error, setError] = useState<Error | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [signingIn, setSigningIn] = useState<string | null>(null);
+  const busy = signingIn !== null;
 
   async function signIn(id: string) {
-    setBusy(true);
+    setSigningIn(id);
     setError(null);
     try {
       await api.post('/api/v1/auth/demo-login', { userId: id });
       onSignedIn();
     } catch (e) {
       setError(e as Error);
-      setBusy(false);
+      setSigningIn(null);
     }
   }
 
@@ -65,7 +76,17 @@ export function Login({
   return (
     <main className="login">
       <div className="login-card">
+        <div className="login-brand">
+          <span className="brand-mark">
+            <MarkIcon />
+          </span>
+          <span>
+            <span className="brand-name">{t('appName')}</span>
+            <span className="brand-sub">{t('appTagline')}</span>
+          </span>
+        </div>
         <h1>{t('loginTitle')}</h1>
+        <p className="muted login-purpose">{t('loginPurpose')}</p>
         {loginError && (
           <p role="alert" className="error-text">
             {loginError}
@@ -81,11 +102,15 @@ export function Login({
         )}
         {demo && (
           <>
-            {oidc && <p className="muted small">{t('loginOr')}</p>}
+            {oidc && (
+              <p className="login-divider">
+                <span>{t('loginOr')}</span>
+              </p>
+            )}
             <p className="banner inline">{t('syntheticBanner')}</p>
             <p className="muted">{t('loginDemoHint')}</p>
             {error && <ErrorState error={error} />}
-            {users.state === 'loading' && <Loading />}
+            {users.state === 'loading' && <Skeleton lines={4} />}
             {users.state === 'error' && <ErrorState error={users.error} onRetry={users.reload} />}
             {users.state === 'ready' &&
               ROLE_ORDER.map((role) => {
@@ -94,6 +119,7 @@ export function Login({
                 return (
                   <section key={role} className="login-group">
                     <h2>{ROLE_LABEL[role]}</h2>
+                    <p className="muted small login-hint">{ROLE_HINT[role]}</p>
                     <ul>
                       {list.map((u) => (
                         <li key={u.id}>
@@ -101,10 +127,15 @@ export function Login({
                             type="button"
                             className="user-btn"
                             disabled={busy}
+                            aria-busy={signingIn === u.id}
                             onClick={() => signIn(u.id)}
                           >
                             <span>{u.display_name}</span>
-                            {u.team && <span className="muted small">{u.team}</span>}
+                            {signingIn === u.id ? (
+                              <span className="muted small">{t('signingIn')}</span>
+                            ) : (
+                              u.team && <span className="muted small">{u.team}</span>
+                            )}
                           </button>
                         </li>
                       ))}

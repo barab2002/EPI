@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { api, OrgNode, PersonDetail, PersonOption } from '../../api';
-import { ErrorState, Loading } from '../../components/States';
+import { ErrorState, Skeleton } from '../../components/States';
 import { useSession } from '../../session';
 import { useApi } from '../../useApi';
 import {
@@ -56,7 +56,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
     onChanged();
   };
 
-  if (person.state === 'loading') return <Loading />;
+  if (person.state === 'loading') return <Skeleton lines={4} />;
   if (person.state === 'error') return <ErrorState error={person.error} onRetry={person.reload} />;
   const p = person.data;
   const isSelf = p.id === me.user.id;
@@ -84,18 +84,33 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
       <FlashMessage flash={flash} />
       <form className="inline-form" onSubmit={rename} key={`${p.display_name}-${p.email}`}>
         <label className="inline-field">
-          Name <input name="displayName" defaultValue={p.display_name} required maxLength={120} />
+          Name
+          <input
+            name="displayName"
+            defaultValue={p.display_name}
+            required
+            maxLength={120}
+            autoComplete="off"
+          />
         </label>
         <label className="inline-field">
-          E-mail <input name="email" type="email" defaultValue={p.email ?? ''} maxLength={200} />
+          E-mail
+          <input
+            name="email"
+            type="email"
+            defaultValue={p.email ?? ''}
+            maxLength={200}
+            autoComplete="off"
+            spellCheck={false}
+          />
         </label>
-        <button type="submit" className="btn">
-          Save
+        <button type="submit" disabled={run.pending} className="btn">
+          Save details
         </button>
         {!isSelf && (
           <button
             type="button"
-            className="btn"
+            className={p.active ? 'btn btn-danger' : 'btn'}
             onClick={() =>
               (p.active
                 ? window.confirm(
@@ -118,11 +133,15 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
       {p.memberships.length === 0 ? (
         <p className="muted">Not in any team. Add them from the Organization tab.</p>
       ) : (
-        <ul>
+        <ul className="plain-list history-list" aria-label="Team history">
           {p.memberships.map((m) => (
             <li key={m.id}>
-              {m.team_name} <span className="muted small">({m.group_name})</span>:{' '}
-              {shortDate(m.effective_from)} – {m.effective_to ? shortDate(m.effective_to) : 'now'}
+              <span>
+                {m.team_name} <span className="muted small">{m.group_name}</span>
+              </span>
+              <span className="muted small">
+                {shortDate(m.effective_from)} – {m.effective_to ? shortDate(m.effective_to) : 'now'}
+              </span>
             </li>
           ))}
         </ul>
@@ -132,55 +151,58 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
       {isSelf && (
         <p className="muted small">You cannot change your own roles — ask another administrator.</p>
       )}
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col">Role</th>
-            <th scope="col">Scope</th>
-            <th scope="col">Period</th>
-            <th scope="col">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Developer</td>
-            <td className="muted">own data (implicit)</td>
-            <td>—</td>
-            <td />
-          </tr>
-          {p.roles.map((r) => (
-            <tr key={r.id}>
-              <td>{ROLES.find((x) => x.role === r.role)?.label ?? r.role}</td>
-              <td>{r.scope_type === 'SYSTEM' ? 'System' : r.scope_name}</td>
-              <td>
-                {shortDate(r.effective_from)} – {r.effective_to ? shortDate(r.effective_to) : 'now'}
-              </td>
-              <td>
-                {!r.effective_to && !isSelf && (
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() =>
-                      window.confirm(
-                        `End this ${r.role.toLowerCase().replace('_', ' ')} role today?`,
-                      ) &&
-                      run(
-                        () => api.post(`/api/v1/admin/role-assignments/${r.id}/end`, {}),
-                        'Role ended.',
-                        reload,
-                      )
-                    }
-                  >
-                    End role
-                  </button>
-                )}
-              </td>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Role</th>
+              <th scope="col">Scope</th>
+              <th scope="col">Period</th>
+              <th scope="col">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Developer</td>
+              <td className="muted">own data (implicit)</td>
+              <td>—</td>
+              <td />
+            </tr>
+            {p.roles.map((r) => (
+              <tr key={r.id}>
+                <td>{ROLES.find((x) => x.role === r.role)?.label ?? r.role}</td>
+                <td>{r.scope_type === 'SYSTEM' ? 'System' : r.scope_name}</td>
+                <td>
+                  {shortDate(r.effective_from)} –{' '}
+                  {r.effective_to ? shortDate(r.effective_to) : 'now'}
+                </td>
+                <td className="cell-actions">
+                  {!r.effective_to && !isSelf && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger"
+                      onClick={() =>
+                        window.confirm(
+                          `End the ${(ROLES.find((x) => x.role === r.role)?.label ?? r.role).toLowerCase()} role of ${p.display_name} today?`,
+                        ) &&
+                        run(
+                          () => api.post(`/api/v1/admin/role-assignments/${r.id}/end`, {}),
+                          'Role ended.',
+                          reload,
+                        )
+                      }
+                    >
+                      End role
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {!isSelf && p.active && (
         <form
           className="inline-form"
@@ -200,7 +222,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           }}
         >
           <label className="inline-field">
-            Role{' '}
+            Role
             <select
               value={role}
               onChange={(e) => {
@@ -219,14 +241,14 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           </label>
           {def.scopes.length > 1 && (
             <label className="inline-field">
-              On{' '}
+              Level
               <select
                 value={scopeType}
                 onChange={(e) => (setScopeType(e.target.value), setScopeId(''))}
               >
                 {def.scopes.map((s) => (
                   <option key={s} value={s}>
-                    {s.toLowerCase()}
+                    {s === 'ORGANIZATION' ? 'Organization' : 'Group'}
                   </option>
                 ))}
               </select>
@@ -234,7 +256,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           )}
           {scopeType !== 'SYSTEM' && (
             <label className="inline-field">
-              Scope{' '}
+              Scope
               <select value={scopeId} onChange={(e) => setScopeId(e.target.value)} required>
                 <option value="">Choose…</option>
                 {options.map((o) => (
@@ -245,21 +267,23 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
               </select>
             </label>
           )}
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" disabled={run.pending} className="btn btn-primary">
             Assign role
           </button>
         </form>
       )}
 
       <h3>Grade</h3>
-      <ul>
+      <ul className="plain-list history-list" aria-label="Grade history">
         {p.grades.map((g) => (
           <li key={g.id}>
-            {g.label}: {shortDate(g.effective_from)} –{' '}
-            {g.effective_to ? shortDate(g.effective_to) : 'now'}
+            <span>{g.label}</span>
+            <span className="muted small">
+              {shortDate(g.effective_from)} – {g.effective_to ? shortDate(g.effective_to) : 'now'}
+            </span>
           </li>
         ))}
-        {p.grades.length === 0 && <li className="muted">No grade recorded.</li>}
+        {p.grades.length === 0 && <li className="muted">No grade recorded yet.</li>}
       </ul>
       <form
         className="inline-form"
@@ -277,7 +301,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
         }}
       >
         <label className="inline-field">
-          New grade{' '}
+          New grade
           <select value={grade} onChange={(e) => setGrade(e.target.value)} required>
             <option value="">Choose…</option>
             {grades.state === 'ready' &&
@@ -289,7 +313,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           </select>
         </label>
         <label className="inline-field">
-          from{' '}
+          From
           <input
             type="date"
             value={gradeFrom}
@@ -298,7 +322,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
             required
           />
         </label>
-        <button type="submit" className="btn">
+        <button type="submit" disabled={run.pending} className="btn">
           Set grade
         </button>
       </form>
@@ -334,20 +358,34 @@ export function PeopleTab() {
     <>
       <section className="panel" aria-labelledby="people-title">
         <h2 id="people-title">People</h2>
+        <p className="muted small">
+          Find someone to change their details, roles or grade, or add a person who is not in EPI
+          yet. Team membership is managed under Organization.
+        </p>
         <FlashMessage flash={flash} />
-        <div className="toolbar">
+        <div className="form-group">
+          <h3>Find a person</h3>
           <PersonSearch label="Find a person…" onPick={setSelected} />
+        </div>
+        <div className="form-group">
+          <h3>Add a person</h3>
           <form className="inline-form" onSubmit={create}>
             <label className="inline-field">
-              New person{' '}
-              <input name="displayName" placeholder="Full name" required maxLength={120} />
+              Full name
+              <input name="displayName" required maxLength={120} autoComplete="off" />
             </label>
-            <label>
-              <span className="sr-only">E-mail</span>
-              <input name="email" type="email" placeholder="E-mail (optional)" maxLength={200} />
+            <label className="inline-field">
+              E-mail (optional)
+              <input
+                name="email"
+                type="email"
+                maxLength={200}
+                autoComplete="off"
+                spellCheck={false}
+              />
             </label>
-            <button type="submit" className="btn">
-              Create
+            <button type="submit" disabled={run.pending} className="btn">
+              Add person
             </button>
           </form>
         </div>

@@ -9,16 +9,19 @@ pnpm install --frozen-lockfile --prefer-offline
 step "secret scan";        bash scripts/secret-scan.sh
 step "pinned images";      bash scripts/check-pins.sh
 step "licenses";           node scripts/license-report.mjs
+step "contrast";           node scripts/check-contrast.mjs
 step "format check";       pnpm run format:check
 step "lint";               pnpm run lint
 step "typecheck";          pnpm run typecheck
 step "unit tests";         pnpm --filter @epi/api run test:unit
+step "script tests";       node --test scripts/*.test.mjs
 if [ -d apps/web ] && [ -f apps/web/package.json ]; then
   step "web tests";        pnpm --filter @epi/web run test
 fi
 if [ "${1:-}" != "--no-integration" ]; then
-  step "integration tests (PostgreSQL + Keycloak)"
-  EPI_REQUIRE_KEYCLOAK=1 bash scripts/test-db.sh run -- bash scripts/test-keycloak.sh run -- \
+  step "integration tests (PostgreSQL + Keycloak + synthetic LDAPS directory)"
+  EPI_REQUIRE_KEYCLOAK=1 EPI_REQUIRE_LDAP=1 bash scripts/test-db.sh run -- \
+    bash scripts/test-keycloak.sh run -- bash scripts/test-ldap.sh run -- \
     pnpm --filter @epi/api run test:int
 fi
 step "build";              pnpm run build

@@ -30,12 +30,12 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
   const rows = page.getByRole('row');
   for (const name of ['jira-pilot', 'gitlab-pilot']) {
     await rows.filter({ hasText: name }).getByRole('button', { name: 'Sync now' }).click();
-    await expect(rows.filter({ hasText: name }).getByText('succeeded').first()).toBeVisible({
+    await expect(rows.filter({ hasText: name }).getByText('Succeeded').first()).toBeVisible({
       timeout: 20_000,
     });
   }
-  await expect(page.getByText(/24 issues · 24 new/)).toBeVisible();
-  await expect(page.getByText(/10 MRs · 10 new · 10 review requests/)).toBeVisible();
+  await expect(page.getByText(/24 issues: 24 new/)).toBeVisible();
+  await expect(page.getByText(/10 MRs: 10 new, 10 review requests/)).toBeVisible();
 
   // Daily sync: 23:00 in a zone where that hour is still ahead, so no run starts mid-test.
   const zone = ['UTC', 'Asia/Jerusalem', 'America/New_York', 'Pacific/Kiritimati'].find(
@@ -49,8 +49,8 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
       ) < 22,
   )!;
   await page.getByRole('checkbox', { name: /Sync daily/ }).check();
-  await page.getByRole('combobox', { name: /^at/ }).selectOption('23:00');
-  await page.getByRole('combobox', { name: /time zone/ }).fill(zone);
+  await page.getByRole('combobox', { name: /^Time(?! zone)/ }).selectOption('23:00');
+  await page.getByRole('combobox', { name: /Time zone/ }).fill(zone);
   await page.getByRole('button', { name: 'Save schedule' }).click();
   await expect(page.getByText(`Daily sync at 23:00 ${zone} saved.`)).toBeVisible();
   await expect(page.getByText(/Next run: \d/)).toBeVisible();
@@ -64,7 +64,7 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
     await row.getByRole('searchbox').fill(person.split(' ')[0]);
     await row.getByRole('button', { name: person, exact: true }).click();
     // The list reload also shows a role=status "Loading…"; target the confirmation itself.
-    await expect(page.locator('p.ok-text')).toContainText(`to ${person}`);
+    await expect(page.locator('p.flash-ok')).toContainText(`to ${person}`);
   };
   await shot(page, '26-admin-identity-mapping');
   await map(/JIRAUSER10101/, 'Dana Dev');
@@ -104,7 +104,7 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
   await page.getByRole('button', { name: /^Eli Engineer/ }).click();
   await expect(page.getByRole('link', { name: 'Administration' })).toHaveCount(0);
   await page.goto('/admin/identities');
-  await expect(page.getByText('Administrator role required.')).toBeVisible();
+  await expect(page.getByText(/Administration needs the Administrator role/)).toBeVisible();
 });
 
 test('admin builds a team and onboards a person; the group manager sees the new team', async ({
@@ -125,20 +125,20 @@ test('admin builds a team and onboards a person; the group manager sees the new 
   await platform.getByText('Rename / add team').click();
   await platform.getByRole('textbox', { name: 'New team in Platform' }).fill('Edge');
   await platform.getByRole('textbox', { name: 'New team in Platform' }).press('Enter');
-  await expect(page.locator('p.ok-text')).toContainText('Team Edge created.');
+  await expect(page.locator('p.flash-ok')).toContainText('Team Edge created.');
 
   // People: create a person, make them team lead of Edge, set a grade.
   await page.getByRole('link', { name: 'People' }).click();
-  await page.getByPlaceholder('Full name').fill('Rowan Newhire');
-  await page.getByPlaceholder('E-mail (optional)').fill('rowan.newhire@example.invalid');
-  await page.getByRole('button', { name: 'Create' }).click();
+  await page.getByLabel('Full name').fill('Rowan Newhire');
+  await page.getByLabel('E-mail (optional)').fill('rowan.newhire@example.invalid');
+  await page.getByRole('button', { name: 'Add person' }).click();
   await expect(page.getByRole('heading', { name: 'Rowan Newhire' })).toBeVisible();
   await page.getByLabel(/^Scope/).selectOption({ label: 'Edge (Platform)' });
   await page.getByRole('button', { name: 'Assign role' }).click();
   await expect(page.getByRole('cell', { name: 'Edge' })).toBeVisible();
   await page.getByLabel(/^New grade/).selectOption({ label: 'Senior' });
   await page.getByRole('button', { name: 'Set grade' }).click();
-  await expect(page.getByText(/^Senior:/)).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Grade history' })).toContainText('Senior');
   await shot(page, '30-admin-people');
 
   // Organization: add Rowan to Edge.
@@ -147,7 +147,7 @@ test('admin builds a team and onboards a person; the group manager sees the new 
   await page.getByRole('searchbox', { name: 'Find a person to add…' }).fill('Rowan');
   await page.getByRole('button', { name: 'Rowan Newhire' }).click();
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(page.locator('p.ok-text')).toContainText('Rowan Newhire added to Edge.');
+  await expect(page.locator('p.flash-ok')).toContainText('Rowan Newhire added to Edge.');
   await expect(page.getByRole('cell', { name: 'Rowan Newhire' })).toBeVisible();
   await shot(page, '29-admin-organization');
 
@@ -161,4 +161,48 @@ test('admin builds a team and onboards a person; the group manager sees the new 
   await page.getByRole('link', { name: 'Organization', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Mobile' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Edge' })).toHaveCount(0);
+});
+
+test('admin imports team membership from the directory: map, preview, apply', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Avery Admin/ }).click();
+  await page.goto('/admin/directory');
+  await expect(page.getByRole('heading', { name: 'Directory import' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preview import' })).toBeDisabled();
+
+  // Team-Payments (synthetic directory: Eli, Taylor) feeds the Payments team.
+  await page
+    .getByLabel('EPI team for Team-Payments')
+    .selectOption({ label: 'Payments (Platform)' });
+  await expect(page.locator('p.flash-ok')).toContainText('Team-Payments now feeds Payments');
+  await page.getByRole('button', { name: 'Preview import' }).click();
+  await expect(page.getByText(/^Applying will link 2 existing people by e-mail/)).toBeVisible();
+  const leaving = page.locator('.form-group').filter({ hasText: 'Leaving a team' });
+  await expect(leaving).toContainText('Dana Dev');
+  await expect(
+    page.getByText('Group Team-Platform is not mapped to a team', { exact: false }),
+  ).toBeVisible();
+  await shot(page, '32-admin-directory');
+
+  page.once('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: /^Apply \d+ changes$/ }).click();
+  await expect(page.locator('p.flash-ok')).toContainText('Import applied');
+  await expect(page.getByText(/^Last import:/)).toBeVisible();
+
+  // Payments now has exactly the directory group's members.
+  await page.goto('/admin/organization');
+  await page.getByRole('button', { name: 'Payments', exact: true }).click();
+  const members = page.getByRole('table').last();
+  await expect(members.getByRole('row')).toHaveCount(3); // header + Eli + Taylor
+  await expect(members).toContainText('Eli Engineer');
+  await expect(members).toContainText('Taylor Lead');
+
+  // A second preview has nothing left to do.
+  await page.goto('/admin/directory');
+  await page.getByRole('button', { name: 'Preview import' }).click();
+  await expect(
+    page.getByText('EPI already matches the directory. Nothing to change.'),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Apply 0 changes' })).toBeDisabled();
 });

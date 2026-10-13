@@ -15,6 +15,9 @@ import { SessionService } from './auth/session.service';
 import { ErrorFilter } from './common/correlation';
 import { EPI_CONFIG, EpiConfig } from './config';
 import { DATA_SOURCE } from './db/data-source';
+import { DirectoryClient } from './directory/directory.client';
+import { DirectoryController } from './directory/directory.controller';
+import { DIRECTORY_READER, DirectoryService } from './directory/directory.service';
 import { GitLabSync } from './ingestion/gitlab/gitlab.sync';
 import { JiraSync } from './ingestion/jira/jira.sync';
 import { SyncScheduler } from './ingestion/sync-scheduler';
@@ -44,6 +47,7 @@ export class AppModule {
         IdentityController,
         OrgAdminController,
         AuditController,
+        DirectoryController,
       ],
       providers: [
         { provide: EPI_CONFIG, useValue: config },
@@ -59,6 +63,11 @@ export class AppModule {
         ReviewsService,
         IdentityService,
         OrgAdminService,
+        DirectoryService,
+        {
+          provide: DIRECTORY_READER,
+          useValue: config.directory ? new DirectoryClient(config.directory) : null,
+        },
         SyncScheduler,
         {
           provide: JiraSync,

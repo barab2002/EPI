@@ -44,6 +44,9 @@ tar -xOf "$bundle" --wildcards '*/images/manifest.tsv' | cut -f1 | xargs -r dock
 echo "==> offline-install"
 bash "$ROOT/epi.sh" offline-install "$bundle" --dir "$dir"
 grep -q '^EPI_PULL_POLICY=never' "$dir/deploy/offline.env"
+for f in deploy/compose.sso.yaml deploy/sso.conf.example scripts/kc-prod-realm.mjs; do
+  [ -f "$dir/$f" ] || { echo "FAIL: bundle lacks $f" >&2; exit 1; }
+done
 
 cat >"$dir/no-egress.yaml" <<'YAML'
 networks:

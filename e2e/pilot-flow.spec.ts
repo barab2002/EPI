@@ -46,21 +46,25 @@ test('team lead submits a monthly assessment; the developer sees it; a peer does
 }, info) => {
   test.skip(info.project.name !== 'desktop', 'mutating flow runs once');
   await signInAs(page, 'Rae Lead');
+  // Home leads with the month's assessments still to write (scoped to Rae's team).
+  await expect(page.getByRole('heading', { name: /^Assessments to write/ })).toBeVisible();
   await page
     .getByRole('link', { name: /^Mobile/ })
     .first()
     .click();
   await page.getByRole('link', { name: 'Maya Mobile' }).click();
-  const form = page.getByRole('form', { name: 'Monthly assessment' });
+  const form = page.getByRole('form', { name: 'Write this month’s assessment' });
   const existing = page.getByText('Drove the offline sync redesign');
   await expect(form.or(existing).first()).toBeVisible(); // re-runs find it already submitted
   if (await form.isVisible()) {
-    await form.getByLabel('4 · Above-grade autonomy').check();
-    await form.getByLabel('3 · Progressing as agreed').check();
+    await form.getByLabel('4: Above-grade autonomy').check();
+    await form.getByLabel('3: Progressing as agreed').check();
     await form.getByRole('textbox').fill('Drove the offline sync redesign with minimal guidance.');
     await form.getByRole('button', { name: 'Submit' }).click();
-    await expect(page.getByText('Submitted.')).toBeVisible();
   }
+  // The form gives way to a lasting confirmation for this month (also on re-runs).
+  await expect(page.getByText(/You submitted this month’s assessment on/)).toBeVisible();
+  await expect(form).toHaveCount(0);
   await expect(page.getByText('Drove the offline sync redesign')).toBeVisible();
   await signOut(page);
 

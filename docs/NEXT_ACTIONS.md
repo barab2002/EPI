@@ -1,6 +1,20 @@
-# Next actions (ordered)
+# Next actions (ordered) — plan to the 2026-11-02 pilot (ADR-024)
 
-1. **Owner (when available):** Jira details B1–B3 (`JIRA.md` §1) and GitLab details B4–B6 (`GITLAB.md` §1) to run `jira-check`/`gitlab-check` and reconcile 20 issues + 10 MRs; Keycloak realm C1.
-2. **EPI-012c `upgrade`** on `feature/upgrade` from `main`: `./epi.sh upgrade <bundle.tar>` for an offline installation — verify bundle, automatic `backup` first, load new images, switch `deploy/offline.env` atomically (keep previous for rollback), start, wait healthy (migrations run in the entrypoint), else roll back images + restore backup; `./epi.sh rollback`. Test: install bundle N, add data, upgrade to N+1 (dummy version bump), data preserved; forced failure rolls back.
-3. **EPI-012b** SBOM + vulnerability scan — waits for C11 (scanner approval).
+Engineering (Claude, unattended via the hourly routine; each on its own branch → CI → PR → merge):
 
+1. ✅ **EPI-003b Production Keycloak in the install** — done (PR #14, ADR-025); follow-ups: `sso-apply` (update the directory provider after first start), Keycloak DB in `backup`.
+   Original scope (~2.5 d): Keycloak (production mode, its own PostgreSQL database, health checks) in `deploy/compose.keycloak.yaml`; realm/client provisioned at install; **LDAPS user federation to AD, read-only** (bind password from a secret file, internal CA trust, user search limited to the pilot team groups); EPI uses it via OIDC. Tests: ephemeral OpenLDAP (synthetic users/groups) + Keycloak.
+2. ✅ **EPI-004c AD team import** — done (ADR-030): EPI reads the team groups directly over LDAPS (same read-only account), admin maps group → team, preview → apply exactly the previewed plan, dated memberships, audited; no automatic deactivation (deliberate), roles stay manual. Follow-up: optional daily import on the sync schedule.
+3. **EPI-012c `upgrade` + rollback** (~1 d): automatic backup, load new images, health check, roll back on failure.
+4. **Retention job** (~0.5 d): delete raw activity, sessions and audit entries older than 24 months (configurable), daily, audited counts.
+5. **Hebrew UI** (~1.5 d): translation catalog, language switch per user, RTL layout check, screenshots.
+6. **Pilot install guide** (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind, Jira PAT, GitLab token), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
+
+Owner (when each step is reached, Claude asks for the non-secret details one at a time):
+
+7. Collect non-secret details: Jira URL + project keys, GitLab URL + group/project IDs, AD LDAPS host + base DN + team group names, registry mirror host name, internal CA certificate file. **Never** paste passwords/tokens in chat — they go into files on the server.
+8. HR/privacy: sign-off for real employee data (B7) and the privacy minimum (C7).
+9. Run the install on the server, the checks and the reconciliation; report results (no personal data in chat).
+10. UAT with pilot managers (week of 2026-10-26), then pilot start 2026-11-02.
+
+Later (after the pilot): Jira service account instead of the personal PAT; SBOM/CVE scanner (C11); bundle signing; clean-VM offline test.

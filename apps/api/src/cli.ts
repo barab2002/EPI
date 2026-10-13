@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { loadConfig } from './config';
 import { createDataSource } from './db/data-source';
+import { DirectoryClient } from './directory/directory.client';
 import { checkGitLabConnection, GitLabSync } from './ingestion/gitlab/gitlab.sync';
 import { checkJiraConnection, JiraSync } from './ingestion/jira/jira.sync';
 import { hasDemoData, seedDemo } from './seed/demo-seed';
@@ -19,7 +20,8 @@ const USAGE = `Usage: node dist/cli.js <command> [options]
              [--bots name,name] [--backfill-months 6] [--allow-http]
                                   create or update a read-only GitLab connection
   gitlab-check --name N           verify access: version, projects, recent merge requests
-  gitlab-sync --name N [--full]   sync merge requests and review activity`;
+  gitlab-sync --name N [--full]   sync merge requests and review activity
+  directory-check                 verify the read-only AD/LDAP account: team groups and member counts`;
 
 function parseArgs(argv: string[]): Record<string, string | true> {
   const out: Record<string, string | true> = {};
@@ -51,6 +53,7 @@ const COMMANDS = [
   'gitlab-add',
   'gitlab-check',
   'gitlab-sync',
+  'directory-check',
 ];
 
 async function main(cmd: string | undefined, rest: string[]): Promise<number> {
@@ -137,6 +140,28 @@ async function main(cmd: string | undefined, rest: string[]): Promise<number> {
         );
         console.log(`  issues in backfill window: ${r.matchingIssues}`);
         return 0;
+      }
+      case 'directory-check': {
+        if (!config.directory) {
+          console.error('directory-check: the directory is not configured (EPI_LDAP_* settings)');
+          return 78;
+        }
+        const groups = await new DirectoryClient(config.directory).readTeamGroups();
+        console.log(`Directory ${config.directory.url}: read-only bind accepted`);
+        for (const g of groups) {
+          console.log(
+            g.name === null
+              ? `  NOT FOUND  ${g.dn}`
+              : `  ${String(g.members.length).padStart(4)} member(s)  ${g.name}  (${g.dn})`,
+          );
+        }
+        const withoutEmail = groups.flatMap((g) => g.members).filter((m) => !m.email).length;
+        if (withoutEmail) {
+          console.log(
+            `  note: ${withoutEmail} member(s) have no e-mail; they cannot sign in with SSO`,
+          );
+        }
+        return groups.some((g) => g.name === null) ? 1 : 0;
       }
       case 'jira-sync': {
         const r = await new JiraSync(ds).run(required(args, 'name'), {

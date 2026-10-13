@@ -6,6 +6,7 @@ import { ErrorState, Loading } from './components/States';
 import { AdminPage } from './pages/admin/Admin';
 import { AuditTab } from './pages/admin/Audit';
 import { DataQualityTab } from './pages/admin/DataQuality';
+import { DirectoryTab } from './pages/admin/Directory';
 import { IdentitiesTab } from './pages/admin/Identities';
 import { IntegrationsTab } from './pages/admin/Integrations';
 import { OrganizationTab } from './pages/admin/Organization';
@@ -95,6 +96,7 @@ export function App() {
               <Route index element={<Navigate to="/admin/data-quality" replace />} />
               <Route path="organization" element={<OrganizationTab />} />
               <Route path="people" element={<PeopleTab />} />
+              <Route path="directory" element={<DirectoryTab />} />
               <Route path="integrations" element={<IntegrationsTab />} />
               <Route path="identities" element={<IdentitiesTab />} />
               <Route path="statuses" element={<StatusesTab />} />

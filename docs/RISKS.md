@@ -12,3 +12,4 @@
 | R8 | Docker Hub rate limits in build environments | Medium | Low | Configurable `EPI_IMAGE_REGISTRY` / internal mirror (ADR-009). |
 | R9 | Secret scanning tools (gitleaks/trivy/syft) not installed | Medium | Medium | Grep-based fallback now; request approval to add pinned tools. |
 | R10 | Dev container is ephemeral; unpushed work lost | Medium | Medium | Push every verified commit; checkpoint docs. |
+| R11 | AD team import removes people from a mapped team when the AD group is incomplete or misconfigured | Medium | Medium | Only mapped teams are affected; preview lists every leaver before apply; memberships end with history kept (re-add restores); nobody is deactivated; `directory-check` shows member counts first |

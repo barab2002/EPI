@@ -9,6 +9,7 @@
                      │  auth (OIDC BFF) · RBAC scope filter · audit
                      │  KPI engine (pure functions) · ingestion jobs
                      ├──OIDC──▶ keycloak (own DB/credentials)      [EPI-003]
+                     ├──read-only LDAPS──▶ AD team groups         [EPI-004c]
                      └──read-only REST──▶ Jira DC, GitLab 18+     [EPI-006/007]
 ```
 
@@ -27,6 +28,7 @@ No Redis/Kafka/Celery/Grafana/DevLake. Background sync runs in-process (daily `S
 4. **Audit:** admin and review mutations write `audit_events` (no secrets/review text in metadata).
 5. **Secrets:** environment / mounted files only; `secret_ref` names in DB, never values.
 6. **Source systems:** read-only tokens; no writeback.
+7. **Directory:** EPI binds to AD with the read-only account (password and CA from mounted files), reads only the configured team groups' members (name, e-mail, username, ID) and never writes; imports change EPI only after an administrator previews and applies the exact plan (ADR-030).
 
 ## Data flow (KPIs)
 
