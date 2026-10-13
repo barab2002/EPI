@@ -1,6 +1,6 @@
 # Resume point
 
-status: active — EPI-004c AD team import IN PROGRESS on `feature/ad-team-import` (from main @ `0b99c4d`)
+status: active — UX-01 UI/UX pass IN PROGRESS (owner 2026-10-13: start now, NO third-party skills — roles done manually); EPI-004c parked at step 2 on `feature/ad-team-import` (pushed)
 
 - **main** contains PRs #1–#12 (… scheduled daily sync, audit-log viewer, EPI-012a offline bundle); PR #13 `docs/pilot-decisions` records the owner's answers.
 - **EPI-004c progress:** (1) ✅ `src/directory/directory.client.ts` — read-only LDAPS reader (ldapts 9.2.0, MIT) for the configured team groups; `DirectoryConfig` from `EPI_LDAP_*` env (bind password/CA from files, ldaps required in production); readable `DirectoryError`s; `scripts/test-ldap.sh` (synthetic LDAPS directory, wired into `ci.sh`) + 4 integration tests. Design choice: EPI reads AD directly with the same read-only account instead of Keycloak admin sync (which would need manage-realm). (2) NEXT: migration `directory_team_mappings` (group_dn PK → team_id) + `external_identities` source `directory`; pure `planImport()` (create/update/link-by-email/add/transfer/end, conflicts for people in two team groups) with unit tests. (3) admin API: GET `/admin/directory` (groups, counts, mapping), PUT mapping, POST preview (plan + hash), POST apply (hash must match), audited; integration tests. (4) Admin "Directory" tab + web tests + e2e + screenshot. (5) compose.sso.yaml passes EPI_LDAP_* + mounts bind password/CA into `epi`; docs (ADR-027), CI, PR, merge.
