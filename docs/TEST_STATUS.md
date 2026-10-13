@@ -4,6 +4,8 @@ Environment: cloud dev container, Ubuntu 24.04, Node 22.22.0, pnpm 10.28.0, Dock
 
 | When (UTC) | Command | Result |
 |---|---|---|
+| 2026-10-13 01:50 | `bash scripts/ci.sh` (branch `feature/scheduled-sync`) | ✅ ALL CHECKS PASSED — **142 unit** (+22 schedule/DST, +1 config), **29 web** (+3 schedule card), **89 integration** (+10 scheduled sync: admin-only, validation/CSRF, before-hour, run-all with failure isolation, once per day after edit, two-process claim, skip running, disable), build |
+| 2026-10-13 01:45 | `bash scripts/e2e-admin.sh --screenshots` | ✅ 2 passed — incl. saving a daily schedule (next run shown) |
 | 2026-10-13 01:45 | `bash scripts/ci.sh` (branch `feature/org-admin`) | ✅ ALL CHECKS PASSED — 119 unit, **26 web**, **79 integration** (+9 organization admin), build |
 | 2026-10-13 01:40 | `bash scripts/e2e-admin.sh` ×5 (+1 with `--screenshots`) | ✅ 5/5 — both admin specs: sync/map/status/data-quality, and build team + onboard person + group manager sees it / other manager does not |
 | 2026-10-13 00:10 | `bash scripts/ci.sh` (branch `feature/identity-mapping`) | ✅ ALL CHECKS PASSED — **119 unit**, **22 web** (incl. 5 admin tabs), **70 integration** (RBAC 23, OIDC 16, Jira 10, GitLab 7, admin API 6, identity/data quality 8), build |

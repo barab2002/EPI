@@ -20,3 +20,4 @@ Dependency graph: `001 → 002 → {003, 006, 007}`; `003 → {004, 005}`; `{006
 | EPI-012 | P0 | Offline bundle, install tests, security/UAT | 3.0 | Planned | `bundle` + egress-blocked install; backup/restore tested; SBOM; pinned digests. |
 | EPI-013..016 | P1 | Competencies, self-review, dev plans, more KPIs, calibration | 12 | Phase 2 | Per spec §3 Phase 2. |
 | OPS-01 | P2 | Hourly resume scheduler scripts (`--dry-run`, **not enabled**) | 0.5 | Done (not enabled) | Lock, skip-when-active, bounded retries, logs; enablement requires approval C10. |
+| OPS-02 | P1 | Scheduled daily sync (in-process, admin-set hour/time zone) | 1.0 | Done (ADR-021) | Once per local day incl. DST; one claim across processes; failures isolated, cursor safe; admin-only, validated, audited; off by default. |

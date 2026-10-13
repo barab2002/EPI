@@ -115,9 +115,9 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process fake Jira DC and GitLab servers (synthetic data).
 
-### Administration › Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)
+### Administration › Integrations: daily sync schedule, Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)
 
-![Administration › Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)](screenshots/25-admin-integrations.png)
+![Administration › Integrations: daily sync schedule, Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)](screenshots/25-admin-integrations.png)
 
 ### Administration › Identity mapping: accounts seen in syncs, mapped to EPI people by search
 

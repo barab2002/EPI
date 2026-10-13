@@ -106,3 +106,10 @@ Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `depl
 - At least one active administrator always remains (checked in the service, below the API's self-change rule).
 - No hard deletes: memberships, roles and grades end with a date; teams are deactivated only when empty. Transfers end the old membership at the new start instant in one transaction, so historical KPIs stay attributed to the team at the time.
 - Deactivating a person revokes their sessions immediately. Audit entries record which fields changed, never personal values.
+
+## ADR-021 · 2026-10-13 · Accepted — In-process daily sync scheduler with a database claim
+
+- **Decision:** a minute timer inside `epi-api` (`SyncScheduler`) runs all enabled Jira/GitLab connections once a day at an admin-set local hour and IANA time zone. No cron container, queue or extra service (lean architecture, one-command install).
+- **Once per day:** the run is claimed with a conditional `UPDATE app_settings … WHERE lastRunDate < <local date>`, so several API processes sharing one database never double-run, and editing the schedule after today's run does not trigger a second one. "At or after the hour" gives same-day catch-up after downtime; keying by local date makes DST gaps and repeated hours run exactly once.
+- **Safety:** off by default (admin opt-in); sequential runs (gentle on Jira/GitLab rate limits); existing one-running-sync guard per connection; failures are isolated and never advance cursors; audited with counts only. `EPI_SYNC_SCHEDULER=off` disables it per process for operators who prefer an external scheduler calling the CLI.
+- **Settings store:** new `app_settings` table (key → non-secret JSON) for admin-editable runtime settings.
