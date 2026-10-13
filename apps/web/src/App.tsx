@@ -4,6 +4,7 @@ import { api, ApiError, Me, setCsrfToken } from './api';
 import { Layout } from './components/Layout';
 import { ErrorState, Loading } from './components/States';
 import { AdminPage } from './pages/admin/Admin';
+import { AuditTab } from './pages/admin/Audit';
 import { DataQualityTab } from './pages/admin/DataQuality';
 import { IdentitiesTab } from './pages/admin/Identities';
 import { IntegrationsTab } from './pages/admin/Integrations';
@@ -98,6 +99,7 @@ export function App() {
               <Route path="identities" element={<IdentitiesTab />} />
               <Route path="statuses" element={<StatusesTab />} />
               <Route path="data-quality" element={<DataQualityTab />} />
+              <Route path="audit" element={<AuditTab />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Route>

@@ -175,6 +175,22 @@ export interface PersonOption {
   identities: { source: string; external_id: string }[] | null;
 }
 
+export interface AuditEvent {
+  id: string;
+  at: string;
+  action: string;
+  actor: { id: string; name: string } | null;
+  resourceType: string;
+  resourceId: string | null;
+  resourceLabel: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface AuditPage {
+  items: AuditEvent[];
+  nextCursor: string | null;
+}
+
 export interface SyncScheduleInfo {
   enabled: boolean;
   hourLocal: number;
