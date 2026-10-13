@@ -118,5 +118,9 @@
   {
     "name": "30-admin-people",
     "title": "Administration \u203a People: create a person, assign roles on a scope, grade history"
+  },
+  {
+    "name": "31-admin-audit-log",
+    "title": "Administration \u203a Audit log: who changed what and when, filterable; review subjects and text never shown"
   }
 ]

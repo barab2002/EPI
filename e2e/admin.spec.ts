@@ -87,6 +87,18 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
   await expect(page.getByText('67%').or(page.getByText('66.7%'))).toBeVisible(); // 16 of 24 items
   await shot(page, '28-admin-data-quality');
 
+  // Audit log: the admin's own changes are recorded; filter to identity mapping.
+  // (Rows, not text: the action filter's <option>s carry the same names.)
+  const auditRows = (action: string) => page.getByRole('row').filter({ hasText: action });
+  await page.getByRole('link', { name: 'Audit log' }).click();
+  await expect(auditRows('sync.start').first()).toBeVisible();
+  await page.getByRole('combobox', { name: /Action/ }).selectOption({ label: 'Identity mapping' });
+  await expect(auditRows('identity.map')).toHaveCount(3);
+  await expect(auditRows('sync.start')).toHaveCount(0);
+  await page.getByRole('combobox', { name: /Action/ }).selectOption({ label: 'All actions' });
+  await expect(auditRows('sync.start').first()).toBeVisible();
+  await shot(page, '31-admin-audit-log');
+
   // A non-admin never sees administration.
   await page.getByRole('button', { name: 'Sign out' }).click();
   await page.getByRole('button', { name: /^Eli Engineer/ }).click();

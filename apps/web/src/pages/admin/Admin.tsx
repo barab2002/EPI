@@ -10,6 +10,7 @@ const TABS = [
   ['identities', 'Identity mapping'],
   ['statuses', 'Status mappings'],
   ['data-quality', 'Data quality'],
+  ['audit', 'Audit log'],
 ] as const;
 
 /** Administration area: configuration and data health only — never metrics or private reviews. */

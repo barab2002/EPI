@@ -6,6 +6,7 @@ import { IdentityController } from './admin/identity.controller';
 import { IdentityService } from './admin/identity.service';
 import { OrgAdminController } from './admin/org-admin.controller';
 import { OrgAdminService } from './admin/org-admin.service';
+import { AuditController } from './audit/audit.controller';
 import { AuditService } from './audit/audit.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthGuard } from './auth/auth.guard';
@@ -42,6 +43,7 @@ export class AppModule {
         AdminController,
         IdentityController,
         OrgAdminController,
+        AuditController,
       ],
       providers: [
         { provide: EPI_CONFIG, useValue: config },

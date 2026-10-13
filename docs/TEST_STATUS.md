@@ -4,6 +4,8 @@ Environment: cloud dev container, Ubuntu 24.04, Node 22.22.0, pnpm 10.28.0, Dock
 
 | When (UTC) | Command | Result |
 |---|---|---|
+| 2026-10-13 02:45 | `bash scripts/ci.sh` (branch `feature/audit-log`) | ✅ ALL CHECKS PASSED — 142 unit, **31 web** (+2 audit tab), **96 integration** (+7 audit log: admin-only, newest first, assessment redaction/no review text, filters, gap-free paging with equal timestamps, validation, actions list), build |
+| 2026-10-13 02:42 | `bash scripts/e2e-admin.sh` ×3 (first with `--screenshots`) | ✅ 3/3 — incl. Audit log tab filtering to identity mapping. First attempt failed: `getByText('sync.start')` matched a hidden `<option>` of the filter; fixed by targeting table rows |
 | 2026-10-13 01:50 | `bash scripts/ci.sh` (branch `feature/scheduled-sync`) | ✅ ALL CHECKS PASSED — **142 unit** (+22 schedule/DST, +1 config), **29 web** (+3 schedule card), **89 integration** (+10 scheduled sync: admin-only, validation/CSRF, before-hour, run-all with failure isolation, once per day after edit, two-process claim, skip running, disable), build |
 | 2026-10-13 01:45 | `bash scripts/e2e-admin.sh --screenshots` | ✅ 2 passed — incl. saving a daily schedule (next run shown) |
 | 2026-10-13 01:45 | `bash scripts/ci.sh` (branch `feature/org-admin`) | ✅ ALL CHECKS PASSED — 119 unit, **26 web**, **79 integration** (+9 organization admin), build |
