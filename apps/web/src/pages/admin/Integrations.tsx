@@ -1,15 +1,21 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api, Integration, SyncRun, SyncScheduleInfo } from '../../api';
-import { Empty, ErrorState, Loading } from '../../components/States';
+import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 import { Flash, FlashMessage } from './shared';
 
+const RUN_LABELS: Record<string, string> = {
+  succeeded: 'Succeeded',
+  failed: 'Failed',
+  running: 'Running',
+};
+
 function RunBadge({ status }: { status: string | undefined }) {
-  if (!status) return <span className="badge">no runs</span>;
+  if (!status) return <span className="badge">No runs yet</span>;
   const cls =
     status === 'succeeded' ? 'badge-managed' : status === 'failed' ? 'badge-bad' : 'badge-warn';
-  return <span className={`badge ${cls}`}>{status}</span>;
+  return <span className={`badge ${cls}`}>{RUN_LABELS[status] ?? status}</span>;
 }
 
 function timezones(): string[] {
@@ -31,7 +37,7 @@ export function SyncScheduleCard() {
   const [message, setMessage] = useState<Flash>(null);
   const [saving, setSaving] = useState(false);
 
-  if (info.state === 'loading') return <Loading />;
+  if (info.state === 'loading') return <Skeleton lines={4} />;
   if (info.state === 'error') return <ErrorState error={info.error} onRetry={info.reload} />;
   const s = info.data;
 
@@ -65,7 +71,7 @@ export function SyncScheduleCard() {
       <h2 id="schedule-title">Daily sync</h2>
       <p className="muted small">
         Runs every enabled connection once a day, one after another. If EPI was down at that hour,
-        it catches up later the same day. Failed runs never advance a connection&apos;s cursor.
+        it catches up later the same day. Failed runs never advance a connection’s cursor.
       </p>
       {!s.schedulerActive && (
         <p role="note" className="error-text small">
@@ -98,6 +104,8 @@ export function SyncScheduleCard() {
             name="timezone"
             defaultValue={s.timezone}
             list="epi-timezones"
+            autoComplete="off"
+            spellCheck={false}
             required
             maxLength={64}
           />
@@ -166,7 +174,7 @@ export function IntegrationsTab() {
           <code>gitlab-add</code> (see docs/JIRA.md, docs/GITLAB.md).
         </p>
         <FlashMessage flash={message} />
-        {list.state === 'loading' && <Loading />}
+        {list.state === 'loading' && <Skeleton lines={4} />}
         {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
         {list.state === 'ready' && list.data.length === 0 && (
           <Empty>
@@ -204,7 +212,7 @@ export function IntegrationsTab() {
                       )}
                     </td>
                     <td>
-                      <code>{c.secret_ref ?? '—'}</code>
+                      <code translate="no">{c.secret_ref ?? '—'}</code>
                     </td>
                     <td className="cell-actions">
                       <button

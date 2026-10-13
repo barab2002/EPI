@@ -75,3 +75,16 @@ export function formatDate(iso: string | null): string {
     year: 'numeric',
   });
 }
+
+/**
+ * A calendar month ("October 2026") from a date-only value. The API sends DATE columns as UTC
+ * midnight, so format in UTC: local time west of UTC would show the previous day's month.
+ */
+export function formatMonth(iso: string | null): string {
+  if (!iso) return t('noData');
+  return new Date(iso).toLocaleDateString('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}

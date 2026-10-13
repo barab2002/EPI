@@ -85,6 +85,8 @@ const en = {
   submitNote: 'Submitting shares the assessment and locks it for this month.',
   submitNoteNamed: 'Submitting shares it with {name} and locks it for this month.',
   saving: 'Saving…',
+  submitting: 'Submitting…',
+  signingIn: 'Signing in…',
   assessmentDoneFor: 'You submitted this month’s assessment on',
   assessmentDoneVisible: 'It is visible to {name} and locked.',
   saveDraft: 'Save draft',

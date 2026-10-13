@@ -92,7 +92,9 @@ export function AssessmentForm({
   const [growth, setGrowth] = useState(initial?.growth ?? 0);
   const [evidence, setEvidence] = useState(initial?.evidence ?? '');
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  /** Which action is in flight: the busy label goes on the button that was pressed. */
+  const [pending, setPending] = useState<'draft' | 'submit' | null>(null);
+  const busy = pending !== null;
   const [tried, setTried] = useState(false);
   const [dirty, setDirty] = useState(false);
   const independenceRef = useRef<HTMLInputElement>(null);
@@ -120,7 +122,7 @@ export function AssessmentForm({
     if (errors.independence) return independenceRef.current?.focus();
     if (errors.growth) return growthRef.current?.focus();
     if (errors.evidence) return evidenceRef.current?.focus();
-    setBusy(true);
+    setPending(submit ? 'submit' : 'draft');
     setStatus(null);
     try {
       await api.post('/api/v1/reviews', { subjectUserId, independence, growth, evidence, submit });
@@ -130,7 +132,7 @@ export function AssessmentForm({
     } catch (err) {
       setStatus({ kind: 'error', text: (err as Error).message });
     } finally {
-      setBusy(false);
+      setPending(null);
     }
   }
 
@@ -205,11 +207,22 @@ export function AssessmentForm({
         <span className="muted small actions-note">
           {subjectName ? t('submitNoteNamed').replace('{name}', subjectName) : t('submitNote')}
         </span>
-        <button type="button" className="btn" disabled={busy} onClick={() => save(false)}>
-          {busy ? t('saving') : t('saveDraft')}
+        <button
+          type="button"
+          className="btn"
+          disabled={busy}
+          aria-busy={pending === 'draft'}
+          onClick={() => save(false)}
+        >
+          {pending === 'draft' ? t('saving') : t('saveDraft')}
         </button>
-        <button type="submit" className="btn btn-primary" disabled={busy} aria-busy={busy}>
-          {t('submit')}
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={busy}
+          aria-busy={pending === 'submit'}
+        >
+          {pending === 'submit' ? t('submitting') : t('submit')}
         </button>
       </div>
     </form>

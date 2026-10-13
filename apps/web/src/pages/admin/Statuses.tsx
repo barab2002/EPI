@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api, StatusMapping } from '../../api';
-import { Empty, ErrorState, Loading } from '../../components/States';
+import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { Flash, FlashMessage } from './shared';
 
@@ -18,8 +18,11 @@ const CATEGORIES: [string, string][] = [
 export function StatusesTab() {
   const list = useApi<StatusMapping[]>('/api/v1/admin/status-mappings');
   const [message, setMessage] = useState<Flash>(null);
+  const [saving, setSaving] = useState<string | null>(null);
 
   async function save(m: StatusMapping, category: string) {
+    const key = `${m.connection}:${m.source_status_id}`;
+    setSaving(key);
     setMessage(null);
     try {
       await api.put(
@@ -35,6 +38,8 @@ export function StatusesTab() {
       list.reload();
     } catch (e) {
       setMessage({ kind: 'error', text: (e as Error).message });
+    } finally {
+      setSaving(null);
     }
   }
 
@@ -47,7 +52,7 @@ export function StatusesTab() {
         overwritten by syncs.
       </p>
       <FlashMessage flash={message} />
-      {list.state === 'loading' && <Loading />}
+      {list.state === 'loading' && <Skeleton lines={4} />}
       {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
       {list.state === 'ready' && list.data.length === 0 && (
         <Empty>No statuses yet — they appear after the first Jira sync.</Empty>
@@ -69,7 +74,9 @@ export function StatusesTab() {
                   <td>{m.connection}</td>
                   <td>
                     {m.source_status_name}{' '}
-                    <span className="muted small">#{m.source_status_id}</span>
+                    <span className="muted small" translate="no">
+                      #{m.source_status_id}
+                    </span>
                   </td>
                   <td>
                     <label
@@ -81,6 +88,8 @@ export function StatusesTab() {
                     <select
                       id={`cat-${m.connection}-${m.source_status_id}`}
                       value={m.category ?? ''}
+                      disabled={saving !== null}
+                      aria-busy={saving === `${m.connection}:${m.source_status_id}`}
                       onChange={(e) => save(m, e.target.value)}
                     >
                       {CATEGORIES.map(([v, label]) => (

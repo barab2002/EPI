@@ -4,7 +4,7 @@ import { KpiPanel } from '../components/KpiPanel';
 import { PageTitle } from '../components/Layout';
 import { ErrorState, Skeleton } from '../components/States';
 import { TeamOverview } from '../components/TeamOverview';
-import { roleLabel } from '../format';
+import { formatMonth, roleLabel } from '../format';
 import { t } from '../i18n';
 import { useSession } from '../session';
 import { useApi } from '../useApi';
@@ -19,9 +19,6 @@ interface DueList {
   }[];
 }
 
-const monthOf = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-
 /** Monthly assessments the manager still has to write: the one action the home page leads with. */
 function AssessmentsDue() {
   const due = useApi<DueList>('/api/v1/reviews/due');
@@ -31,7 +28,7 @@ function AssessmentsDue() {
         <h2 id="due-title">
           {t('assessmentsDue')}
           {due.state === 'ready' && due.data.cycle && (
-            <span className="muted"> for {monthOf(due.data.cycle.periodStart)}</span>
+            <span className="muted"> for {formatMonth(due.data.cycle.periodStart)}</span>
           )}
         </h2>
         {due.state === 'ready' && due.data.people.length > 0 && (

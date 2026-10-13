@@ -70,7 +70,12 @@ export function TeamPage() {
                       ) : (
                         m.display_name
                       )}
-                      {m.is_lead && <span className="badge"> {t('lead')}</span>}
+                      {m.is_lead && (
+                        <>
+                          {' '}
+                          <span className="badge">{t('lead')}</span>
+                        </>
+                      )}
                     </td>
                     <td>{m.grade ?? '—'}</td>
                   </tr>

@@ -30,7 +30,7 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
   const rows = page.getByRole('row');
   for (const name of ['jira-pilot', 'gitlab-pilot']) {
     await rows.filter({ hasText: name }).getByRole('button', { name: 'Sync now' }).click();
-    await expect(rows.filter({ hasText: name }).getByText('succeeded').first()).toBeVisible({
+    await expect(rows.filter({ hasText: name }).getByText('Succeeded').first()).toBeVisible({
       timeout: 20_000,
     });
   }
@@ -104,7 +104,7 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
   await page.getByRole('button', { name: /^Eli Engineer/ }).click();
   await expect(page.getByRole('link', { name: 'Administration' })).toHaveCount(0);
   await page.goto('/admin/identities');
-  await expect(page.getByText('Administrator role required.')).toBeVisible();
+  await expect(page.getByText(/Administration needs the Administrator role/)).toBeVisible();
 });
 
 test('admin builds a team and onboards a person; the group manager sees the new team', async ({

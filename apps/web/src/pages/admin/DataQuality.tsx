@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { DataQuality } from '../../api';
-import { ErrorState, Loading } from '../../components/States';
+import { ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 
@@ -33,7 +33,7 @@ function Metric({
 /** Can the KPIs be trusted? Freshness, identity coverage, status mapping and link coverage. */
 export function DataQualityTab() {
   const dq = useApi<DataQuality>('/api/v1/admin/data-quality');
-  if (dq.state === 'loading') return <Loading />;
+  if (dq.state === 'loading') return <Skeleton lines={4} />;
   if (dq.state === 'error') return <ErrorState error={dq.error} onRetry={dq.reload} />;
   const d = dq.data;
   const lowCoverage = (p: number | null) => p !== null && p < 90;
@@ -63,7 +63,9 @@ export function DataQualityTab() {
                     <td>{formatTime(c.lastSuccessAt)}</td>
                     <td>
                       {c.stale ? (
-                        <span className="badge badge-bad">Stale (&gt; {d.staleAfterHours} h)</span>
+                        <span className="badge badge-bad">
+                          Stale: last sync over {d.staleAfterHours}&nbsp;h ago
+                        </span>
                       ) : (
                         <span className="badge badge-managed">Fresh</span>
                       )}

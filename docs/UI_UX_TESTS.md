@@ -25,3 +25,47 @@
 | 2026-10-13 10:20 | web unit · demo e2e (+ home assertion) · admin e2e · captures ×2 rounds | ✅ 33/33 · 6 passed · 2/2 · reviewed |
 | 2026-10-13 10:55 | web unit (2 new form tests: errors+focus, draft prefill) · demo e2e ×2 (incl. re-run path) · pilot flow on a **fresh** throwaway database (port 8095, removed after) · admin e2e · captures | ✅ 34/34 · 6 passed · 3/3 fresh · 2/2 · reviewed. First demo run failed only because Docker was down after an idle container restart |
 | 2026-10-13 11:55 | web unit · lint/typecheck · admin e2e · layout guard · captures before/after (all admin tabs, 4 widths) | ✅ 34/34 · clean · 2/2 · ❌ sign-in 366 px at 320 with SSO configured (UX-051) → fixed → ✅ · reviewed (inputs stretched vertically in stacked fields found and fixed in round 2) |
+| 2026-10-13 13:30 | web unit (+3: formatMonth, useMutation re-entry, local today) also under `TZ=America/Los_Angeles` · contrast check · demo e2e incl. layout guard · admin e2e (screenshots) · doc screenshots ×2 (idempotent) | ✅ 37/37 · 38/38 pairs (after UX-056) · 6 passed · 2/2 · 2/2 runs |
+
+## Contrast (WCAG 2.2 AA, from `node scripts/check-contrast.mjs --markdown`)
+
+| Pair | Theme | Ratio | Minimum | Result |
+|---|---|---|---|---|
+| Body text on surface | light | 17.96:1 | 4.5:1 | pass |
+| Body text on canvas | light | 16.46:1 | 4.5:1 | pass |
+| Secondary text on surface | light | 6.25:1 | 4.5:1 | pass |
+| Secondary text on canvas | light | 5.73:1 | 4.5:1 | pass |
+| Secondary text on sidebar | light | 5.98:1 | 4.5:1 | pass |
+| Secondary text on sunken | light | 5.47:1 | 4.5:1 | pass |
+| Captions on surface | light | 4.58:1 | 4.5:1 | pass |
+| Links on surface | light | 5.57:1 | 4.5:1 | pass |
+| Navigation on sidebar | light | 5.33:1 | 4.5:1 | pass |
+| Selected navigation | light | 4.89:1 | 4.5:1 | pass |
+| Primary button label | light | 5.57:1 | 4.5:1 | pass |
+| Positive on surface | light | 6.65:1 | 4.5:1 | pass |
+| Success message | light | 5.79:1 | 4.5:1 | pass |
+| Caution on surface | light | 5.93:1 | 4.5:1 | pass |
+| Critical on surface | light | 5.89:1 | 4.5:1 | pass |
+| Error message / danger hover | light | 5.11:1 | 4.5:1 | pass |
+| Notice text | light | 8.55:1 | 4.5:1 | pass |
+| Input edge on surface | light | 3.39:1 | 3:1 | pass |
+| Input edge on canvas | light | 3.32:1 | 3:1 | pass |
+| Body text on surface | dark | 15.99:1 | 4.5:1 | pass |
+| Body text on canvas | dark | 17.27:1 | 4.5:1 | pass |
+| Secondary text on surface | dark | 7.51:1 | 4.5:1 | pass |
+| Secondary text on canvas | dark | 8.11:1 | 4.5:1 | pass |
+| Secondary text on sidebar | dark | 7.80:1 | 4.5:1 | pass |
+| Secondary text on sunken | dark | 6.88:1 | 4.5:1 | pass |
+| Captions on surface | dark | 5.60:1 | 4.5:1 | pass |
+| Links on surface | dark | 6.30:1 | 4.5:1 | pass |
+| Navigation on sidebar | dark | 6.54:1 | 4.5:1 | pass |
+| Selected navigation | dark | 4.94:1 | 4.5:1 | pass |
+| Primary button label | dark | 6.76:1 | 4.5:1 | pass |
+| Positive on surface | dark | 8.98:1 | 4.5:1 | pass |
+| Success message | dark | 6.89:1 | 4.5:1 | pass |
+| Caution on surface | dark | 10.69:1 | 4.5:1 | pass |
+| Critical on surface | dark | 7.41:1 | 4.5:1 | pass |
+| Error message / danger hover | dark | 5.90:1 | 4.5:1 | pass |
+| Notice text | dark | 10.86:1 | 4.5:1 | pass |
+| Input edge on surface | dark | 3.34:1 | 3:1 | pass |
+| Input edge on canvas | dark | 3.31:1 | 3:1 | pass |

@@ -1,7 +1,7 @@
 [
   {
     "name": "01-sign-in",
-    "title": "Sign-in page: single sign-on button and demo people (synthetic)"
+    "title": "Sign-in page: single sign-on, demo people grouped by role (synthetic)"
   },
   {
     "name": "02-keycloak-login",
@@ -9,51 +9,51 @@
   },
   {
     "name": "03-home-team-lead-sso",
-    "title": "Team lead home after SSO sign-in: own KPIs and managed team"
+    "title": "Team lead home: assessments to write this month, team overview, own KPIs"
   },
   {
     "name": "04-home-engineering-manager",
-    "title": "Engineering manager home: organization KPIs and managed teams"
+    "title": "Engineering manager home: organization KPIs and teams"
   },
   {
     "name": "05-organization-tree",
-    "title": "Organization \u2192 group \u2192 team tree with access badges"
+    "title": "Organization → group → team tree with access badges"
   },
   {
     "name": "06-group-overview",
-    "title": "Group overview: group KPIs with trends and its teams"
+    "title": "Group overview: group KPIs and its teams (alphabetical, never ranked)"
   },
   {
     "name": "07-team-overview",
-    "title": "Team overview (managed): KPI cards, trend, sample, confidence, freshness, members"
+    "title": "Team overview (managed): KPI strip with trend, sample, confidence and freshness; members"
   },
   {
     "name": "08-kpi-window-180d",
-    "title": "Switching the KPI window (30/90/180 days)"
+    "title": "Switching the KPI window (30/90/180 days; kept in the URL)"
   },
   {
     "name": "09-kpi-explanation-drawer",
-    "title": "\"How calculated?\" drawer: formula, population, source, window, version, exclusions"
+    "title": "\"How calculated?\" sheet: formula, population, source, window, version, exclusions"
   },
   {
     "name": "10-kpi-evidence",
-    "title": "Drawer continued: limitations, worked example computed by the engine, items behind the value"
+    "title": "Sheet continued: limitations, worked example computed by the engine, items behind the value"
   },
   {
     "name": "11-developer-profile",
-    "title": "Developer profile (manager view): grade, team, flow KPIs, assessments"
+    "title": "Developer profile (manager view): grade, team, flow KPIs with neutral trends, assessments"
   },
   {
     "name": "12-assessment-form",
-    "title": "Monthly manager assessment: anchored 1\u20135 rubrics with required evidence"
+    "title": "Monthly manager assessment: anchored 1–5 rubrics with required evidence"
   },
   {
     "name": "13-assessment-submitted",
-    "title": "Submitted assessment (locked) in the developer profile"
+    "title": "After submitting: lasting confirmation; the assessment is locked for the month"
   },
   {
     "name": "14-out-of-scope",
-    "title": "Out-of-scope team opened by URL: \u201cNot available\u201d (server returns 404)"
+    "title": "Out-of-scope team opened by URL: “Not available” (server returns 404)"
   },
   {
     "name": "15-home-developer",
@@ -69,7 +69,7 @@
   },
   {
     "name": "18-admin-structure-only",
-    "title": "Administrator: organization structure only \u2014 no KPIs or private reviews"
+    "title": "Administrator: organization structure only — no KPIs or private reviews"
   },
   {
     "name": "19-kpi-catalog",
@@ -89,38 +89,38 @@
   },
   {
     "name": "23-mobile-home",
-    "title": "Mobile layout: home"
+    "title": "Phone layout: home"
   },
   {
     "name": "24-mobile-team",
-    "title": "Mobile layout: team KPIs"
+    "title": "Phone layout: team KPIs"
   },
   {
     "name": "25-admin-integrations",
-    "title": "Administration \u203a Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)"
+    "title": "Administration › Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)"
   },
   {
     "name": "26-admin-identity-mapping",
-    "title": "Administration \u203a Identity mapping: accounts seen in syncs, mapped to EPI people by search"
+    "title": "Administration › Identity mapping: accounts seen in syncs, mapped to EPI people by search"
   },
   {
     "name": "27-admin-status-mappings",
-    "title": "Administration \u203a Status mappings: Jira status \u2192 EPI category, inferred vs admin-confirmed"
+    "title": "Administration › Status mappings: Jira status → EPI category, inferred vs admin-confirmed"
   },
   {
     "name": "28-admin-data-quality",
-    "title": "Administration \u203a Data quality: freshness, identity coverage, MR-to-Jira links, unmapped statuses"
+    "title": "Administration › Data quality: freshness, identity coverage, MR-to-Jira links, unmapped statuses"
   },
   {
     "name": "29-admin-organization",
-    "title": "Administration \u203a Organization: groups and teams, members with dates, add/transfer and end memberships"
+    "title": "Administration › Organization: groups and teams, members with dates, add/transfer and end memberships"
   },
   {
     "name": "30-admin-people",
-    "title": "Administration \u203a People: create a person, assign roles on a scope, grade history"
+    "title": "Administration › People: create a person, assign roles on a scope, grade history"
   },
   {
     "name": "31-admin-audit-log",
-    "title": "Administration \u203a Audit log: who changed what and when, filterable; review subjects and text never shown"
+    "title": "Administration › Audit log: who changed what and when, filterable; review subjects and text never shown"
   }
 ]

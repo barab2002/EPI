@@ -7,6 +7,10 @@ import { useApi } from '../useApi';
 import { KpiWindow, useKpiWindow, withWindow } from './useKpiWindow';
 
 const OVERVIEW = ['CYCLE_TIME', 'REVIEW_WAITING_TIME'] as const;
+const LABELS: Record<(typeof OVERVIEW)[number], string> = {
+  CYCLE_TIME: 'Cycle Time',
+  REVIEW_WAITING_TIME: 'Review Waiting Time',
+};
 
 function kpiCell(cards: KpiCard[], code: string): string {
   const c = cards.find((k) => k.code === code);
@@ -37,13 +41,17 @@ function TeamRow({ team, window }: { team: TeamNode; window: KpiWindow }) {
         <Link to={withWindow(`/teams/${team.id}`, window)}>{team.name}</Link>{' '}
         <AccessBadge access={team.access} />
       </th>
-      <td className="num">{team.memberCount ?? '—'}</td>
+      <td className="num" data-label={t('members')}>
+        {team.memberCount ?? '—'}
+      </td>
       {OVERVIEW.map((code) => (
-        <td key={code} className="num">
+        <td key={code} className="num" data-label={LABELS[code]}>
           {!canSee ? '—' : ready ? kpiCell(ready, code) : cards.state === 'error' ? '—' : '…'}
         </td>
       ))}
-      <td className="num">{canSee && ready ? formatDate(asOf) : '—'}</td>
+      <td className="num" data-label={t('dataAsOf')}>
+        {canSee && ready ? formatDate(asOf) : '—'}
+      </td>
     </tr>
   );
 }
@@ -54,19 +62,18 @@ export function TeamOverview({ teams }: { teams: TeamNode[] }) {
   const sorted = [...teams].sort((a, b) => a.name.localeCompare(b.name));
   return (
     <div className="table-wrap">
-      <table className="table">
+      <table className="table table-stack">
         <thead>
           <tr>
             <th scope="col">{t('team')}</th>
             <th scope="col" className="num">
               {t('members')}
             </th>
-            <th scope="col" className="num">
-              Cycle Time
-            </th>
-            <th scope="col" className="num">
-              Review Waiting Time
-            </th>
+            {OVERVIEW.map((code) => (
+              <th key={code} scope="col" className="num">
+                {LABELS[code]}
+              </th>
+            ))}
             <th scope="col" className="num">
               {t('dataAsOf')}
             </th>

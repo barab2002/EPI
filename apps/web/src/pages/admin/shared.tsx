@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PersonOption } from '../../api';
 import { useApi } from '../../useApi';
 
 export type Flash = { kind: 'ok' | 'error'; text: string } | null;
 
+/** Result of an admin action. Scrolls itself into view: forms lower in a long panel report here. */
 export function FlashMessage({ flash }: { flash: Flash }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (flash) ref.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [flash]);
   if (!flash) return null;
   return (
     <p
+      ref={ref}
       role={flash.kind === 'error' ? 'alert' : 'status'}
       className={`flash ${flash.kind === 'error' ? 'flash-error' : 'flash-ok'}`}
     >
@@ -16,9 +22,18 @@ export function FlashMessage({ flash }: { flash: Flash }) {
   );
 }
 
-/** Runs an admin mutation and reports the result in a flash message. */
+/**
+ * Runs an admin mutation and reports the result in a flash message. While one is in flight,
+ * further calls are ignored (no duplicate creates from a double click) and `run.pending` is true
+ * so forms can disable their submit buttons.
+ */
 export function useMutation(setFlash: (f: Flash) => void) {
-  return async (action: () => Promise<unknown>, ok: string, after?: () => void) => {
+  const [pending, setPending] = useState(false);
+  const inFlight = useRef(false);
+  const run = async (action: () => Promise<unknown>, ok: string, after?: () => void) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setPending(true);
     setFlash(null);
     try {
       await action();
@@ -26,11 +41,19 @@ export function useMutation(setFlash: (f: Flash) => void) {
       after?.();
     } catch (e) {
       setFlash({ kind: 'error', text: (e as Error).message });
+    } finally {
+      inFlight.current = false;
+      setPending(false);
     }
   };
+  return Object.assign(run, { pending });
 }
 
-export const today = () => new Date().toISOString().slice(0, 10);
+export const today = () => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
 /** yyyy-mm-dd from a date input → ISO at 00:00 UTC; today means "now". */
 export const dateToIso = (d: string) =>
   d === today() ? new Date().toISOString() : new Date(`${d}T00:00:00Z`).toISOString();

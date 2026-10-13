@@ -20,7 +20,7 @@ visible inconsistency or friction · **Low** polish. Close an issue only with ev
 | UX-011 | Low | segmented control | Full blue fill on the active period is loud for a frequent, low-stakes control. | captures | §5 Segmented control | Fixed (slice 1) |
 | UX-012 | Low | KPI drawer | Weak label/value hierarchy; text "Close" button; formula code wraps mid-token; no bottom sheet on mobile. | `04-kpi-drawer--*.png` | §5 Sheet | Fixed (slice 1) — icon close, side/bottom sheet, focus trap + return |
 | UX-013 | Low | login | Long undifferentiated grid; no product identity; sign-in purpose unclear. | `01-login--desktop.png` | Slice 3 | Fixed (slice 3) — brand + purpose line, SSO primary with divider, role hints per demo group |
-| UX-014 | Low | copy | "…" written as "..." in placeholders ("Find a person..."); middle-dot meta strings ("Platform · 7 members"); "→" suffix on links (generic tells per frontend-design). | code grep | §6 Copy | Open |
+| UX-014 | Low | copy | "…" written as "..." in placeholders ("Find a person..."); middle-dot meta strings ("Platform · 7 members"); "→" suffix on links (generic tells per frontend-design). | code grep | §6 Copy | Fixed — no "...", middle dots or arrow suffixes left in UI copy (grep, slice 6) |
 | UX-015 | Low | brand | Generic "E" square mark; tagline wraps in sidebar. | captures | §5 | Fixed (slice 1) — authored mark, brand links home |
 
 ## Found during slice 1
@@ -52,7 +52,7 @@ probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence sk
 | UX-029 | Low | N/A without reason; spinners instead of skeletons; page jump on load (A) | Fixed — reason line; `Skeleton` in pages and KPI panels |
 | UX-030 | Low | Middle dots / arrow in UI copy (B) | Fixed everywhere (admin run summaries, schedule line, data-quality hints, audit details in slice 5) |
 | UX-031 | Low | Duplicate h2 "Monthly assessments"/"Monthly assessment" (B) | Fixed — form title "Write this month’s assessment" |
-| UX-032 | Low | KPI disclaimer repeated per panel (A) | Open — kept (ethics copy); revisit with owner |
+| UX-032 | Low | KPI disclaimer repeated per panel (A) | Decided — kept on every KPI section (ADR-028); revisit in the pilot |
 
 ## Slice 3 (home + sign-in)
 
@@ -62,7 +62,7 @@ probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence sk
 | UX-034 | Medium | Managed teams shown as tiles without status | Fixed — shared `TeamOverview` table (same as group page) |
 | UX-035 | Medium | Desktop sidebar background ended after one screen on long pages | Fixed — column painted on `.shell` (RTL aware) |
 | UX-036 | Medium | Phone KPI strip overflowed its section (mobile rule overridden by later base rule) | Fixed — mobile override placed after base rules |
-| UX-037 | Low | Team overview table scrolls horizontally on phones | Open — acceptable (scrolls inside its section); revisit with a stacked mobile layout in slice 6 |
+| UX-037 | Low | Team overview table scrolls horizontally on phones | Fixed in slice 6 — stacked labelled rows below 600 px (`.table-stack`) |
 
 ## Slice 4 (reviews + assessment form)
 
@@ -88,3 +88,24 @@ probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence sk
 | UX-050 | Low | Org tree: team links and member counts on different baselines; team panel heading level and "— members" copy | Fixed — aligned rows, "Members of Payments" as the section h2 |
 | UX-051 | Medium | With SSO configured, the sign-in button's long label overflowed at 320 px (`white-space: nowrap`) | Fixed — full-width buttons wrap; caught by the layout guard |
 | UX-052 | Low | Team and grade history as bulleted text ("Senior: 26 Mar 2026 – now") | Fixed — hairline lists with dates aligned to the end |
+
+## Slice 6 (full audit)
+
+Sources: Vercel Web Interface Guidelines review of every page and component (sub-agent, read-only), the token contrast check, and re-captured screens.
+
+| ID | Sev | Issue | Status |
+|---|---|---|---|
+| UX-053 | **High** | Assessment month was computed from a DATE sent as UTC midnight and formatted in local time: west of UTC an October assessment showed "30 Sept 2026" | Fixed — `formatMonth` (UTC), shown as "October 2026" like the home page; unit test run in `America/Los_Angeles` |
+| UX-054 | Medium | Admin date inputs defaulted to the UTC date: in Israel just after midnight "today" was yesterday and today could not be picked | Fixed — `today()` from local date parts; test |
+| UX-055 | Medium | Admin forms could be submitted twice while a request ran (duplicate groups/teams/people, racing status-mapping saves, double identity mapping) | Fixed — `useMutation` ignores re-entry and exposes `pending`; submit buttons disabled; rename/add forms busy; status selects disabled while saving; unit test |
+| UX-056 | Medium | Input borders 1.47:1 / 1.76:1, below WCAG 1.4.11 (3:1) | Fixed — `--input-border`; CI contrast check (ADR-029) |
+| UX-057 | Medium | Feedback of actions lower in a long admin panel appeared off-screen at the top | Fixed — the flash scrolls itself into view (`block: nearest`, clears the sticky bar) |
+| UX-058 | Low | Busy label on the wrong button (Submit showed "Saving…" on Save draft); sign-in showed no progress on the chosen person | Fixed — "Submitting…" / "Signing in…" on the pressed control, `aria-busy` |
+| UX-059 | Low | Admin times without year; raw run statuses ("succeeded"); "1 members"; skipped heading level; straight apostrophe; "> 24 h"; badge padding | Fixed |
+| UX-060 | Low | Spinners for content loads in admin and catalog | Fixed — skeletons |
+| UX-061 | Low | Missing `theme-color`, `translate="no"` on codes/IDs, number alignment in evidence and identity tables, `overflow-wrap` on evidence text | Fixed |
+| UX-062 | Low | Admin filters and selections (audit filters, selected team/person, identity filters) are not in the URL | Open — deep links for admin tools; low value for the pilot |
+| UX-063 | Low | Unsaved assessment text is guarded on tab close only, not on in-app navigation (no data router, so no `useBlocker`) | Open — needs a router change; drafts can be saved explicitly |
+| UX-064 | Low | Developer-page breadcrumbs drop the `?window=` parameter | Open — cosmetic |
+
+The documentation screenshots (`docs/SCREENSHOTS.md`) were regenerated by a committed spec (`e2e/doc-screenshots.spec.ts`).

@@ -80,7 +80,7 @@ export function KpiDrawer({
             <dl className="defs">
               <dt>{t('formula')}</dt>
               <dd>
-                <code>{exp.data.formula}</code>
+                <code translate="no">{exp.data.formula}</code>
               </dd>
               <dt>{t('population')}</dt>
               <dd>{exp.data.population}</dd>
@@ -99,7 +99,8 @@ export function KpiDrawer({
               <dd>{exp.data.minimumSample}</dd>
               <dt>{t('version')}</dt>
               <dd>
-                {exp.data.code} v{exp.data.version}, <code>{exp.data.implementation}</code>
+                {exp.data.code} v{exp.data.version},{' '}
+                <code translate="no">{exp.data.implementation}</code>
               </dd>
             </dl>
             <h3>{t('exclusions')}</h3>
@@ -139,14 +140,16 @@ export function KpiDrawer({
                       <thead>
                         <tr>
                           <th scope="col">Item</th>
-                          <th scope="col">Value</th>
+                          <th scope="col" className="num">
+                            Value
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {card.evidence.observations.map((o) => (
                           <tr key={o.key}>
-                            <td>{o.key}</td>
-                            <td>{formatValue(o.value, card.unit)}</td>
+                            <td translate="no">{o.key}</td>
+                            <td className="num">{formatValue(o.value, card.unit)}</td>
                           </tr>
                         ))}
                       </tbody>
