@@ -4,46 +4,76 @@ import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 import { PersonSearch } from './shared';
+import { AdminKey, ta, taf } from './i18n-admin';
 
-const ACTION_GROUPS = [
-  ['', 'All actions'],
-  ['auth.', 'Sign-ins and sign-outs'],
-  ['role.', 'Role changes'],
-  ['membership.', 'Team memberships'],
-  ['identity.', 'Identity mapping'],
-  ['sync.', 'Syncs'],
-] as const;
+const ACTION_GROUPS: [string, AdminKey][] = [
+  ['', 'grpAll'],
+  ['auth.', 'grpAuth'],
+  ['role.', 'grpRole'],
+  ['membership.', 'grpMembership'],
+  ['identity.', 'tabIdentities'],
+  ['sync.', 'grpSync'],
+  ['directory.', 'grpDirectory'],
+];
 
 /** Plain-language names for audit actions; unknown actions fall back to their code. */
-const ACTION_LABELS: Record<string, string> = {
-  'auth.login': 'Signed in',
-  'auth.login_failed': 'Sign-in failed',
-  'auth.logout': 'Signed out',
-  'assessment.create': 'Assessment written',
-  'assessment.update': 'Assessment changed',
-  'grade.set': 'Grade set',
-  'group.create': 'Group created',
-  'group.rename': 'Group renamed',
-  'identity.linked': 'Sign-in identity linked',
-  'identity.map': 'Account mapped',
-  'identity.unmap': 'Account unmapped',
-  'integration.upsert': 'Connection saved',
-  'membership.add': 'Added to team',
-  'membership.end': 'Team membership ended',
-  'person.create': 'Person added',
-  'person.update': 'Person changed',
-  'role.assign': 'Role assigned',
-  'role.end': 'Role ended',
-  'seed.demo': 'Demo data loaded',
-  'status_mapping.update': 'Status mapping changed',
-  'sync.schedule': 'Sync scheduled',
-  'sync.scheduled': 'Scheduled sync ran',
-  'sync.start': 'Sync started',
-  'sync_schedule.update': 'Daily sync changed',
-  'team.create': 'Team created',
-  'team.update': 'Team changed',
+const ACTION_LABELS: Record<string, AdminKey> = {
+  'auth.login': 'actAuthLogin',
+  'auth.login_failed': 'actAuthLoginFailed',
+  'auth.logout': 'actAuthLogout',
+  'assessment.create': 'actAssessmentCreate',
+  'assessment.update': 'actAssessmentUpdate',
+  'grade.set': 'actGradeSet',
+  'group.create': 'actGroupCreate',
+  'group.rename': 'actGroupRename',
+  'identity.linked': 'actIdentityLinked',
+  'identity.map': 'actIdentityMap',
+  'identity.unmap': 'actIdentityUnmap',
+  'integration.upsert': 'actIntegrationUpsert',
+  'integration.create': 'actIntegrationCreate',
+  'integration.update': 'actIntegrationUpdate',
+  'membership.add': 'actMembershipAdd',
+  'membership.transfer': 'actMembershipTransfer',
+  'membership.end': 'actMembershipEnd',
+  'person.create': 'actPersonCreate',
+  'person.update': 'actPersonUpdate',
+  'role.assign': 'actRoleAssign',
+  'role.end': 'actRoleEnd',
+  'seed.demo': 'actSeedDemo',
+  'status_mapping.update': 'actStatusMappingUpdate',
+  'sync.schedule': 'actSyncSchedule',
+  'sync.scheduled': 'actSyncScheduled',
+  'sync.start': 'actSyncStart',
+  'sync_schedule.update': 'actSyncScheduleUpdate',
+  'team.create': 'actTeamCreate',
+  'team.update': 'actTeamUpdate',
+  'directory.mapping': 'actDirectoryMapping',
+  'directory.link': 'actDirectoryLink',
+  'directory.import': 'actDirectoryImport',
+  'retention.run': 'actRetentionRun',
 };
-export const actionLabel = (a: string) => ACTION_LABELS[a] ?? a;
+export const actionLabel = (a: string) => (ACTION_LABELS[a] ? ta(ACTION_LABELS[a]) : a);
+
+/** Plain names for audited resource types; unknown types are shown with spaces. */
+const RESOURCE_LABELS: Record<string, AdminKey> = {
+  app_setting: 'resAppSetting',
+  assessment: 'resAssessment',
+  directory: 'resDirectory',
+  directory_group: 'resDirectoryGroup',
+  external_identity: 'resExternalIdentity',
+  group: 'resGroup',
+  integration_connection: 'resIntegrationConnection',
+  retention: 'resRetention',
+  role_assignment: 'resRoleAssignment',
+  session: 'resSession',
+  status_mapping: 'resStatusMapping',
+  system: 'resSystem',
+  team: 'resTeam',
+  team_membership: 'resTeamMembership',
+  user: 'resUser',
+};
+const resourceLabel = (type: string) =>
+  RESOURCE_LABELS[type] ? ta(RESOURCE_LABELS[type]) : type.replace(/_/g, ' ');
 
 /** Readable metadata pairs; values are never personal data or review text. */
 function details(m: Record<string, unknown>): string[] {
@@ -116,22 +146,19 @@ export function AuditTab() {
 
   return (
     <section className="panel" aria-labelledby="audit-title">
-      <h2 id="audit-title">Audit log</h2>
-      <p className="muted small">
-        Every administrative change, review action, sign-in and sync, newest first. Entries are
-        append-only. For reviews you see who acted and when — never about whom or what was written.
-      </p>
+      <h2 id="audit-title">{ta('tabAudit')}</h2>
+      <p className="muted small">{ta('auditIntro')}</p>
       <div className="inline-form">
         <label className="inline-field">
-          Action
+          {ta('action')}
           <select value={action} onChange={(e) => setAction(e.target.value)}>
             {ACTION_GROUPS.map(([v, l]) => (
               <option key={v} value={v}>
-                {l}
+                {ta(l)}
               </option>
             ))}
             {knownExact.length > 0 && (
-              <optgroup label="Exact action">
+              <optgroup label={ta('exactAction')}>
                 {knownExact.map((a) => (
                   <option key={a} value={a}>
                     {actionLabel(a)} ({a})
@@ -143,21 +170,21 @@ export function AuditTab() {
         </label>
         {actor ? (
           <span className="form-subject">
-            By&nbsp;<strong>{actor.display_name}</strong>&nbsp;
+            {ta('by')}&nbsp;<strong>{actor.display_name}</strong>&nbsp;
             <button
               type="button"
               className="btn btn-sm"
               onClick={() => setActor(null)}
-              aria-label={`Clear person filter (${actor.display_name})`}
+              aria-label={taf('clearPersonFilter', { name: actor.display_name })}
             >
-              Clear
+              {ta('clear')}
             </button>
           </span>
         ) : (
-          <PersonSearch label="Filter by person…" onPick={setActor} />
+          <PersonSearch label={ta('filterByPerson')} onPick={setActor} />
         )}
         <label className="inline-field">
-          From
+          {ta('from')}
           <input
             type="date"
             value={from}
@@ -166,7 +193,7 @@ export function AuditTab() {
           />
         </label>
         <label className="inline-field">
-          To
+          {ta('to')}
           <input
             type="date"
             value={to}
@@ -177,18 +204,18 @@ export function AuditTab() {
       </div>
       {error && <ErrorState error={error} onRetry={() => setTick((n) => n + 1)} />}
       {!error && items === null && <Skeleton lines={4} />}
-      {items !== null && items.length === 0 && <Empty>No audit events match these filters.</Empty>}
+      {items !== null && items.length === 0 && <Empty>{ta('noAuditEvents')}</Empty>}
       {items !== null && items.length > 0 && (
         <>
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">When</th>
-                  <th scope="col">Who</th>
-                  <th scope="col">Action</th>
-                  <th scope="col">Resource</th>
-                  <th scope="col">Details</th>
+                  <th scope="col">{ta('when')}</th>
+                  <th scope="col">{ta('who')}</th>
+                  <th scope="col">{ta('action')}</th>
+                  <th scope="col">{ta('resource')}</th>
+                  <th scope="col">{ta('details')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,7 +224,7 @@ export function AuditTab() {
                     <td>
                       <time dateTime={e.at}>{formatTime(e.at)}</time>
                     </td>
-                    <td>{e.actor?.name ?? <span className="muted">system</span>}</td>
+                    <td>{e.actor?.name ?? <span className="muted">{ta('system')}</span>}</td>
                     <td>
                       {actionLabel(e.action)}
                       <div>
@@ -208,7 +235,7 @@ export function AuditTab() {
                     </td>
                     <td>
                       {e.resourceLabel ?? (
-                        <span className="muted">{e.resourceType.replace(/_/g, ' ')}</span>
+                        <span className="muted">{resourceLabel(e.resourceType)}</span>
                       )}
                     </td>
                     <td className="small">
@@ -225,7 +252,7 @@ export function AuditTab() {
           </div>
           {cursor && (
             <button type="button" className="btn" onClick={more} disabled={loadingMore}>
-              {loadingMore ? 'Loading…' : 'Load older events'}
+              {loadingMore ? ta('loading') : ta('loadOlder')}
             </button>
           )}
         </>

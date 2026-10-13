@@ -4,6 +4,7 @@ import { ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { groupLabel } from './Directory';
 import { Flash, FlashMessage, useMutation } from './shared';
+import { ta, taf } from './i18n-admin';
 
 const KIND = { jira: 'Jira Data Center', gitlab: 'GitLab' } as const;
 /** Default names of the server-side token secrets (names only, never values). */
@@ -16,10 +17,10 @@ const splitProjects = (v: string) =>
 
 function TokenStatus({ c }: { c: SourceConnection }) {
   return c.tokenPresent ? (
-    <span className="badge badge-managed">Token found on the server</span>
+    <span className="badge badge-managed">{ta('tokenFound')}</span>
   ) : (
     <span className="badge badge-bad">
-      Token missing: put it in the file named by <code translate="no">{c.secretRef}_FILE</code>
+      {ta('tokenMissing')} <code translate="no">{c.secretRef}_FILE</code>
     </span>
   );
 }
@@ -48,7 +49,7 @@ function ConnectionForm({
           secretRef: String(d.get('secretRef')),
           enabled: d.get('enabled') === 'on',
         }),
-      `${c.name} saved. The next sync uses the new settings.`,
+      taf('connSaved', { name: c.name }),
       onSaved,
     );
   }
@@ -77,7 +78,7 @@ function ConnectionForm({
       <TokenStatus c={c} />
       <div className="inline-form">
         <label className="inline-field">
-          Address
+          {ta('address')}
           <input
             name="url"
             type="url"
@@ -88,7 +89,7 @@ function ConnectionForm({
           />
         </label>
         <label className="inline-field">
-          {c.kind === 'jira' ? 'Project keys' : 'Project IDs'}
+          {ta(c.kind === 'jira' ? 'projectKeys' : 'projectIds')}
           <input
             name="projects"
             defaultValue={c.projects.join(', ')}
@@ -98,7 +99,7 @@ function ConnectionForm({
           />
         </label>
         <label className="inline-field">
-          Token secret name
+          {ta('secretName')}
           <input
             name="secretRef"
             defaultValue={c.secretRef ?? ''}
@@ -109,7 +110,7 @@ function ConnectionForm({
           />
         </label>
         <label className="check-field">
-          <input type="checkbox" name="enabled" defaultChecked={c.enabled} /> Sync this connection
+          <input type="checkbox" name="enabled" defaultChecked={c.enabled} /> {ta('syncThis')}
         </label>
       </div>
       <div className="actions">
@@ -128,10 +129,10 @@ function ConnectionForm({
           disabled={testing}
           aria-busy={testing}
         >
-          {testing ? 'Testing…' : 'Test connection'}
+          {testing ? ta('testing') : ta('testConnection')}
         </button>
         <button type="submit" className="btn btn-primary" disabled={run.pending}>
-          Save
+          {ta('save')}
         </button>
       </div>
     </form>
@@ -160,7 +161,7 @@ function AddConnection({
           projects: splitProjects(String(d.get('projects'))),
           secretRef: String(d.get('secretRef')) || undefined,
         }),
-      `${name} added. Put its token on the server, then use Test connection.`,
+      taf('connAdded', { name }),
       () => {
         form.reset();
         onSaved();
@@ -169,17 +170,17 @@ function AddConnection({
   }
   return (
     <form className="form-group" onSubmit={add}>
-      <h3>Add a connection</h3>
+      <h3>{ta('addConnection')}</h3>
       <div className="inline-form">
         <label className="inline-field">
-          Source
+          {ta('source')}
           <select value={kind} onChange={(e) => setKind(e.target.value as 'jira' | 'gitlab')}>
             <option value="jira">{KIND.jira}</option>
             <option value="gitlab">{KIND.gitlab}</option>
           </select>
         </label>
         <label className="inline-field">
-          Name
+          {ta('name')}
           <input
             name="name"
             required
@@ -190,7 +191,7 @@ function AddConnection({
           />
         </label>
         <label className="inline-field">
-          Address
+          {ta('address')}
           <input
             name="url"
             type="url"
@@ -203,7 +204,7 @@ function AddConnection({
           />
         </label>
         <label className="inline-field">
-          {kind === 'jira' ? 'Project keys' : 'Project IDs'}
+          {ta(kind === 'jira' ? 'projectKeys' : 'projectIds')}
           <input
             name="projects"
             required
@@ -213,7 +214,7 @@ function AddConnection({
           />
         </label>
         <label className="inline-field">
-          Token secret name (optional)
+          {ta('secretNameOptional')}
           <input
             name="secretRef"
             placeholder={SECRET_NAME[kind]}
@@ -223,7 +224,7 @@ function AddConnection({
           />
         </label>
         <button type="submit" className="btn" disabled={run.pending}>
-          Add connection
+          {ta('addConnectionBtn')}
         </button>
       </div>
     </form>
@@ -242,19 +243,16 @@ export function SettingsTab() {
   return (
     <>
       <section className="panel" aria-labelledby="sources-title">
-        <h2 id="sources-title">Jira and GitLab</h2>
+        <h2 id="sources-title">{ta('jiraGitlab')}</h2>
         <p className="muted small">
-          EPI reads these read-only and sends each source its token, which stays in a file on the
-          server and is never shown or typed here. Changes apply from the next sync.
+          {ta('sourcesIntro')}
           {rules.allowedHosts && (
-            <> Allowed hosts on this server: {rules.allowedHosts.join(', ')}.</>
+            <> {taf('allowedHosts', { hosts: rules.allowedHosts.join(', ') })}</>
           )}
-          {rules.httpAllowed && <> Demo mode: http:// test servers are accepted.</>}
+          {rules.httpAllowed && <> {ta('httpDemo')}</>}
         </p>
         <FlashMessage flash={flash} />
-        {connections.length === 0 && (
-          <p className="muted">No Jira or GitLab connection yet. Add the first one below.</p>
-        )}
+        {connections.length === 0 && <p className="muted">{ta('noConnections')}</p>}
         {connections.map((c) => (
           <ConnectionForm key={c.id} c={c} run={run} onSaved={s.reload} />
         ))}
@@ -262,52 +260,46 @@ export function SettingsTab() {
       </section>
 
       <section className="panel" aria-labelledby="signin-title">
-        <h2 id="signin-title">Sign-in and directory</h2>
+        <h2 id="signin-title">{ta('signInDirectory')}</h2>
         <p className="muted small">
-          Set on the server at installation (<code translate="no">./epi.sh sso-setup</code>, see
-          docs/KEYCLOAK.md), so a browser session can never redirect sign-in.
+          {ta('signInIntro')} (<code translate="no">./epi.sh sso-setup</code>, docs/KEYCLOAK.md)
         </p>
         <dl className="defs">
-          <dt>EPI address</dt>
+          <dt>{ta('epiAddress')}</dt>
           <dd translate="no">{server.publicUrl}</dd>
-          <dt>Sign-in</dt>
-          <dd translate="no">
-            {server.signIn ? server.signIn.issuer : 'Demo sign-in (no single sign-on)'}
-          </dd>
-          <dt>Directory</dt>
+          <dt>{ta('signIn')}</dt>
+          <dd translate="no">{server.signIn ? server.signIn.issuer : ta('demoSignIn')}</dd>
+          <dt>{ta('directory')}</dt>
           <dd>
             {server.directory ? (
               <>
                 <span translate="no">{server.directory.url}</span>
                 <div className="muted small">
-                  Team groups: {server.directory.teamGroups.map(groupLabel).join(', ')}
+                  {ta('teamGroups')}: {server.directory.teamGroups.map(groupLabel).join(', ')}
                 </div>
               </>
             ) : (
-              'Not configured'
+              ta('notConfigured')
             )}
           </dd>
         </dl>
       </section>
 
       <section className="panel" aria-labelledby="privacy-title">
-        <h2 id="privacy-title">Privacy and data</h2>
+        <h2 id="privacy-title">{ta('privacyData')}</h2>
         <dl className="defs">
-          <dt>Minimum group size</dt>
-          <dd>
-            {server.minimumGroupSize} people. Viewers who only see team totals get no numbers for
-            smaller groups.
-          </dd>
-          <dt>Data retention</dt>
+          <dt>{ta('minGroupSize')}</dt>
+          <dd>{taf('minGroupSizeText', { n: server.minimumGroupSize })}</dd>
+          <dt>{ta('dataRetention')}</dt>
           <dd>
             {server.retentionMonths === null
-              ? 'Off'
-              : `${server.retentionMonths} months, then source activity and logs are deleted (see Data quality).`}
+              ? ta('off')
+              : taf('retentionText', { n: server.retentionMonths })}
           </dd>
         </dl>
         <p className="muted small">
-          Server settings (<code translate="no">EPI_MIN_AGGREGATE_SIZE</code>,{' '}
-          <code translate="no">EPI_RETENTION_MONTHS</code>); changing them needs a restart.
+          {ta('serverSettings')} (<code translate="no">EPI_MIN_AGGREGATE_SIZE</code>,{' '}
+          <code translate="no">EPI_RETENTION_MONTHS</code>)
         </p>
       </section>
     </>

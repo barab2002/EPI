@@ -74,4 +74,23 @@ test('no horizontal overflow in Hebrew (right-to-left)', async ({ page }) => {
   await page.getByRole('link', { name: 'Payments' }).first().click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expectNoOverflow(page, 'team (he)');
+  await page.getByRole('button', { name: 'התנתקות' }).click();
+  await expect(page.getByRole('heading', { name: 'כניסה ל-EPI' })).toBeVisible();
+  await page.getByRole('button', { name: /^Avery Admin/ }).click();
+  await expect(page.getByRole('button', { name: 'התנתקות' })).toBeVisible();
+  for (const path of [
+    '/admin/organization',
+    '/admin/people',
+    '/admin/directory',
+    '/admin/integrations',
+    '/admin/identities',
+    '/admin/statuses',
+    '/admin/data-quality',
+    '/admin/audit',
+    '/admin/settings',
+  ]) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { name: 'ניהול מערכת', level: 1 })).toBeVisible();
+    await expectNoOverflow(page, `${path} (he)`);
+  }
 });

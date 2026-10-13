@@ -1,14 +1,17 @@
 import { Link } from 'react-router-dom';
 import type { DataQuality, RetentionInfo } from '../../api';
 import { ErrorState, Skeleton } from '../../components/States';
+import { t } from '../../i18n';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 import { shortDate } from './shared';
+import { AdminKey, ta, taf } from './i18n-admin';
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+/** "{n} record(s)" in the current language: one/many forms from the admin catalog. */
+const plural = (n: number, one: AdminKey, many: AdminKey) => taf(n === 1 ? one : many, { n });
 
 export function pctLabel(p: number | null): string {
-  return p === null ? 'N/A' : `${p}%`;
+  return p === null ? t('na') : `${p}%`;
 }
 
 function Metric({
@@ -41,26 +44,29 @@ export function RetentionSection() {
     c ? Object.values(c).reduce((a, b) => a + b, 0) : 0;
   return (
     <section className="panel" aria-labelledby="retention-title">
-      <h2 id="retention-title">Data retention</h2>
+      <h2 id="retention-title">{ta('dataRetention')}</h2>
       {d.months === null ? (
-        <p className="muted">
-          Retention is switched off on this server (EPI_RETENTION_MONTHS=off).
-        </p>
+        <p className="muted">{ta('retentionOff')}</p>
       ) : (
         <>
           <p>
-            Source activity, sync history, stored KPI snapshots and audit entries older than{' '}
-            {d.months} months (before {shortDate(d.cutoff)}) are deleted
-            {d.automatic ? ' automatically once a day' : ' when an administrator runs it'}.
-            Assessments, people, roles and team history are kept.
+            {taf(d.automatic ? 'retentionDaily' : 'retentionManual', {
+              n: d.months,
+              date: shortDate(d.cutoff),
+            })}
           </p>
           <p className="meta-row">
-            <span>Due now: {plural(total(d.due), 'record')}</span>
             <span>
-              Last run:{' '}
+              {ta('dueNow')}: {plural(total(d.due), 'recordOne', 'recordMany')}
+            </span>
+            <span>
+              {ta('lastRun')}:{' '}
               {d.lastRun
-                ? `${formatTime(d.lastRun.at)}, ${plural(total(d.lastRun.counts), 'record')} deleted`
-                : 'never'}
+                ? taf('lastRunDeleted', {
+                    when: formatTime(d.lastRun.at),
+                    what: plural(total(d.lastRun.counts), 'recordOne', 'recordMany'),
+                  })
+                : ta('neverLower')}
             </span>
           </p>
         </>
@@ -79,20 +85,17 @@ export function DataQualityTab() {
   return (
     <>
       <section className="panel" aria-labelledby="freshness-title">
-        <h2 id="freshness-title">Freshness</h2>
+        <h2 id="freshness-title">{ta('freshness')}</h2>
         {d.connections.length === 0 ? (
-          <p className="muted">
-            No source connection is configured yet, so KPIs use synthetic demo data. Add one under
-            Integrations.
-          </p>
+          <p className="muted">{ta('noSourceYet')}</p>
         ) : (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Connection</th>
-                  <th scope="col">Last successful sync</th>
-                  <th scope="col">State</th>
+                  <th scope="col">{ta('connection')}</th>
+                  <th scope="col">{ta('lastSuccessfulSync')}</th>
+                  <th scope="col">{ta('state')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,14 +106,14 @@ export function DataQualityTab() {
                     <td>
                       {c.stale ? (
                         <span className="badge badge-bad">
-                          Stale: last sync over {d.staleAfterHours}&nbsp;h ago
+                          {taf('stale', { h: d.staleAfterHours })}
                         </span>
                       ) : (
-                        <span className="badge badge-managed">Fresh</span>
+                        <span className="badge badge-managed">{ta('fresh')}</span>
                       )}
                       {c.lastRun?.status === 'failed' && (
                         <div className="error-text small">
-                          Last run failed: {c.lastRun.error_summary}
+                          {ta('lastRunFailed')}: {c.lastRun.error_summary}
                         </div>
                       )}
                     </td>
@@ -122,39 +125,39 @@ export function DataQualityTab() {
         )}
       </section>
       <section className="panel" aria-labelledby="coverage-title">
-        <h2 id="coverage-title">Coverage</h2>
+        <h2 id="coverage-title">{ta('coverage')}</h2>
         <div className="kpi-grid">
           <Metric
-            label="Jira assignees mapped"
+            label={ta('jiraAssigneesMapped')}
             value={pctLabel(d.jira.assigneeCoveragePct)}
-            hint={`${d.jira.mappedAssignees} of ${d.jira.withAssignee} assigned items. ${plural(d.jira.unmappedAccounts, 'unmapped account')}.`}
+            hint={`${taf('ofAssignedItems', { a: d.jira.mappedAssignees, b: d.jira.withAssignee })} ${plural(d.jira.unmappedAccounts, 'unmappedOne', 'unmappedMany')}.`}
             warn={lowCoverage(d.jira.assigneeCoveragePct)}
           />
           <Metric
-            label="GitLab MR authors mapped"
+            label={ta('gitlabAuthorsMapped')}
             value={pctLabel(d.gitlab.authorCoveragePct)}
-            hint={`${d.gitlab.mappedAuthors} of ${d.gitlab.mergeRequests} MRs. ${plural(d.gitlab.unmappedAccounts, 'unmapped account')}.`}
+            hint={`${taf('ofMrs', { a: d.gitlab.mappedAuthors, b: d.gitlab.mergeRequests })} ${plural(d.gitlab.unmappedAccounts, 'unmappedOne', 'unmappedMany')}.`}
             warn={lowCoverage(d.gitlab.authorCoveragePct)}
           />
           <Metric
-            label="MRs linked to Jira"
+            label={ta('mrsLinked')}
             value={pctLabel(d.gitlab.jiraLinkPct)}
-            hint={`${d.gitlab.linkedToJira} of ${d.gitlab.mergeRequests} MRs carry a known issue key.`}
+            hint={taf('mrsLinkedHint', { a: d.gitlab.linkedToJira, b: d.gitlab.mergeRequests })}
           />
         </div>
         {(d.jira.unmappedAccounts > 0 || d.gitlab.unmappedAccounts > 0) && (
           <p>
-            <Link to="/admin/identities">Map the remaining accounts</Link>
+            <Link to="/admin/identities">{ta('mapRemaining')}</Link>
           </p>
         )}
       </section>
       <section className="panel" aria-labelledby="statuses-dq-title">
-        <h2 id="statuses-dq-title">Statuses without a category</h2>
+        <h2 id="statuses-dq-title">{ta('statusesNoCategory')}</h2>
         {d.jira.statusesWithoutCategory.length === 0 ? (
-          <p className="muted">Every Jira status has a category.</p>
+          <p className="muted">{ta('allStatusesCategorized')}</p>
         ) : (
           <>
-            <p className="muted small">Transitions into these statuses are ignored by flow KPIs.</p>
+            <p className="muted small">{ta('ignoredTransitions')}</p>
             <ul>
               {d.jira.statusesWithoutCategory.map((s) => (
                 <li key={`${s.connection}:${s.status}`}>
@@ -162,7 +165,7 @@ export function DataQualityTab() {
                 </li>
               ))}
             </ul>
-            <Link to="/admin/statuses">Review status mappings</Link>
+            <Link to="/admin/statuses">{ta('reviewStatusMappings')}</Link>
           </>
         )}
       </section>

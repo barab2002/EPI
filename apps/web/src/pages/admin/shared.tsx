@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PersonOption } from '../../api';
+import { intlLocale } from '../../i18n';
 import { useApi } from '../../useApi';
+import { ta } from './i18n-admin';
 
 export type Flash = { kind: 'ok' | 'error'; text: string } | null;
 
@@ -59,7 +61,11 @@ export const dateToIso = (d: string) =>
   d === today() ? new Date().toISOString() : new Date(`${d}T00:00:00Z`).toISOString();
 export const shortDate = (iso: string | null) =>
   iso
-    ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    ? new Date(iso).toLocaleDateString(intlLocale(), {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
     : '—';
 
 /** Debounced people search used by membership and people screens. */
@@ -92,8 +98,8 @@ export function PersonSearch({
         />
       </label>
       {debounced.length >= 2 && people.state === 'ready' && (
-        <ul className="picker-results" aria-label="Matching people">
-          {people.data.length === 0 && <li className="muted small">No matching people</li>}
+        <ul className="picker-results" aria-label={ta('matchingPeople')}>
+          {people.data.length === 0 && <li className="muted small">{ta('noMatchingPeople')}</li>}
           {people.data.map((p) => (
             <li key={p.id}>
               <button

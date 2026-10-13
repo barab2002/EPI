@@ -16,7 +16,7 @@
 - **Audit-log viewer (ADR-022):** admin-only, read-only Audit log tab and API; filter by action group/exact action, person and dates; keyset paging; review subjects and text never shown.
 - **Offline installation (EPI-012a, ADR-023):** images pinned by digest; `./epi.sh bundle` and `./epi.sh offline-install` (checksums, image identity check, bundled images only); verified by `scripts/test-offline-install.sh` on a no-egress Docker network incl. refusal of corrupted/tampered bundles. Production dependency licenses checked in CI (216 packages, all permissive).
 - **Production sign-in with AD (EPI-003b, ADR-025):** `./epi.sh sso-setup` + `deploy/compose.sso.yaml` — Keycloak in production mode with its own database, read-only LDAPS federation limited to pilot team groups, bind password in Keycloak's file vault, customer CA trust. Verified end to end against a synthetic LDAPS directory (`scripts/e2e-sso-ldap.sh`); not yet against the real AD.
-- **Hebrew interface (ADR-035, stage 1):** English | עברית switch per user (saved to the account), right-to-left layout, Hebrew dates/numbers, all manager and developer screens; layout guard passes in Hebrew.
+- **Hebrew interface (ADR-035, stages 1–2):** English | עברית switch per user (saved to the account), right-to-left layout, Hebrew dates/numbers, every screen including administration; layout guard passes in Hebrew.
 - **Settings (ADR-033):** Administration › Settings adds/edits Jira and GitLab connections (address, projects, token name, on/off) with Test connection; tokens stay in server files (presence shown); optional `EPI_SOURCE_HOSTS` allow-list; sign-in/AD/privacy/retention shown read-only. Minimum group size 3 (ADR-034).
 - **Data retention (ADR-032):** daily deletion of source activity, sync history, KPI snapshots and audit entries older than 24 months (`EPI_RETENTION_MONTHS`), expired sessions at any age; assessments and people kept; audited; `retention --dry-run` CLI; shown on Administration › Data quality.
 - **Upgrade with automatic rollback (EPI-012c, ADR-031):** `./epi.sh upgrade <bundle>` — bundle verification, version checks, database (and Keycloak) backup, image load, file swap, migrations on start, health check; on failure the previous files, database and version come back. Verified by `scripts/test-upgrade.sh` (upgrade, refusals, broken release rolled back with data intact).
@@ -34,5 +34,5 @@
 - `install` (EPI-012) exits 2 with a message (use `offline-install`). Bundle signing; clean-VM offline test.
 - KPIs computed on request; `kpi_snapshots` not populated yet. Stratification by work type/complexity not shown in UI yet.
 - Audit-log export.
-- Hebrew: manager/developer screens done (ADR-035); administration screens and KPI explanation texts still English. `PUT /reviews/{id}` replaced by idempotent `POST` upsert.
+- Hebrew: all screens done (ADR-035); KPI explanation texts and server messages (API errors, import conflict reasons) still English. `PUT /reviews/{id}` replaced by idempotent `POST` upsert.
 - No SBOM/vulnerability scan yet (needs approved scanner, C11).

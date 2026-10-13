@@ -3,15 +3,16 @@ import { api, StatusMapping } from '../../api';
 import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { Flash, FlashMessage } from './shared';
+import { AdminKey, ta, taf } from './i18n-admin';
 
-const CATEGORIES: [string, string][] = [
-  ['TODO', 'To do'],
-  ['IN_PROGRESS', 'In progress'],
-  ['BLOCKED', 'Blocked'],
-  ['REVIEW', 'Review'],
-  ['QA', 'QA'],
-  ['DONE', 'Done'],
-  ['', 'Ignore (not a workflow status)'],
+const CATEGORIES: [string, AdminKey][] = [
+  ['TODO', 'catTodo'],
+  ['IN_PROGRESS', 'catInProgress'],
+  ['BLOCKED', 'catBlocked'],
+  ['REVIEW', 'catReview'],
+  ['QA', 'catQa'],
+  ['DONE', 'catDone'],
+  ['', 'catIgnore'],
 ];
 
 /** Source status → EPI category (drives Cycle Time and Aging). Applies on the next sync. */
@@ -33,7 +34,7 @@ export function StatusesTab() {
       );
       setMessage({
         kind: 'ok',
-        text: `“${m.source_status_name}” saved. It applies to history on the next sync.`,
+        text: taf('statusSaved', { name: m.source_status_name }),
       });
       list.reload();
     } catch (e) {
@@ -45,27 +46,21 @@ export function StatusesTab() {
 
   return (
     <section className="panel" aria-labelledby="statuses-title">
-      <h2 id="statuses-title">Status mappings</h2>
-      <p className="muted small">
-        Jira statuses are first mapped from Jira’s own categories (To do / In progress / Done).
-        Confirm them and mark statuses that mean Blocked, Review or QA. Your choices are never
-        overwritten by syncs.
-      </p>
+      <h2 id="statuses-title">{ta('tabStatuses')}</h2>
+      <p className="muted small">{ta('statusesIntro')}</p>
       <FlashMessage flash={message} />
       {list.state === 'loading' && <Skeleton lines={4} />}
       {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
-      {list.state === 'ready' && list.data.length === 0 && (
-        <Empty>No statuses yet — they appear after the first Jira sync.</Empty>
-      )}
+      {list.state === 'ready' && list.data.length === 0 && <Empty>{ta('noStatuses')}</Empty>}
       {list.state === 'ready' && list.data.length > 0 && (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Connection</th>
-                <th scope="col">Jira status</th>
-                <th scope="col">EPI category</th>
-                <th scope="col">Set by</th>
+                <th scope="col">{ta('connection')}</th>
+                <th scope="col">{ta('jiraStatus')}</th>
+                <th scope="col">{ta('epiCategory')}</th>
+                <th scope="col">{ta('setBy')}</th>
               </tr>
             </thead>
             <tbody>
@@ -83,7 +78,7 @@ export function StatusesTab() {
                       className="sr-only"
                       htmlFor={`cat-${m.connection}-${m.source_status_id}`}
                     >
-                      Category for {m.source_status_name}
+                      {taf('categoryFor', { name: m.source_status_name })}
                     </label>
                     <select
                       id={`cat-${m.connection}-${m.source_status_id}`}
@@ -94,7 +89,7 @@ export function StatusesTab() {
                     >
                       {CATEGORIES.map(([v, label]) => (
                         <option key={v} value={v}>
-                          {label}
+                          {ta(label)}
                         </option>
                       ))}
                     </select>
@@ -103,7 +98,7 @@ export function StatusesTab() {
                     <span
                       className={`badge ${m.origin === 'admin' ? 'badge-managed' : 'badge-warn'}`}
                     >
-                      {m.origin === 'admin' ? 'Administrator' : 'Inferred — please confirm'}
+                      {m.origin === 'admin' ? ta('setByAdmin') : ta('inferred')}
                     </span>
                   </td>
                 </tr>
