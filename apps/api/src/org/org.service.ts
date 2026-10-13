@@ -40,9 +40,9 @@ export class OrgService {
     const rows: {
       org_id: string;
       org_name: string;
-      group_id: string;
+      group_id: string | null;
       group_name: string;
-      team_id: string;
+      team_id: string | null;
       team_name: string;
       member_count: number;
     }[] = await this.ds.query(
@@ -50,13 +50,15 @@ export class OrgService {
               t.id AS team_id, t.name AS team_name,
               (SELECT count(DISTINCT m.user_id)::int FROM team_memberships m WHERE m.team_id = t.id
                  AND m.effective_from <= now() AND (m.effective_to IS NULL OR m.effective_to > now())) AS member_count
-       FROM organizations o JOIN org_groups g ON g.organization_id = o.id JOIN teams t ON t.group_id = g.id
-       WHERE t.active ORDER BY o.name, g.name, t.name`,
+       FROM organizations o LEFT JOIN org_groups g ON g.organization_id = o.id
+       LEFT JOIN teams t ON t.group_id = g.id AND t.active
+       WHERE t.id IS NOT NULL OR $1::boolean ORDER BY o.name, g.name, t.name`,
+      [scope.isAdmin], // administrators also see empty organizations and groups, to build them
     );
     const orgs = new Map<string, OrgNode>();
     for (const r of rows) {
-      const access = this.teamAccess(scope, r.team_id);
-      if (!access) continue;
+      const access = r.team_id ? this.teamAccess(scope, r.team_id) : null;
+      if (!access && !(scope.isAdmin && !r.team_id)) continue;
       let org = orgs.get(r.org_id);
       if (!org) {
         org = {
@@ -67,6 +69,7 @@ export class OrgService {
         };
         orgs.set(r.org_id, org);
       }
+      if (!r.group_id) continue;
       let group = org.groups.find((g) => g.id === r.group_id);
       if (!group) {
         group = {
@@ -77,6 +80,7 @@ export class OrgService {
         };
         org.groups.push(group);
       }
+      if (!r.team_id || !access) continue;
       group.teams.push({
         id: r.team_id,
         name: r.team_name,
