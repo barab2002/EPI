@@ -11,10 +11,7 @@ export function ReviewsPage() {
     <>
       <Breadcrumb items={[{ label: t('navReviews') }]} />
       <PageTitle>{t('assessments')}</PageTitle>
-      <p className="muted">
-        You see assessments about yourself (once submitted), assessments you wrote, and submitted
-        assessments of people you manage. To write one, open a team member’s profile.
-      </p>
+      <p className="muted">{t('reviewsIntro')}</p>
       {list.state === 'loading' && <Skeleton lines={5} />}
       {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
       {list.state === 'ready' && (

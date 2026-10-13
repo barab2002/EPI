@@ -57,7 +57,7 @@ export function TeamPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Name</th>
+                  <th scope="col">{t('name')}</th>
                   <th scope="col">{t('grade')}</th>
                 </tr>
               </thead>

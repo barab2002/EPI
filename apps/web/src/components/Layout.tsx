@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { roleLabel } from '../format';
 import { t } from '../i18n';
+import { LanguageSwitch } from './LanguageSwitch';
 import { useSession } from '../session';
 import { MarkIcon } from './Icons';
 
@@ -11,7 +12,7 @@ export interface Crumb {
 
 export function Breadcrumb({ items }: { items: Crumb[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="breadcrumb">
+    <nav aria-label={t('breadcrumb')} className="breadcrumb">
       <ol>
         {items.map((c, i) => (
           <li key={`${c.label}-${i}`}>
@@ -48,7 +49,7 @@ export function Layout() {
   return (
     <div className="app">
       <a className="skip-link" href="#main">
-        Skip to content
+        {t('skipToContent')}
       </a>
       {me.mode === 'demo' && (
         <div className="banner" role="note">
@@ -66,7 +67,7 @@ export function Layout() {
               <span className="brand-sub">{t('appTagline')}</span>
             </span>
           </Link>
-          <nav aria-label="Main">
+          <nav aria-label={t('mainNav')}>
             <ul className="nav">
               <li>
                 <NavLink to="/" end>
@@ -94,6 +95,7 @@ export function Layout() {
               <span className="user-name">{me.user.display_name}</span>
               <span className="user-role">{roleLabel(me.roles)}</span>
             </div>
+            <LanguageSwitch />
             <button type="button" className="btn" onClick={signOut}>
               {t('signOut')}
             </button>

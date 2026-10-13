@@ -1,16 +1,13 @@
 import { Link } from 'react-router-dom';
 import type { KpiCard, TeamNode } from '../api';
 import { formatDate, formatValue } from '../format';
-import { t } from '../i18n';
+import { kpiTitle, t } from '../i18n';
 import { AccessBadge } from '../pages/Organization';
 import { useApi } from '../useApi';
 import { KpiWindow, useKpiWindow, withWindow } from './useKpiWindow';
 
 const OVERVIEW = ['CYCLE_TIME', 'REVIEW_WAITING_TIME'] as const;
-const LABELS: Record<(typeof OVERVIEW)[number], string> = {
-  CYCLE_TIME: 'Cycle Time',
-  REVIEW_WAITING_TIME: 'Review Waiting Time',
-};
+const label = (code: (typeof OVERVIEW)[number]) => kpiTitle(code, code);
 
 function kpiCell(cards: KpiCard[], code: string): string {
   const c = cards.find((k) => k.code === code);
@@ -45,7 +42,7 @@ function TeamRow({ team, window }: { team: TeamNode; window: KpiWindow }) {
         {team.memberCount ?? '—'}
       </td>
       {OVERVIEW.map((code) => (
-        <td key={code} className="num" data-label={LABELS[code]}>
+        <td key={code} className="num" data-label={label(code)}>
           {!canSee ? '—' : ready ? kpiCell(ready, code) : cards.state === 'error' ? '—' : '…'}
         </td>
       ))}
@@ -71,7 +68,7 @@ export function TeamOverview({ teams }: { teams: TeamNode[] }) {
             </th>
             {OVERVIEW.map((code) => (
               <th key={code} scope="col" className="num">
-                {LABELS[code]}
+                {label(code)}
               </th>
             ))}
             <th scope="col" className="num">

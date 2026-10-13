@@ -7,6 +7,7 @@ import {
   Logger,
   NotFoundException,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -19,7 +20,7 @@ import {
   ApiPropertyOptional,
   ApiTags,
 } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import type { Request, Response } from 'express';
 import { DataSource } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
@@ -31,6 +32,12 @@ import { SessionService } from './session.service';
 
 export const OIDC_BINDING_COOKIE = 'epi_oidc';
 const OIDC_COOKIE_PATH = '/api/v1/auth';
+
+export class LocaleDto {
+  @ApiProperty({ enum: ['en', 'he'] })
+  @IsIn(['en', 'he'])
+  locale!: 'en' | 'he';
+}
 
 export class LoginQuery {
   @ApiPropertyOptional({ description: 'Relative path to return to after sign-in' })
@@ -190,7 +197,7 @@ export class AuthController {
   async me(@Req() req: AuthedRequest) {
     const s = req.scope;
     const [u] = await this.ds.query(
-      `SELECT id, display_name, is_synthetic FROM users WHERE id = $1`,
+      `SELECT id, display_name, is_synthetic, locale FROM users WHERE id = $1`,
       [s.userId],
     );
     const teams = await this.ds.query(
@@ -198,8 +205,10 @@ export class AuthController {
        WHERE m.user_id = $1 AND m.effective_from <= now() AND (m.effective_to IS NULL OR m.effective_to > now())`,
       [s.userId],
     );
+    const { locale, ...user } = u;
     return {
-      user: u,
+      user,
+      locale: locale ?? null,
       roles: s.roles,
       csrfToken: req.csrfToken,
       teams,
@@ -209,5 +218,16 @@ export class AuthController {
       canReview: s.reviewableUserIds.size > 0,
       mode: this.config.mode,
     };
+  }
+
+  @Put('me/locale')
+  @HttpCode(204)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Set my interface language (English or Hebrew)' })
+  async setLocale(@Req() req: AuthedRequest, @Body() dto: LocaleDto): Promise<void> {
+    await this.ds.query(`UPDATE users SET locale = $2 WHERE id = $1`, [
+      req.scope.userId,
+      dto.locale,
+    ]);
   }
 }

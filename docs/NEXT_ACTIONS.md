@@ -7,7 +7,7 @@ Engineering (Claude, unattended via the hourly routine; each on its own branch �
 2. ✅ **EPI-004c AD team import** — done (ADR-030): EPI reads the team groups directly over LDAPS (same read-only account), admin maps group → team, preview → apply exactly the previewed plan, dated memberships, audited; no automatic deactivation (deliberate), roles stay manual. Follow-up: optional daily import on the sync schedule.
 3. ✅ **EPI-012c `upgrade` + rollback** — done (ADR-031): `./epi.sh upgrade <bundle>` verifies, backs up (incl. Keycloak DB), loads images, swaps files, migrates on start, health-checks and rolls back automatically; `scripts/test-upgrade.sh`.
 4. ✅ **Retention job** — done (ADR-032): 24 months (configurable), daily, audited; assessments/people kept pending HR (open question).
-5. **Hebrew UI** (~1.5 d): translation catalog, language switch per user, RTL layout check, screenshots.
+5. **Hebrew UI** — stage 1 done (ADR-035: per-user language, RTL, all manager/developer screens); next: stage 2 administration screens, stage 3 KPI definitions from the server catalog.
 6. **Pilot install guide** (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind, Jira PAT, GitLab token), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
 
 Owner (when each step is reached, Claude asks for the non-secret details one at a time):

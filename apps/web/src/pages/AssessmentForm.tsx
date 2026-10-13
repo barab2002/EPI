@@ -1,22 +1,16 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { api } from '../api';
-import { t } from '../i18n';
+import { MessageKey, t } from '../i18n';
 
-const ANCHORS: Record<'independence' | 'growth', string[]> = {
+const ANCHORS: Record<'independence' | 'growth', MessageKey[]> = {
   independence: [
-    'Substantially dependent',
-    'Needs frequent guidance',
-    'Meets grade expectations',
-    'Above-grade autonomy',
-    'Demonstrates and develops others',
+    'anchorIndependence1',
+    'anchorIndependence2',
+    'anchorIndependence3',
+    'anchorIndependence4',
+    'anchorIndependence5',
   ],
-  growth: [
-    'No progress on plan',
-    'Limited progress',
-    'Progressing as agreed',
-    'Ahead of plan',
-    'Exceptional growth, helps others grow',
-  ],
+  growth: ['anchorGrowth1', 'anchorGrowth2', 'anchorGrowth3', 'anchorGrowth4', 'anchorGrowth5'],
 };
 
 function Rubric({
@@ -55,7 +49,7 @@ function Rubric({
           <span className="rubric-score">{i + 1}</span>
           <span>
             <span className="sr-only">: </span>
-            {anchor}
+            {t(anchor)}
           </span>
         </label>
       ))}
@@ -151,10 +145,7 @@ export function AssessmentForm({
       noValidate
     >
       <h2 id="assess-title">{t('newAssessment')}</h2>
-      <p className="muted small">
-        Human judgment with evidence. Ratings are relative to the person’s grade and development
-        plan — never derived from KPIs.
-      </p>
+      <p className="muted small">{t('assessmentIntro')}</p>
       <Rubric
         name="independence"
         label={t('independence')}

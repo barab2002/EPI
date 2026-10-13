@@ -150,7 +150,7 @@ loading and error states.
 
 ## 6. Copy
 
-Sentence case, active voice, the product's own words ("Write assessment", "How calculated?").
+Hebrew (ADR-035): the same voice in neutral plural imperatives ("נסו שוב"); right-to-left via `dir`, logical properties only, numbers and Latin names isolated. Sentence case, active voice, the product's own words ("Write assessment", "How calculated?").
 Errors say what happened and how to fix it. Loading text ends with "…". Roles are shown as words
 ("Team lead"), never enum codes. Dates via `Intl.DateTimeFormat` in one style: `12 Oct 2026`; times
 `12 Oct 2026, 14:05`.

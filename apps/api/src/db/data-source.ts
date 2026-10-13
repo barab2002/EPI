@@ -5,6 +5,7 @@ import { StatusMappings1760500000000 } from './migrations/1760500000000-status-m
 import { SourceAccounts1760600000000 } from './migrations/1760600000000-source-accounts';
 import { AppSettings1760700000000 } from './migrations/1760700000000-app-settings';
 import { DirectoryMappings1760800000000 } from './migrations/1760800000000-directory-mappings';
+import { UserLocale1760900000000 } from './migrations/1760900000000-user-locale';
 
 export const MIGRATIONS = [
   InitialSchema1760300000000,
@@ -13,6 +14,7 @@ export const MIGRATIONS = [
   SourceAccounts1760600000000,
   AppSettings1760700000000,
   DirectoryMappings1760800000000,
+  UserLocale1760900000000,
 ];
 
 export function createDataSource(databaseUrl: string): DataSource {

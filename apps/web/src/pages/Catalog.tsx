@@ -3,7 +3,7 @@ import type { KpiCard } from '../api';
 import { KpiDrawer } from '../components/KpiDrawer';
 import { Breadcrumb, PageTitle } from '../components/Layout';
 import { ErrorState, Skeleton } from '../components/States';
-import { t } from '../i18n';
+import { kpiTitle, MessageKey, t } from '../i18n';
 import { useApi } from '../useApi';
 
 interface CatalogEntry {
@@ -17,10 +17,17 @@ interface CatalogEntry {
 }
 
 function directionLabel(d: string): string {
-  if (d === 'lower_is_better') return 'Lower is better';
-  if (d === 'higher_is_better') return 'Higher is better';
+  if (d === 'lower_is_better') return t('dirLower');
+  if (d === 'higher_is_better') return t('dirHigher');
   return d.replace(/_/g, ' ');
 }
+
+const SCOPES: Record<string, MessageKey> = {
+  organization: 'scopeOrganization',
+  group: 'scopeGroup',
+  team: 'scopeTeam',
+  developer: 'scopeDeveloper',
+};
 
 function catalogCard(k: CatalogEntry): KpiCard {
   return {
@@ -57,8 +64,8 @@ export function CatalogPage() {
             {list.data.map((k) => (
               <li key={k.code}>
                 <div>
-                  <h2 className="kpi-title">{k.title}</h2>
-                  <p>{k.question}</p>
+                  <h2 className="kpi-title">{kpiTitle(k.code, k.title)}</h2>
+                  <p dir="auto">{k.question}</p>
                   <button
                     type="button"
                     className="link-btn"
@@ -70,7 +77,7 @@ export function CatalogPage() {
                 <dl className="kpi-meta">
                   <div>
                     <dt>{t('unit')}</dt>
-                    <dd>{k.unit}</dd>
+                    <dd>{t(k.unit === 'days' ? 'unitDaysName' : 'unitHoursName')}</dd>
                   </div>
                   <div>
                     <dt>{t('direction')}</dt>
@@ -78,7 +85,7 @@ export function CatalogPage() {
                   </div>
                   <div>
                     <dt>{t('shownFor')}</dt>
-                    <dd>{k.scopes.join(', ')}</dd>
+                    <dd>{k.scopes.map((sc) => (SCOPES[sc] ? t(SCOPES[sc]) : sc)).join(', ')}</dd>
                   </div>
                 </dl>
               </li>

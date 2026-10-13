@@ -48,6 +48,8 @@ export type Access = 'managed' | 'aggregate' | 'structure';
 
 export interface Me {
   user: { id: string; display_name: string; is_synthetic: boolean };
+  /** Saved interface language; null = follow the browser. */
+  locale: 'en' | 'he' | null;
   roles: string[];
   csrfToken: string;
   teams: { id: string; name: string }[];
