@@ -24,7 +24,7 @@ describe('loadConfig', () => {
     expect(c.cookieSecure).toBe(false);
     expect(c.oidc).toBeNull();
     expect(c.publicUrl).toBe('http://127.0.0.1:8080');
-    expect(c.minimumAggregateSize).toBe(5);
+    expect(c.minimumAggregateSize).toBe(3); // owner decision, ADR-034
     expect(c.kpiMinimumSample).toBe(10);
     expect(c.trendThresholdPct).toBe(8);
   });

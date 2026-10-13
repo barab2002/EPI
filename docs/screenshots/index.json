@@ -65,7 +65,7 @@
   },
   {
     "name": "17-small-team-suppressed",
-    "title": "Privacy: team aggregate hidden for a 3-person team (minimum 5)"
+    "title": "Privacy: a 3-person team shows team totals (minimum group size 3; smaller groups are hidden)"
   },
   {
     "name": "18-admin-structure-only",
@@ -126,5 +126,9 @@
   {
     "name": "32-admin-directory",
     "title": "Administration › Directory: AD team groups mapped to EPI teams, preview of every change before applying (synthetic directory)"
+  },
+  {
+    "name": "33-admin-settings",
+    "title": "Administration › Settings: Jira/GitLab addresses and projects with Test connection; sign-in, directory, privacy and retention read-only (synthetic setup)"
   }
 ]

@@ -49,3 +49,5 @@ Administration › Integrations › **Daily sync** (or `GET|PUT /api/v1/admin/sy
 - Attribution uses the **current assignee** at sync time, not who worked on each status.
 - Issues deleted or moved out of the configured projects in Jira are not removed from EPI yet (reconciliation job planned).
 - Sprint data (commitments) is not collected yet (Phase 2, KPI-05).
+
+**In the UI:** Administration › Settings adds or changes connections (address, projects, token secret name, on/off) and has *Test connection*; the token itself stays a file on the server (`<NAME>_FILE`). With `EPI_SOURCE_HOSTS` set, only listed hosts are accepted (ADR-033).

@@ -48,6 +48,7 @@ test('no horizontal overflow on key screens', async ({ page }) => {
     '/admin/statuses',
     '/admin/data-quality',
     '/admin/audit',
+    '/admin/settings',
   ]) {
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

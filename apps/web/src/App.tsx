@@ -11,6 +11,7 @@ import { IdentitiesTab } from './pages/admin/Identities';
 import { IntegrationsTab } from './pages/admin/Integrations';
 import { OrganizationTab } from './pages/admin/Organization';
 import { PeopleTab } from './pages/admin/People';
+import { SettingsTab } from './pages/admin/Settings';
 import { StatusesTab } from './pages/admin/Statuses';
 import { CatalogPage } from './pages/Catalog';
 import { DeveloperPage } from './pages/Developer';
@@ -102,6 +103,7 @@ export function App() {
               <Route path="statuses" element={<StatusesTab />} />
               <Route path="data-quality" element={<DataQualityTab />} />
               <Route path="audit" element={<AuditTab />} />
+              <Route path="settings" element={<SettingsTab />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Route>

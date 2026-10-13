@@ -189,7 +189,7 @@ test('regenerate documentation screenshots', async ({ page, browser }) => {
   await shot(
     page,
     '17-small-team-suppressed',
-    'Privacy: team aggregate hidden for a 3-person team (minimum 5)',
+    'Privacy: a 3-person team shows team totals (minimum group size 3; smaller groups are hidden)',
   );
   await signOut(page);
 

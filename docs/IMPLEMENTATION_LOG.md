@@ -13,3 +13,4 @@
 - **2026-10-13** — UX-01 UI/UX pass complete (PRs #17–#22: design system, 6 slices, CI contrast check, refreshed screenshots). EPI-004c AD team import (ADR-030): `planImport`, directory mappings migration, admin API (preview/apply with plan hash), Directory tab, `directory-check`, compose wiring; fixed `sso.conf` loading in `epi.sh`.
 - **2026-10-13** — EPI-012c `./epi.sh upgrade` with automatic rollback (ADR-031) and `scripts/test-upgrade.sh`; `offline-install` and `upgrade` share bundle verification and image loading.
 - **2026-10-13** — Data retention (ADR-032): `RetentionService` (daily, one transaction, audited), `retention` CLI, admin view on Data quality; assessments/people kept pending HR.
+- **2026-10-13** — Administration › Settings (ADR-033): connections editable in the UI with Test connection, token presence only, `EPI_SOURCE_HOSTS` allow-list; minimum group size 3 (ADR-034).

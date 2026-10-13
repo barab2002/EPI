@@ -206,3 +206,23 @@ test('admin imports team membership from the directory: map, preview, apply', as
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Apply 0 changes' })).toBeDisabled();
 });
+
+test('admin edits a source connection in Settings and tests it', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Avery Admin/ }).click();
+  await page.goto('/admin/settings');
+  const jira = page.locator('form').filter({ hasText: 'jira-pilot' });
+  await expect(jira.getByText('Token found on the server')).toBeVisible();
+  await jira.getByRole('button', { name: 'Test connection' }).click();
+  await expect(jira.getByText(/token accepted/)).toBeVisible();
+  await jira.getByLabel('Project keys').fill('PAY, OPS');
+  await jira.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('p.flash-ok')).toContainText('jira-pilot saved');
+  await expect(page.getByLabel('Project keys').first()).toHaveValue('PAY, OPS');
+  await shot(page, '33-admin-settings');
+  // An address with credentials is refused with a readable message.
+  await jira.getByLabel('Address').fill('https://user:secret@jira.corp.example');
+  await jira.getByRole('button', { name: 'Save' }).click();
+  await expect(page.locator('p.flash-error')).toContainText('user name or password');
+});

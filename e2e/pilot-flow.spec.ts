@@ -79,8 +79,12 @@ test('team lead submits a monthly assessment; the developer sees it; a peer does
   await signOut(page);
 });
 
-test('developer in a 3-person team sees the aggregate suppressed', async ({ page }) => {
+test('developer in a 3-person team sees team totals at the minimum group size of 3', async ({
+  page,
+}) => {
+  // ADR-034: totals are hidden only below 3 people (suppression itself: rbac.int.spec.ts).
   await signInAs(page, 'Jo Small');
-  await expect(page.getByText('Hidden: group too small').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Team aggregate: Identity' })).toBeVisible();
+  await expect(page.getByText('Hidden: group too small')).toHaveCount(0);
   await signOut(page);
 });

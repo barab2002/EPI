@@ -19,7 +19,8 @@ describe('RBAC & data isolation (integration)', () => {
 
   beforeAll(async () => {
     ds = await freshDatabase();
-    app = await startApp(ds);
+    // Suppression tests below use a threshold above Identity's 3 members (default is 3, ADR-034).
+    app = await startApp(ds, { minimumAggregateSize: 5 });
     ids = {
       dana: await userId(ds, 'Dana Dev'),
       eli: await userId(ds, 'Eli Engineer'),
