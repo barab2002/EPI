@@ -36,6 +36,24 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
   }
   await expect(page.getByText(/24 issues · 24 new/)).toBeVisible();
   await expect(page.getByText(/10 MRs · 10 new · 10 review requests/)).toBeVisible();
+
+  // Daily sync: 23:00 in a zone where that hour is still ahead, so no run starts mid-test.
+  const zone = ['UTC', 'Asia/Jerusalem', 'America/New_York', 'Pacific/Kiritimati'].find(
+    (tz) =>
+      Number(
+        new Intl.DateTimeFormat('en-GB', {
+          timeZone: tz,
+          hour: '2-digit',
+          hourCycle: 'h23',
+        }).format(new Date()),
+      ) < 22,
+  )!;
+  await page.getByRole('checkbox', { name: /Sync daily/ }).check();
+  await page.getByRole('combobox', { name: /^at/ }).selectOption('23:00');
+  await page.getByRole('combobox', { name: /time zone/ }).fill(zone);
+  await page.getByRole('button', { name: 'Save schedule' }).click();
+  await expect(page.getByText(`Daily sync at 23:00 ${zone} saved.`)).toBeVisible();
+  await expect(page.getByText(/Next run: \d/)).toBeVisible();
   await shot(page, '25-admin-integrations');
 
   // Identity mapping: map Jira and GitLab accounts of Dana to the synthetic person Dana Dev.
