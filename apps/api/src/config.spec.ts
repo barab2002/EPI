@@ -80,6 +80,15 @@ describe('loadConfig', () => {
     ).toThrow('EPI_MIN_AGGREGATE_SIZE');
   });
 
+  it('enables the sync scheduler unless EPI_SYNC_SCHEDULER=off', () => {
+    const base = { DATABASE_URL: 'x', EPI_MODE: 'demo' };
+    expect(loadConfig(base).syncScheduler).toBe(true);
+    expect(loadConfig({ ...base, EPI_SYNC_SCHEDULER: 'off' }).syncScheduler).toBe(false);
+    expect(() => loadConfig({ ...base, EPI_SYNC_SCHEDULER: 'maybe' })).toThrow(
+      'EPI_SYNC_SCHEDULER',
+    );
+  });
+
   it('builds the database URL from a password file and URL-encodes it', () => {
     const c = loadConfig({
       EPI_MODE: 'demo',

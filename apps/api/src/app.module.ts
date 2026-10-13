@@ -16,6 +16,7 @@ import { EPI_CONFIG, EpiConfig } from './config';
 import { DATA_SOURCE } from './db/data-source';
 import { GitLabSync } from './ingestion/gitlab/gitlab.sync';
 import { JiraSync } from './ingestion/jira/jira.sync';
+import { SyncScheduler } from './ingestion/sync-scheduler';
 import { HealthController } from './health/health.controller';
 import { KpiController } from './kpi/kpi.controller';
 import { KpiService } from './kpi/kpi.service';
@@ -56,6 +57,7 @@ export class AppModule {
         ReviewsService,
         IdentityService,
         OrgAdminService,
+        SyncScheduler,
         {
           provide: JiraSync,
           useFactory: (ds: DataSource) => new JiraSync(ds),

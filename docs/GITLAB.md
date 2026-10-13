@@ -37,6 +37,10 @@ Add `external_identities(source='gitlab', external_id=<numeric GitLab user ID>)`
 - **MR Open → First Review** (separate proxy KPI) is used only when a source exposes no reviewer-request events.
 - **Jira links**: first key found in branch (case-insensitive), then title, then description; linked only if that Jira issue exists in EPI. The source is stored as `link_confidence` (`branch` > `title` > `description`); manual override arrives with EPI-008.
 
+## Daily automatic sync
+
+Same schedule as Jira — see `JIRA.md` › Daily automatic sync.
+
 ## How sync works
 
 `updated_after` (UTC ISO timestamps) with 48 h overlap after the first backfill, `X-Next-Page` pagination for MRs and notes, bounded retries/backoff with `Retry-After`, fail-fast on 401/403, inaccessible projects reported by ID, idempotent upserts, cursor only on success, one run per connection.

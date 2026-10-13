@@ -32,6 +32,10 @@ EPI_JIRA_TOKEN_FILE=/etc/epi/jira_token node dist/cli.js jira-sync --name jira-m
 - **People:** add `external_identities(source='jira', external_id=<Jira user key, e.g. JIRAUSER10100>)` for each pilot member (admin screen: EPI-008). Unmapped assignees are counted in each run (`unmappedAssignees`) and their items are not attributed to anyone.
 - **Statuses:** review `GET /api/v1/admin/status-mappings`; set e.g. "Code Review" → `REVIEW`, "Blocked" → `BLOCKED` with `PUT /api/v1/admin/status-mappings/jira-main/<statusId>`. Admin choices are never overwritten; the next sync re-categorizes history.
 
+## Daily automatic sync
+
+Administration › Integrations › **Daily sync** (or `GET|PUT /api/v1/admin/sync-schedule`) runs every enabled Jira and GitLab connection once a day at a local hour in an IANA time zone (off by default). Runs go one after another; a connection already syncing is skipped; a failure never stops the others or advances that connection's cursor. Each daily run is audited (`sync.scheduled`, counts only). If EPI was down at the hour it catches up later the same day; DST gaps/repeats run exactly once. With several EPI processes on one database only one claims each day. `EPI_SYNC_SCHEDULER=off` disables the in-process scheduler (e.g. when an external cron calls `jira-sync`/`gitlab-sync`).
+
 ## How sync works
 
 - JQL: `project in (…) AND issuetype not in ("Epic") AND updated >= "-Nm" ORDER BY updated, key` — relative minutes, so the service account's time zone does not matter.

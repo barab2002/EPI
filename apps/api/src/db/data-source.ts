@@ -3,12 +3,14 @@ import { InitialSchema1760300000000 } from './migrations/1760300000000-initial-s
 import { OidcLogin1760400000000 } from './migrations/1760400000000-oidc-login';
 import { StatusMappings1760500000000 } from './migrations/1760500000000-status-mappings';
 import { SourceAccounts1760600000000 } from './migrations/1760600000000-source-accounts';
+import { AppSettings1760700000000 } from './migrations/1760700000000-app-settings';
 
 export const MIGRATIONS = [
   InitialSchema1760300000000,
   OidcLogin1760400000000,
   StatusMappings1760500000000,
   SourceAccounts1760600000000,
+  AppSettings1760700000000,
 ];
 
 export function createDataSource(databaseUrl: string): DataSource {

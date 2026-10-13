@@ -32,6 +32,8 @@ export interface EpiConfig {
   kpiMinimumSample: number;
   kpiLowConfidenceFloor: number;
   trendThresholdPct: number;
+  /** Run the in-process daily sync scheduler (EPI_SYNC_SCHEDULER=off disables it). */
+  syncScheduler: boolean;
 }
 
 function int(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
@@ -77,7 +79,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): EpiConfig {
     kpiMinimumSample: int(env, 'EPI_KPI_MIN_SAMPLE', 10),
     kpiLowConfidenceFloor: int(env, 'EPI_KPI_LOW_CONFIDENCE_FLOOR', 5),
     trendThresholdPct: int(env, 'EPI_TREND_THRESHOLD_PCT', 8),
+    syncScheduler: syncSchedulerFlag(env.EPI_SYNC_SCHEDULER),
   };
+}
+
+function syncSchedulerFlag(raw: string | undefined): boolean {
+  if (raw === undefined || raw === '' || raw === 'on') return true;
+  if (raw === 'off') return false;
+  throw new Error('Config: EPI_SYNC_SCHEDULER must be "on" or "off"');
 }
 
 function readSecretFile(name: string, path: string): string {

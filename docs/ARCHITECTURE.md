@@ -17,7 +17,7 @@
 - **postgres**: PostgreSQL 16. Schema managed by TypeORM migrations containing explicit SQL (`apps/api/src/db/migrations`).
 - **keycloak**: authentication only; EPI DB owns authorization.
 
-No Redis/Kafka/Celery/Grafana/DevLake. Background sync runs in-process (scheduled job) or via `epi-api` CLI command.
+No Redis/Kafka/Celery/Grafana/DevLake. Background sync runs in-process (daily `SyncScheduler`, ADR-021) or via `epi-api` CLI command.
 
 ## Security boundaries
 

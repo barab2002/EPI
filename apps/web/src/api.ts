@@ -175,6 +175,16 @@ export interface PersonOption {
   identities: { source: string; external_id: string }[] | null;
 }
 
+export interface SyncScheduleInfo {
+  enabled: boolean;
+  hourLocal: number;
+  timezone: string;
+  lastRunDate: string | null;
+  lastRunStartedAt: string | null;
+  schedulerActive: boolean;
+  nextRunAt: string | null;
+}
+
 export interface Integration {
   id: string;
   kind: 'jira' | 'gitlab';

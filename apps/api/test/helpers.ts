@@ -26,7 +26,7 @@ export async function freshDatabase(seed = true): Promise<DataSource> {
 
 export function testConfig(overrides: Partial<EpiConfig> = {}): EpiConfig {
   return {
-    ...loadConfig({ DATABASE_URL: testDatabaseUrl(), EPI_MODE: 'demo' }),
+    ...loadConfig({ DATABASE_URL: testDatabaseUrl(), EPI_MODE: 'demo', EPI_SYNC_SCHEDULER: 'off' }),
     ...overrides,
   };
 }
