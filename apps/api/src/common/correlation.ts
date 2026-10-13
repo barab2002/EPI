@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
+import { pickLocale } from './locale';
+import { translateMessages } from './messages-he';
 
 export const CORRELATION_HEADER = 'x-correlation-id';
 
@@ -32,7 +34,14 @@ export class ErrorFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const body = exception.getResponse();
-      const details = typeof body === 'string' ? { message: body } : body;
+      const details: Record<string, unknown> =
+        typeof body === 'string' ? { message: body } : { ...body };
+      // Messages for people follow the request's language (ADR-035 stage 3b).
+      const locale = pickLocale(req.query?.lang, req.header('accept-language'));
+      const m = details.message;
+      if (typeof m === 'string' || (Array.isArray(m) && m.every((x) => typeof x === 'string'))) {
+        details.message = translateMessages(m, locale);
+      }
       res.status(status).json({ ...details, statusCode: status, correlationId });
       return;
     }
@@ -41,7 +50,10 @@ export class ErrorFilter implements ExceptionFilter {
     this.logger.error(`[${correlationId}] ${req.method} ${req.path} failed: ${err}`);
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: 500,
-      message: 'Internal error',
+      message: translateMessages(
+        'Internal error',
+        pickLocale(req.query?.lang, req.header('accept-language')),
+      ),
       correlationId,
     });
   }

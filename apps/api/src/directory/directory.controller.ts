@@ -1,3 +1,5 @@
+import { RequestLocale, type Locale } from '../common/locale';
+import { translateMessage } from '../common/messages-he';
 import { Body, Controller, ForbiddenException, Get, HttpCode, Post, Put } from '@nestjs/common';
 import {
   ApiCookieAuth,
@@ -57,9 +59,21 @@ export class DirectoryController {
   @Post('preview')
   @HttpCode(200)
   @ApiOperation({ summary: 'Read the directory and show what an import would change (no changes)' })
-  preview(@CurrentScope() scope: Scope) {
+  async preview(@CurrentScope() scope: Scope, @RequestLocale() locale: Locale) {
     requireAdmin(scope);
-    return this.directory.preview();
+    const p = await this.directory.preview();
+    // Reasons and warnings in the reader's language; the hash covers the plan, not its wording.
+    return {
+      ...p,
+      plan: {
+        ...p.plan,
+        conflicts: p.plan.conflicts.map((c) => ({
+          ...c,
+          reason: translateMessage(c.reason, locale),
+        })),
+        warnings: p.plan.warnings.map((w) => translateMessage(w, locale)),
+      },
+    };
   }
 
   @Post('apply')
