@@ -18,6 +18,19 @@ export interface OidcConfig {
   linkByVerifiedEmail: boolean;
 }
 
+/** Read-only directory (Active Directory / LDAP) for the team import (EPI-004c, ADR-026). */
+export interface DirectoryConfig {
+  url: string;
+  bindDn: string;
+  bindPassword: string;
+  /** PEM CA bundle trusted for LDAPS; null = system trust store. */
+  caPem: string | null;
+  usersDn: string;
+  vendor: 'ad' | 'other';
+  /** DNs of the pilot team groups (same list Keycloak uses for sign-in). */
+  teamGroups: string[];
+}
+
 export interface EpiConfig {
   mode: EpiMode;
   /** External base URL users reach EPI at; used for the OIDC redirect URI. */
@@ -34,6 +47,7 @@ export interface EpiConfig {
   trendThresholdPct: number;
   /** Run the in-process daily sync scheduler (EPI_SYNC_SCHEDULER=off disables it). */
   syncScheduler: boolean;
+  directory: DirectoryConfig | null;
 }
 
 function int(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
@@ -80,6 +94,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): EpiConfig {
     kpiLowConfidenceFloor: int(env, 'EPI_KPI_LOW_CONFIDENCE_FLOOR', 5),
     trendThresholdPct: int(env, 'EPI_TREND_THRESHOLD_PCT', 8),
     syncScheduler: syncSchedulerFlag(env.EPI_SYNC_SCHEDULER),
+    directory: resolveDirectory(env, mode),
   };
 }
 
@@ -98,6 +113,40 @@ function readSecretFile(name: string, path: string): string {
   }
   if (!value) throw new Error(`Config: ${name} is empty`);
   return value;
+}
+
+function resolveDirectory(env: NodeJS.ProcessEnv, mode: EpiMode): DirectoryConfig | null {
+  const url = env.EPI_LDAP_URL;
+  if (!url) return null;
+  const need = [
+    'EPI_LDAP_BIND_DN',
+    'EPI_LDAP_BIND_PASSWORD_FILE',
+    'EPI_LDAP_USERS_DN',
+    'EPI_LDAP_TEAM_GROUPS',
+  ];
+  const missing = need.filter((k) => !env[k]);
+  if (missing.length) throw new Error(`Config: directory import needs ${missing.join(', ')}`);
+  if (!/^ldaps:\/\//.test(url)) {
+    if (env.EPI_LDAP_ALLOW_PLAIN !== 'true' || mode === 'production')
+      throw new Error('Config: EPI_LDAP_URL must be ldaps:// (passwords cross the network)');
+  }
+  const vendor = env.EPI_LDAP_VENDOR ?? 'ad';
+  if (vendor !== 'ad' && vendor !== 'other')
+    throw new Error('Config: EPI_LDAP_VENDOR must be ad or other');
+  const teamGroups = env
+    .EPI_LDAP_TEAM_GROUPS!.split(';')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (teamGroups.length === 0) throw new Error('Config: EPI_LDAP_TEAM_GROUPS is empty');
+  return {
+    url,
+    bindDn: env.EPI_LDAP_BIND_DN!,
+    bindPassword: readSecretFile('EPI_LDAP_BIND_PASSWORD_FILE', env.EPI_LDAP_BIND_PASSWORD_FILE!),
+    caPem: env.EPI_LDAP_CA_FILE ? readSecretFile('EPI_LDAP_CA_FILE', env.EPI_LDAP_CA_FILE) : null,
+    usersDn: env.EPI_LDAP_USERS_DN!,
+    vendor,
+    teamGroups,
+  };
 }
 
 function resolveOidc(env: NodeJS.ProcessEnv): OidcConfig | null {
