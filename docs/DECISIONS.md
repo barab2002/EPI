@@ -147,3 +147,13 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 - **Why bundled rather than "EPI talks LDAP":** Keycloak already does secure LDAP auth, brute-force protection and OIDC; EPI keeps one auth path (OIDC BFF, ADR-015). Cost: one more container (~1 GB RAM limit).
 - **Tests:** realm unit tests (node:test, in CI); `scripts/e2e-sso-ldap.sh` with a synthetic OpenLDAP (pinned test image, test CA, AD-style `member`/`memberOf`) — browser sign-in, refusal cases, no stored credentials. AD-specific filters (nested groups, disabled accounts) are unit-tested only; verify against the real AD in the pilot install.
 - **Limits:** realm changes after the first start need the admin console until `sso-apply` exists; the Keycloak database is not yet included in `./epi.sh backup` (state is rebuildable from the realm file and AD).
+
+## ADR-026 · 2026-10-13 · Accepted — UI/UX master prompt adopted, reconciled with offline rules
+
+- **Decision:** `docs/UI_UX_MASTER_PROMPT.md` (owner-provided) is the standard for all UI/UX work: one authoritative design system in `docs/DESIGN.md`, the Design → Implement → Critique → Audit → Browser test → Fix loop, WCAG 2.2 AA target, screenshots at 390/768/1440/1920 px, and the `UI_UX_*` records in `docs/`.
+- **Conflicts resolved (CLAUDE.md and the Master Spec win):**
+  - No web fonts or CDNs (air-gapped): the system font stack, which is SF Pro on Apple devices.
+  - No Apple assets or branding.
+  - Keep React + Vite + plain CSS tokens (ADR-004) instead of the prompt's "new project" stack. Tailwind, shadcn/ui, Lucide or Motion are adopted only via an ADR with a license check and a clear benefit.
+- **Skills:** the five named skills are third-party code. They are installed only after their code is reviewed and the owner approves; until then their roles are done manually and reported as manual. Playwright is already present.
+- **Scheduling:** UI work enters the plan after the pilot-critical items (EPI-004c, 012c, retention, Hebrew), or earlier if the owner asks. Hebrew/RTL work will follow the new design system.
