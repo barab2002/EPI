@@ -1,3 +1,5 @@
+import { RequestLocale, type Locale } from '../common/locale';
+import { translateMessage } from '../common/messages-he';
 import {
   Body,
   Controller,
@@ -122,8 +124,13 @@ export class SettingsController {
   @Post('connections/:id/test')
   @HttpCode(200)
   @ApiOperation({ summary: 'Check the connection with the server-side token (read-only)' })
-  test(@CurrentScope() scope: Scope, @Param('id', new ParseUUIDPipe()) id: string) {
+  async test(
+    @CurrentScope() scope: Scope,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @RequestLocale() locale: Locale,
+  ) {
     requireAdmin(scope);
-    return this.settings.test(id);
+    const r = await this.settings.test(id);
+    return { ...r, summary: translateMessage(r.summary, locale) };
   }
 }

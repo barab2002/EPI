@@ -107,6 +107,14 @@ run('Directory import (integration)', () => {
       `Group ${TEAM_PLATFORM} is not mapped to a team; its 1 member(s) are not imported.`,
     ]);
     expect(await openMembers(payments)).toEqual(before);
+    // In Hebrew: same plan and hash, warnings in Hebrew with the group DN kept.
+    const he = (
+      await admin.post('/api/v1/admin/directory/preview').set('Accept-Language', 'he').expect(200)
+    ).body;
+    expect(he.hash).toBe(hash);
+    expect(he.plan.warnings).toEqual([
+      `הקבוצה ${TEAM_PLATFORM} אינה ממופה לצוות; 1 החברים בה אינם מיובאים.`,
+    ]);
   });
 
   it('refuses a plan that is not the previewed one', async () => {

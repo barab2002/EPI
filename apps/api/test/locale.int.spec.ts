@@ -65,4 +65,45 @@ describe('Interface language (integration)', () => {
     ).body;
     expect(forced[0].title).toBe('Cycle Time');
   });
+
+  it('sends error and validation messages in the language of the request', async () => {
+    const eli = await login(app, ds, 'Eli Engineer');
+    const forbidden = await eli
+      .get('/api/v1/admin/settings')
+      .set('Accept-Language', 'he')
+      .expect(403);
+    expect(forbidden.body.message).toBe('נדרשת הרשאת מנהל מערכת');
+    expect(forbidden.body.correlationId).toBeDefined();
+    const english = await eli.get('/api/v1/admin/settings').expect(403);
+    expect(english.body.message).toBe('Administrator role required');
+    const invalid = await request(app.getHttpServer())
+      .put('/api/v1/me/locale')
+      .set('Cookie', eli.cookie)
+      .set('x-csrf-token', eli.csrf)
+      .set('Accept-Language', 'he-IL')
+      .send({ locale: 'fr' })
+      .expect(400);
+    expect(invalid.body.message).toEqual(['השדה locale חייב להיות אחד מהערכים: en, he']);
+    const anon = await request(app.getHttpServer()).get('/api/v1/me?lang=he').expect(401);
+    expect(anon.body.message).toBe('לא מחוברים, או שתוקף ההתחברות פג');
+  });
+
+  it('sends the connection test result in Hebrew', async () => {
+    const admin = await login(app, ds, 'Avery Admin');
+    const created = await admin
+      .post('/api/v1/admin/settings/connections', {
+        kind: 'jira',
+        name: 'jira-he',
+        url: 'https://jira.corp.example',
+        projects: ['ENG'],
+        secretRef: 'EPI_HE_TEST_TOKEN',
+      })
+      .expect(201);
+    const r = await admin
+      .post(`/api/v1/admin/settings/connections/${created.body.id}/test`)
+      .set('Accept-Language', 'he')
+      .expect(200);
+    expect(r.body.ok).toBe(false); // the token does not exist in the test environment
+    expect(r.body.summary).toMatch(/^הטוקן EPI_HE_TEST_TOKEN לא סופק/);
+  });
 });
