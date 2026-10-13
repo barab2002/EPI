@@ -32,6 +32,10 @@ outside `--dir` except Docker images. It does not start anything. The installati
 the bundled images (`deploy/offline.env`, Compose `pull_policy: never`), so it never tries to
 reach a registry.
 
+**Integrity:** the `.sha256` file protects against corruption in transit; it is only as trustworthy
+as the channel it came through. Compare it with the value published by the bundle's builder (e.g.
+read it over the phone or from a signed ticket). Cryptographic signing of bundles is planned.
+
 ## 3. Run
 
 - **Synthetic demo:** `./epi.sh demo` — demo data and, unless built with `--no-keycloak`, the

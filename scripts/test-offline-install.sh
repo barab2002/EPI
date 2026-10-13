@@ -22,6 +22,22 @@ echo "==> Building bundle (no demo Keycloak)"
 bash "$ROOT/epi.sh" bundle --no-keycloak | tail -2
 bundle="$(ls -t "$ROOT"/dist/epi-bundle-*.tar | head -1)"
 
+echo "==> Refuses a corrupted bundle and a tampered one"
+neg="$(dirname "$dir")/neg"; mkdir -p "$neg"
+cp "$bundle" "$neg/bad.tar"; sed 's/ .*/  bad.tar/' "$bundle.sha256" >"$neg/bad.tar.sha256"
+printf 'X' | dd of="$neg/bad.tar" bs=1 seek=4096 conv=notrunc status=none
+if bash "$ROOT/epi.sh" offline-install "$neg/bad.tar" --dir "$neg/a" >/dev/null 2>&1; then
+  echo "FAIL: corrupted bundle accepted" >&2; exit 1
+fi
+mkdir -p "$neg/x" && tar -xf "$bundle" -C "$neg/x"
+top="$(ls "$neg/x")"; echo '# tampered' >>"$neg/x/$top/epi.sh"
+tar -C "$neg/x" -cf "$neg/tampered.tar" "$top"
+if bash "$ROOT/epi.sh" offline-install "$neg/tampered.tar" --dir "$neg/b" >/dev/null 2>&1; then
+  echo "FAIL: tampered bundle accepted" >&2; exit 1
+fi
+rm -rf "$neg"
+echo "    corrupted and tampered bundles refused: OK"
+
 echo "==> Removing the bundle's image tags so the install must load them from the bundle"
 tar -xOf "$bundle" --wildcards '*/images/manifest.tsv' | cut -f1 | xargs -r docker rmi -f >/dev/null 2>&1 || true
 
