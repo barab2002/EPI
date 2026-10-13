@@ -1,0 +1,13 @@
+# UI/UX progress
+
+## 2026-10-13
+
+- **Done:** skills installed and reviewed (PR #16, ADR-027); baseline captures (40) and analysis;
+  `DESIGN.md` design system; issues UX-001…015; plan (6 slices).
+- **Branch / commit:** `feature/ui-pass` (see `git log`).
+- **Skill use (honest):** UI UX Pro Max search script **run**; Impeccable, frontend-design,
+  web-design-guidelines and webapp-testing **followed by reading their SKILL.md/references** (not yet
+  registered as skills in this session).
+- **Slice 1 done:** tokens (`styles.css` per DESIGN.md §3), responsive shell (sidebar ≥1024 px, compact top bar below, scrollable nav with fade), links, tabular numerals, buttons/inputs/segmented control, KPI strip (no nested cards), KPI sheet (icon close, focus trap, bottom sheet on mobile, Intl dates), role names, authored icons/mark, copy tells removed, all tables wrapped. Layout guard `e2e/layout.spec.ts` (13 routes × 6 widths).
+- **Evidence:** web unit 33/33; demo e2e 6 passed (20 skipped by design); admin e2e 2/2 ×2; 40 post-slice captures reviewed (team, mobile, tablet admin, sheet).
+- **Next:** Slice 2 — remaining KPI surfaces (group/org/developer pages, catalog), then Slice 3 home + sign-in.

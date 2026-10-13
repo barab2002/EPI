@@ -1,9 +1,10 @@
 import type { KpiCard as Card } from '../api';
-import { confidenceLabel, formatDate, formatPct, formatValue, trendLabel } from '../format';
+import { confidenceLabel, formatDate, formatPct, trendLabel, valueParts } from '../format';
 import { t } from '../i18n';
 
 export function KpiCardView({ card, onExplain }: { card: Card; onExplain: (card: Card) => void }) {
   const trend = card.trend;
+  const v = valueParts(card.value, card.unit);
   return (
     <article className="kpi-card" aria-labelledby={`kpi-${card.code}`}>
       <header className="kpi-head">
@@ -19,7 +20,13 @@ export function KpiCardView({ card, onExplain }: { card: Card; onExplain: (card:
       ) : (
         <>
           <p className={`kpi-value${card.value === null ? ' kpi-na' : ''}`}>
-            {formatValue(card.value, card.unit)}
+            {v.number}
+            {v.unit && (
+              <>
+                {' '}
+                <span className="kpi-unit">{v.unit}</span>
+              </>
+            )}
           </p>
           {trend && (
             <p className={`trend trend-${trend.status}`}>

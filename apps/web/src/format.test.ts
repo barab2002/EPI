@@ -1,4 +1,4 @@
-import { formatPct, formatValue } from './format';
+import { formatPct, formatValue, roleLabel, valueParts } from './format';
 
 describe('formatValue', () => {
   it('renders missing values as N/A, never as zero', () => {
@@ -21,5 +21,21 @@ describe('formatPct', () => {
     expect(formatPct(-20.4)).toBe('-20%');
     expect(formatPct(8.6)).toBe('+9%');
     expect(formatPct(null)).toBe('');
+  });
+});
+
+describe('valueParts', () => {
+  it('splits number and unit; N/A has no unit', () => {
+    expect(valueParts(4.26, 'days')).toEqual({ number: '4.3', unit: 'days' });
+    expect(valueParts(null, 'days')).toEqual({ number: 'N/A', unit: '' });
+  });
+});
+
+describe('roleLabel', () => {
+  it('shows words, highest role first, developer only when nothing else', () => {
+    expect(roleLabel(['DEVELOPER', 'TEAM_LEAD'])).toBe('Team lead');
+    expect(roleLabel(['TEAM_LEAD', 'ADMIN'])).toBe('Administrator, Team lead');
+    expect(roleLabel(['DEVELOPER'])).toBe('Developer');
+    expect(roleLabel([])).toBe('Developer');
   });
 });

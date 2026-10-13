@@ -1,0 +1,21 @@
+# UI/UX tests
+
+## Strategy
+
+| Layer | What | Command |
+|---|---|---|
+| Unit (web) | components, states, formatting | `pnpm --filter @epi/web test` (in `scripts/ci.sh`) |
+| E2E journeys | sign-in, drill-down, assessment, admin, SSO | `pnpm run e2e`, `scripts/e2e-admin.sh`, `scripts/e2e-oidc.sh`, `scripts/e2e-sso-ldap.sh` |
+| Layout guard | no horizontal overflow at 320/390/768/1440/1920 on key routes | `e2e/layout.spec.ts` (Slice 1) |
+| Review captures | 10 screens × 390/768/1440/1920 for human/AI inspection | `EPI_UX_CAPTURE=<dir> npx playwright test e2e/ux-capture.spec.ts --project=desktop` |
+| Accessibility | keyboard paths, focus, labels, contrast table; automated axe would need a new dependency (axe-core, MPL-2.0) → not added without approval | manual + e2e keyboard tests |
+
+## Results
+
+| When (UTC) | Run | Result |
+|---|---|---|
+| 2026-10-13 05:20 | baseline `ux-capture` (demo, pre-redesign) | 40 captures; findings UX-001…015 |
+| 2026-10-13 05:25 | overflow probe at 390 px | `scrollWidth` 424 on `/`, `/kpis`, `/reviews` → UX-001 |
+| 2026-10-13 06:05 | `e2e/layout.spec.ts` (before slice 1) | ❌ as expected: `/` 424 px at 320 px |
+| 2026-10-13 06:30 | layout guard after slice 1 | ❌ `/admin/audit` 461 px at 320 → unwrapped tables (UX-016) fixed; ❌ `/admin/people` 350 px → field groups (UX-018) fixed; then ✅ |
+| 2026-10-13 06:40 | web unit · demo e2e · admin e2e ×2 · 40 captures | ✅ 33/33 · 6 passed, 20 skipped by design · 2/2 ×2 · reviewed |

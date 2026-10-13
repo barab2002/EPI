@@ -144,36 +144,38 @@ export function AuditTab() {
       {items !== null && items.length === 0 && <Empty>No audit events match these filters.</Empty>}
       {items !== null && items.length > 0 && (
         <>
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">When</th>
-                <th scope="col">Who</th>
-                <th scope="col">Action</th>
-                <th scope="col">Resource</th>
-                <th scope="col">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((e) => (
-                <tr key={e.id}>
-                  <td>
-                    <time dateTime={e.at}>{formatTime(e.at)}</time>
-                  </td>
-                  <td>{e.actor?.name ?? <span className="muted">system</span>}</td>
-                  <td>
-                    <code className="nowrap">{e.action}</code>
-                  </td>
-                  <td>
-                    {e.resourceLabel ?? (
-                      <span className="muted">{e.resourceType.replace(/_/g, ' ')}</span>
-                    )}
-                  </td>
-                  <td className="small">{details(e.metadata)}</td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">When</th>
+                  <th scope="col">Who</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Resource</th>
+                  <th scope="col">Details</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((e) => (
+                  <tr key={e.id}>
+                    <td>
+                      <time dateTime={e.at}>{formatTime(e.at)}</time>
+                    </td>
+                    <td>{e.actor?.name ?? <span className="muted">system</span>}</td>
+                    <td>
+                      <code className="nowrap">{e.action}</code>
+                    </td>
+                    <td>
+                      {e.resourceLabel ?? (
+                        <span className="muted">{e.resourceType.replace(/_/g, ' ')}</span>
+                      )}
+                    </td>
+                    <td className="small">{details(e.metadata)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {cursor && (
             <button type="button" className="btn" onClick={more} disabled={loadingMore}>
               {loadingMore ? 'Loading…' : 'Load older events'}

@@ -44,35 +44,37 @@ export function DataQualityTab() {
         {d.connections.length === 0 ? (
           <p className="muted">No source connections configured — KPIs use synthetic demo data.</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Connection</th>
-                <th scope="col">Last successful sync</th>
-                <th scope="col">State</th>
-              </tr>
-            </thead>
-            <tbody>
-              {d.connections.map((c) => (
-                <tr key={c.name}>
-                  <td>{c.name}</td>
-                  <td>{formatTime(c.lastSuccessAt)}</td>
-                  <td>
-                    {c.stale ? (
-                      <span className="badge badge-bad">Stale (&gt; {d.staleAfterHours} h)</span>
-                    ) : (
-                      <span className="badge badge-managed">Fresh</span>
-                    )}
-                    {c.lastRun?.status === 'failed' && (
-                      <div className="error-text small">
-                        Last run failed: {c.lastRun.error_summary}
-                      </div>
-                    )}
-                  </td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Connection</th>
+                  <th scope="col">Last successful sync</th>
+                  <th scope="col">State</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {d.connections.map((c) => (
+                  <tr key={c.name}>
+                    <td>{c.name}</td>
+                    <td>{formatTime(c.lastSuccessAt)}</td>
+                    <td>
+                      {c.stale ? (
+                        <span className="badge badge-bad">Stale (&gt; {d.staleAfterHours} h)</span>
+                      ) : (
+                        <span className="badge badge-managed">Fresh</span>
+                      )}
+                      {c.lastRun?.status === 'failed' && (
+                        <div className="error-text small">
+                          Last run failed: {c.lastRun.error_summary}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
       <section className="panel" aria-labelledby="coverage-title">
@@ -98,7 +100,7 @@ export function DataQualityTab() {
         </div>
         {(d.jira.unmappedAccounts > 0 || d.gitlab.unmappedAccounts > 0) && (
           <p>
-            <Link to="/admin/identities">Map the remaining accounts →</Link>
+            <Link to="/admin/identities">Map the remaining accounts</Link>
           </p>
         )}
       </section>
@@ -116,7 +118,7 @@ export function DataQualityTab() {
                 </li>
               ))}
             </ul>
-            <Link to="/admin/statuses">Review status mappings →</Link>
+            <Link to="/admin/statuses">Review status mappings</Link>
           </>
         )}
       </section>

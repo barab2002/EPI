@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { roleLabel } from '../format';
 import { t } from '../i18n';
 import { useSession } from '../session';
+import { MarkIcon } from './Icons';
 
 export interface Crumb {
   label: string;
@@ -39,15 +41,15 @@ export function Layout() {
       )}
       <div className="shell">
         <aside className="sidebar">
-          <div className="brand">
-            <span className="brand-mark" aria-hidden="true">
-              E
+          <Link to="/" className="brand" aria-label={`${t('appName')} — ${t('navHome')}`}>
+            <span className="brand-mark">
+              <MarkIcon />
             </span>
             <span>
-              <strong>{t('appName')}</strong>
+              <span className="brand-name">{t('appName')}</span>
               <span className="brand-sub">{t('appTagline')}</span>
             </span>
-          </div>
+          </Link>
           <nav aria-label="Main">
             <ul className="nav">
               <li>
@@ -73,10 +75,8 @@ export function Layout() {
           </nav>
           <div className="user">
             <div>
-              <strong>{me.user.display_name}</strong>
-              <div className="muted small">
-                {me.roles.filter((r) => r !== 'DEVELOPER').join(', ') || 'DEVELOPER'}
-              </div>
+              <span className="user-name">{me.user.display_name}</span>
+              <span className="user-role">{roleLabel(me.roles)}</span>
             </div>
             <button type="button" className="btn" onClick={signOut}>
               {t('signOut')}

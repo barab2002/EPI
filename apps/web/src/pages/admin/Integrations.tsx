@@ -185,83 +185,87 @@ export function IntegrationsTab() {
           </Empty>
         )}
         {list.state === 'ready' && list.data.length > 0 && (
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Source</th>
-                <th scope="col">Last success</th>
-                <th scope="col">Last run</th>
-                <th scope="col">Secret</th>
-                <th scope="col">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.data.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <strong>{c.name}</strong>
-                    <div className="muted small">{c.endpoint}</div>
-                  </td>
-                  <td>{c.kind === 'jira' ? 'Jira DC' : 'GitLab'}</td>
-                  <td>{formatTime(c.last_success_at)}</td>
-                  <td>
-                    <RunBadge status={c.last_run?.status} />
-                    {c.last_run?.error_summary && (
-                      <div className="error-text small">{c.last_run.error_summary}</div>
-                    )}
-                  </td>
-                  <td>
-                    <code>{c.secret_ref ?? '—'}</code>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={!c.enabled || busy === c.name || running}
-                      onClick={() => syncNow(c.name)}
-                    >
-                      Sync now
-                    </button>
-                  </td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Source</th>
+                  <th scope="col">Last success</th>
+                  <th scope="col">Last run</th>
+                  <th scope="col">Secret</th>
+                  <th scope="col">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {list.data.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <strong>{c.name}</strong>
+                      <div className="muted small">{c.endpoint}</div>
+                    </td>
+                    <td>{c.kind === 'jira' ? 'Jira DC' : 'GitLab'}</td>
+                    <td>{formatTime(c.last_success_at)}</td>
+                    <td>
+                      <RunBadge status={c.last_run?.status} />
+                      {c.last_run?.error_summary && (
+                        <div className="error-text small">{c.last_run.error_summary}</div>
+                      )}
+                    </td>
+                    <td>
+                      <code>{c.secret_ref ?? '—'}</code>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn"
+                        disabled={!c.enabled || busy === c.name || running}
+                        onClick={() => syncNow(c.name)}
+                      >
+                        Sync now
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         <h3>Recent sync runs</h3>
         {runs.state === 'ready' && runs.data.length === 0 && <p className="muted">No runs yet.</p>}
         {runs.state === 'ready' && runs.data.length > 0 && (
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Connection</th>
-                <th scope="col">Started</th>
-                <th scope="col">Status</th>
-                <th scope="col">Summary</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.data.slice(0, 10).map((r) => (
-                <tr key={r.id}>
-                  <td>{r.connection}</td>
-                  <td>{formatTime(r.started_at)}</td>
-                  <td>
-                    <RunBadge status={r.status} />
-                  </td>
-                  <td className="small">
-                    {r.error_summary ? (
-                      <span className="error-text">{r.error_summary}</span>
-                    ) : (
-                      summarize(r.counts)
-                    )}
-                  </td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Connection</th>
+                  <th scope="col">Started</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Summary</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {runs.data.slice(0, 10).map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.connection}</td>
+                    <td>{formatTime(r.started_at)}</td>
+                    <td>
+                      <RunBadge status={r.status} />
+                    </td>
+                    <td className="small">
+                      {r.error_summary ? (
+                        <span className="error-text">{r.error_summary}</span>
+                      ) : (
+                        summarize(r.counts)
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </>
