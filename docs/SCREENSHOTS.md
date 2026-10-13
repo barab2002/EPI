@@ -131,10 +131,18 @@ Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process 
 
 ![Administration › Data quality: freshness, identity coverage, MR-to-Jira links, unmapped statuses](screenshots/28-admin-data-quality.png)
 
+### Administration › Organization: groups and teams, members with dates, add/transfer and end memberships
+
+![Administration › Organization: groups and teams, members with dates, add/transfer and end memberships](screenshots/29-admin-organization.png)
+
+### Administration › People: create a person, assign roles on a scope, grade history
+
+![Administration › People: create a person, assign roles on a scope, grade history](screenshots/30-admin-people.png)
+
 ## How these were made
 
 1. `./epi.sh demo` (signs-in users from `./epi.sh credentials`).
 2. A Playwright script signs in as each demo role (demo sign-in and Keycloak SSO for `taylor`), navigates every screen at 1366×900, Pixel 7 and dark color scheme, and saves PNGs here; `screenshots/index.json` lists file → caption.
 3. No passwords appear in any screenshot (the Keycloak page is captured before the password is typed).
 
-Admin shots (25–28) come from `scripts/e2e-admin.sh --screenshots`; mobile shots were refreshed after the mobile navigation fix.
+Admin shots (25–30) come from `scripts/e2e-admin.sh --screenshots`; mobile shots were refreshed after the mobile navigation fix.

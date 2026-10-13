@@ -715,3 +715,30 @@ td select,
 .table-wrap {
   overflow-x: auto;
 }
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0.4rem 0;
+}
+.inline-form input:not([type='checkbox']) {
+  font: inherit;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.inline-details {
+  display: inline-block;
+}
+.inline-details[open] {
+  display: block;
+  width: 100%;
+  padding: 0.25rem 0 0.5rem;
+}
+h4 {
+  margin: 1rem 0 0.25rem;
+  font-size: 0.95rem;
+}

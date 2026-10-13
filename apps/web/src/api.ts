@@ -40,6 +40,7 @@ export const api = {
   get: <T>(url: string) => call<T>('GET', url),
   post: <T>(url: string, body?: unknown) => call<T>('POST', url, body ?? {}),
   put: <T>(url: string, body?: unknown) => call<T>('PUT', url, body ?? {}),
+  patch: <T>(url: string, body?: unknown) => call<T>('PATCH', url, body ?? {}),
   delete: <T>(url: string) => call<T>('DELETE', url),
 };
 
@@ -235,4 +236,44 @@ export interface DataQuality {
     jiraLinkPct: number | null;
     unmappedAccounts: number;
   };
+}
+
+export interface Membership {
+  id: string;
+  user_id: string;
+  display_name: string;
+  active: boolean;
+  effective_from: string;
+  effective_to: string | null;
+}
+
+export interface PersonDetail {
+  id: string;
+  display_name: string;
+  email: string | null;
+  active: boolean;
+  memberships: {
+    id: string;
+    team_id: string;
+    team_name: string;
+    group_name: string;
+    effective_from: string;
+    effective_to: string | null;
+  }[];
+  roles: {
+    id: string;
+    role: string;
+    scope_type: string;
+    scope_id: string | null;
+    scope_name: string | null;
+    effective_from: string;
+    effective_to: string | null;
+  }[];
+  grades: {
+    id: string;
+    code: string;
+    label: string;
+    effective_from: string;
+    effective_to: string | null;
+  }[];
 }

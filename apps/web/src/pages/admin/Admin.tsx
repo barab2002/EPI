@@ -4,6 +4,8 @@ import { Empty } from '../../components/States';
 import { useSession } from '../../session';
 
 const TABS = [
+  ['organization', 'Organization'],
+  ['people', 'People'],
   ['integrations', 'Integrations'],
   ['identities', 'Identity mapping'],
   ['statuses', 'Status mappings'],
