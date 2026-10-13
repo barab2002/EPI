@@ -24,3 +24,4 @@
 | 2026-10-13 10:05 | `reviews-due.int.spec.ts` (new) + RBAC suite, serial | ✅ 28/28 (a parallel run without `--runInBand` showed 5 false failures from shared test DB) |
 | 2026-10-13 10:20 | web unit · demo e2e (+ home assertion) · admin e2e · captures ×2 rounds | ✅ 33/33 · 6 passed · 2/2 · reviewed |
 | 2026-10-13 10:55 | web unit (2 new form tests: errors+focus, draft prefill) · demo e2e ×2 (incl. re-run path) · pilot flow on a **fresh** throwaway database (port 8095, removed after) · admin e2e · captures | ✅ 34/34 · 6 passed · 3/3 fresh · 2/2 · reviewed. First demo run failed only because Docker was down after an idle container restart |
+| 2026-10-13 11:55 | web unit · lint/typecheck · admin e2e · layout guard · captures before/after (all admin tabs, 4 widths) | ✅ 34/34 · clean · 2/2 · ❌ sign-in 366 px at 320 with SSO configured (UX-051) → fixed → ✅ · reviewed (inputs stretched vertically in stacked fields found and fixed in round 2) |

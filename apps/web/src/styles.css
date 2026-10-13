@@ -852,6 +852,12 @@ h1 .badge {
 .btn-block {
   display: flex;
   width: 100%;
+  /* Full-width labels may be long (SSO); wrap rather than overflow narrow screens. */
+  white-space: normal;
+  text-align: center;
+  height: auto;
+  min-height: 36px;
+  padding-block: var(--s-2);
 }
 .link-btn {
   font: inherit;
@@ -987,27 +993,119 @@ input[type='radio'] {
 .form textarea {
   width: 100%;
 }
-.inline-form input:not([type='checkbox']):not([type='radio']),
-.inline-field input:not([type='checkbox']):not([type='radio']) {
+.inline-form > label > input:not([type='checkbox']):not([type='radio']) {
   min-width: 0;
-  flex: 1 1 160px;
+  width: min(260px, 100%);
+}
+.inline-field > input:not([type='checkbox']):not([type='radio']) {
+  width: min(260px, 100%);
+}
+.inline-field > input[type='date'] {
+  width: auto;
+}
+.inline-form .inline-form {
+  margin: 0;
 }
 .inline-form {
   display: flex;
-  gap: var(--s-2) var(--s-3);
-  align-items: center;
+  gap: var(--s-3);
+  align-items: flex-end;
   flex-wrap: wrap;
-  margin: var(--s-2) 0;
+  margin: var(--s-3) 0;
 }
+/* Admin fields: caption label above its control, so every row lines up on the control edge. */
 .inline-field {
   display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--s-1);
   max-width: 100%;
   min-width: 0;
-  gap: var(--s-2);
   color: var(--text-secondary);
   font-size: var(--text-footnote);
+  font-weight: 500;
+}
+.inline-field > input,
+.inline-field > select {
+  color: var(--text);
+  font-weight: 400;
+}
+/* Checkbox: control and label share one hit target, on the control's baseline. */
+.check-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  cursor: pointer;
+}
+.check-field input {
+  margin: 0;
+}
+.form-group + .form-group {
+  border-top: 1px solid var(--separator);
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+}
+.form-group > h3,
+.panel > h3 {
+  margin: var(--s-5) 0 var(--s-1);
+}
+.form-group > h3:first-child {
+  margin-top: 0;
+}
+.plain-list {
+  list-style: none;
+  margin: var(--s-1) 0 var(--s-2);
+  padding: 0;
+}
+.plain-list li {
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid var(--separator);
+}
+.plain-list li:last-child {
+  border-bottom: 0;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-6);
+  margin: var(--s-2) 0 0;
+  font-size: var(--text-footnote);
+  color: var(--text-secondary);
+}
+.meta-row strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.cell-actions {
+  text-align: end;
+  white-space: nowrap;
+}
+.btn-sm {
+  height: 30px;
+  padding: 0 var(--s-3);
+  font-size: var(--text-footnote);
+}
+.detail-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.flash {
+  border-radius: var(--r-control);
+  padding: var(--s-2) var(--s-3);
+  margin: var(--s-2) 0 var(--s-3);
+  font-size: var(--text-footnote);
+}
+.flash-ok {
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+.flash-error {
+  background: var(--critical-soft);
+  color: var(--critical);
 }
 .inline-details {
   display: inline-block;
@@ -1185,6 +1283,11 @@ textarea[aria-invalid='true'] {
 }
 .tree-row a {
   padding: var(--s-2) 0;
+}
+.tree-row .link-btn {
+  margin: 0;
+  align-self: center;
+  font-size: var(--text-body);
 }
 .tree ul .tree-row:last-child {
   border-bottom: 0;
@@ -1558,4 +1661,16 @@ textarea[aria-invalid='true'] {
   color: var(--text);
   border-bottom-color: var(--accent);
   font-weight: 600;
+}
+.history-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+  flex-wrap: wrap;
+}
+.form-subject {
+  align-self: center;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
 }

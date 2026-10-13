@@ -3,6 +3,7 @@ import { api, Integration, SyncRun, SyncScheduleInfo } from '../../api';
 import { Empty, ErrorState, Loading } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
+import { Flash, FlashMessage } from './shared';
 
 function RunBadge({ status }: { status: string | undefined }) {
   if (!status) return <span className="badge">no runs</span>;
@@ -27,7 +28,7 @@ const pad = (h: number) => `${String(h).padStart(2, '0')}:00`;
 /** Daily automatic sync of every enabled connection, at a local hour in a chosen time zone. */
 export function SyncScheduleCard() {
   const info = useApi<SyncScheduleInfo>('/api/v1/admin/sync-schedule');
-  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<Flash>(null);
   const [saving, setSaving] = useState(false);
 
   if (info.state === 'loading') return <Loading />;
@@ -68,28 +69,21 @@ export function SyncScheduleCard() {
       </p>
       {!s.schedulerActive && (
         <p role="note" className="error-text small">
-          The scheduler is switched off on this server (EPI_SYNC_SCHEDULER=off); the schedule is
-          saved but nothing runs automatically.
+          The scheduler is switched off on this server (<code>EPI_SYNC_SCHEDULER=off</code>). The
+          schedule is saved, but nothing runs automatically.
         </p>
       )}
-      {message && (
-        <p
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={message.kind === 'error' ? 'error-text' : 'ok-text'}
-        >
-          {message.text}
-        </p>
-      )}
+      <FlashMessage flash={message} />
       <form
         className="inline-form"
         onSubmit={save}
         key={`${s.enabled}-${s.hourLocal}-${s.timezone}`}
       >
-        <label className="inline-field">
+        <label className="check-field">
           <input type="checkbox" name="enabled" defaultChecked={s.enabled} /> Sync daily
         </label>
         <label className="inline-field">
-          at{' '}
+          Time
           <select name="hourLocal" defaultValue={s.hourLocal}>
             {Array.from({ length: 24 }, (_, h) => (
               <option key={h} value={h}>
@@ -99,7 +93,7 @@ export function SyncScheduleCard() {
           </select>
         </label>
         <label className="inline-field">
-          time zone{' '}
+          Time zone
           <input
             name="timezone"
             defaultValue={s.timezone}
@@ -113,13 +107,15 @@ export function SyncScheduleCard() {
             <option key={tz} value={tz} />
           ))}
         </datalist>
-        <button type="submit" className="btn btn-primary" disabled={saving}>
-          Save schedule
+        <button type="submit" className="btn btn-primary" disabled={saving} aria-busy={saving}>
+          {saving ? 'Saving…' : 'Save schedule'}
         </button>
       </form>
-      <p className="small">
-        Next run: {s.nextRunAt ? formatTime(s.nextRunAt) : '—'} · Last scheduled run:{' '}
-        {s.lastRunStartedAt ? formatTime(s.lastRunStartedAt) : 'never'}
+      <p className="meta-row">
+        <span>Next run: {s.nextRunAt ? formatTime(s.nextRunAt) : 'not scheduled'}</span>
+        <span>
+          Last scheduled run: {s.lastRunStartedAt ? formatTime(s.lastRunStartedAt) : 'never'}
+        </span>
       </p>
     </section>
   );
@@ -129,7 +125,7 @@ export function SyncScheduleCard() {
 export function IntegrationsTab() {
   const list = useApi<Integration[]>('/api/v1/admin/integrations');
   const runs = useApi<SyncRun[]>('/api/v1/admin/sync-runs');
-  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<Flash>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const { reload: reloadRuns } = runs;
   const { reload: reloadList } = list;
@@ -169,14 +165,7 @@ export function IntegrationsTab() {
           secret that holds them. Add connections with <code>jira-add</code> /{' '}
           <code>gitlab-add</code> (see docs/JIRA.md, docs/GITLAB.md).
         </p>
-        {message && (
-          <p
-            role={message.kind === 'error' ? 'alert' : 'status'}
-            className={message.kind === 'error' ? 'error-text' : 'ok-text'}
-          >
-            {message.text}
-          </p>
-        )}
+        <FlashMessage flash={message} />
         {list.state === 'loading' && <Loading />}
         {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
         {list.state === 'ready' && list.data.length === 0 && (
@@ -217,10 +206,10 @@ export function IntegrationsTab() {
                     <td>
                       <code>{c.secret_ref ?? '—'}</code>
                     </td>
-                    <td>
+                    <td className="cell-actions">
                       <button
                         type="button"
-                        className="btn"
+                        className="btn btn-sm"
                         disabled={!c.enabled || busy === c.name || running}
                         onClick={() => syncNow(c.name)}
                       >
@@ -234,7 +223,9 @@ export function IntegrationsTab() {
           </div>
         )}
         <h3>Recent sync runs</h3>
-        {runs.state === 'ready' && runs.data.length === 0 && <p className="muted">No runs yet.</p>}
+        {runs.state === 'ready' && runs.data.length === 0 && (
+          <p className="muted">No sync has run yet. Runs appear here after the first sync.</p>
+        )}
         {runs.state === 'ready' && runs.data.length > 0 && (
           <div className="table-wrap">
             <table className="table">
@@ -275,10 +266,10 @@ export function IntegrationsTab() {
 function summarize(c: Record<string, unknown>): string {
   const n = (k: string) => (typeof c[k] === 'number' ? (c[k] as number) : null);
   if (n('issuesSeen') !== null) {
-    return `${n('issuesSeen')} issues · ${n('itemsInserted')} new · ${n('itemsUpdated')} updated · ${n('unmappedAssignees')} unmapped people`;
+    return `${n('issuesSeen')} issues: ${n('itemsInserted')} new, ${n('itemsUpdated')} updated, ${n('unmappedAssignees')} unmapped people`;
   }
   if (n('mrsSeen') !== null) {
-    return `${n('mrsSeen')} MRs · ${n('mrsInserted')} new · ${n('reviewRequests')} review requests · ${n('unmappedUsers')} unmapped people`;
+    return `${n('mrsSeen')} MRs: ${n('mrsInserted')} new, ${n('reviewRequests')} review requests, ${n('unmappedUsers')} unmapped people`;
   }
   return '';
 }

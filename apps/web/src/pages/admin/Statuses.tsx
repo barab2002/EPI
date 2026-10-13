@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api, StatusMapping } from '../../api';
 import { Empty, ErrorState, Loading } from '../../components/States';
 import { useApi } from '../../useApi';
+import { Flash, FlashMessage } from './shared';
 
 const CATEGORIES: [string, string][] = [
   ['TODO', 'To do'],
@@ -16,7 +17,7 @@ const CATEGORIES: [string, string][] = [
 /** Source status → EPI category (drives Cycle Time and Aging). Applies on the next sync. */
 export function StatusesTab() {
   const list = useApi<StatusMapping[]>('/api/v1/admin/status-mappings');
-  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<Flash>(null);
 
   async function save(m: StatusMapping, category: string) {
     setMessage(null);
@@ -45,14 +46,7 @@ export function StatusesTab() {
         Confirm them and mark statuses that mean Blocked, Review or QA. Your choices are never
         overwritten by syncs.
       </p>
-      {message && (
-        <p
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={message.kind === 'error' ? 'error-text' : 'ok-text'}
-        >
-          {message.text}
-        </p>
-      )}
+      <FlashMessage flash={message} />
       {list.state === 'loading' && <Loading />}
       {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
       {list.state === 'ready' && list.data.length === 0 && (

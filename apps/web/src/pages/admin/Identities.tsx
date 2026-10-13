@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, PersonOption, SourceAccount } from '../../api';
 import { Empty, ErrorState, Loading } from '../../components/States';
 import { useApi } from '../../useApi';
+import { Flash, FlashMessage } from './shared';
 import { formatTime } from './Admin';
 
 type Status = 'unmapped' | 'mapped';
@@ -72,7 +73,7 @@ export function IdentitiesTab() {
   const accounts = useApi<SourceAccount[]>(
     `/api/v1/admin/accounts?status=${status}${source ? `&source=${source}` : ''}`,
   );
-  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<Flash>(null);
 
   async function map(a: SourceAccount, p: PersonOption) {
     setMessage(null);
@@ -118,7 +119,7 @@ export function IdentitiesTab() {
         mappings — never by matching display names. Each change is audited and applies to data
         already synced.
       </p>
-      <div className="toolbar">
+      <div className="inline-form">
         <div className="segmented" role="group" aria-label="Mapping status">
           {(['unmapped', 'mapped'] as const).map((s) => (
             <button
@@ -133,7 +134,7 @@ export function IdentitiesTab() {
           ))}
         </div>
         <label className="inline-field">
-          Source{' '}
+          Source
           <select value={source} onChange={(e) => setSource(e.target.value as typeof source)}>
             <option value="">All</option>
             <option value="jira">Jira</option>
@@ -141,14 +142,7 @@ export function IdentitiesTab() {
           </select>
         </label>
       </div>
-      {message && (
-        <p
-          role={message.kind === 'error' ? 'alert' : 'status'}
-          className={message.kind === 'error' ? 'error-text' : 'ok-text'}
-        >
-          {message.text}
-        </p>
-      )}
+      <FlashMessage flash={message} />
       {accounts.state === 'loading' && <Loading />}
       {accounts.state === 'error' && (
         <ErrorState error={accounts.error} onRetry={accounts.reload} />
@@ -188,7 +182,11 @@ export function IdentitiesTab() {
                     {a.user_id ? (
                       <>
                         {a.user_name}{' '}
-                        <button type="button" className="btn" onClick={() => unmap(a)}>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger"
+                          onClick={() => unmap(a)}
+                        >
                           Unmap
                         </button>
                       </>

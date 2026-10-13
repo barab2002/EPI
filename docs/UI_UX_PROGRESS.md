@@ -16,4 +16,6 @@
 - **Slice 3 done:** home leads with assessments to write (new API `GET /api/v1/reviews/due`, 5 integration tests: scope, alphabetical, draft→done, empty for developer/admin, group isolation, auth), team overview reused on home, context line under the greeting, admin home points to data quality; sign-in with product identity, purpose line, SSO divider, role hints. Fixed sidebar column height and phone KPI strip overflow.
 - **Slice 3 merged:** PR #19.
 - **Slice 4 done:** assessment form per Web Interface Guidelines (enabled actions, inline errors + focus, `aria-invalid`, submit note, unsaved-changes warning), draft prefill (fixes overwrite bug UX-038), per-cycle form visibility via `/reviews/due` (fixes UX-039), lasting confirmation, reviews page title/skeleton/section, no boxed empty states inside sections.
-- **Next:** Slice 5 — administration (field groups, tables, flash messages, remaining middle dots in run summaries).
+- **Slice 4 merged:** PR #20.
+- **Slice 5 done:** administration per Web Interface Guidelines: stacked caption labels, People split into find/add groups, danger styling + confirmation for destructive actions, readable audit actions, one flash component, no middle dots left, org tree alignment, history lists; SSO sign-in button overflow at 320 px fixed (UX-045…052). Capture spec now covers every admin tab.
+- **Next:** Slice 6 — full audit (Vercel guidelines + Impeccable), contrast table, UX-037 stacked phone table, UX-032 decision, refresh screenshots, close issues.

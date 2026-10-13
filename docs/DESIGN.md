@@ -132,6 +132,8 @@ loading and error states.
 |---|---|
 | **Button** | `.btn` secondary (surface, hairline border), `.btn-primary` (accent fill), `.btn-plain` (text only, accent), `.btn-danger` (critical text, soft critical bg on hover). Height 36 (≥44 on coarse pointers), radius 8, 15/500. Busy: label stays, `aria-busy`, spinner inline. |
 | **Link** | Accent, no underline; underline on hover/focus (offset 3 px). Names in tables are links at weight 500. No "→" suffix. |
+| **Field (admin rows)** | `.inline-form` row aligned to the control's bottom edge; each `.inline-field` = caption label (13/500 secondary) above its control; checkboxes use `.check-field` (control + label one hit target). Row actions in tables: `.btn-sm` in `.cell-actions`; destructive ones `.btn-danger` with a confirmation naming the object and what is kept. |
+| **Flash** | One `FlashMessage`: tinted positive/critical notice, `role=status`/`alert`, above the form it reports on. |
 | **Input / select / textarea** | Height 36, radius 8, 1 px border `--separator` ×2, surface bg; focus ring `0 0 0 3px var(--accent-soft)` + accent border; error: critical border + message below (`aria-describedby`). Placeholders end with "…". |
 | **Segmented control** | Sunken track, raised surface thumb with small shadow, 13/500 labels, `role=group` + `aria-pressed`. |
 | **Section** | `.section`: surface, radius 12, hairline border, padding 20/24; header row = headline title + actions. Not nestable. |

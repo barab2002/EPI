@@ -50,7 +50,7 @@ probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence sk
 | UX-027 | Medium | Org tree links 22 px tall; breadcrumb/table links < 24 px (B) | Fixed — 40 px tree rows, padded links; coarse-pointer sizes for nav/segmented/links |
 | UX-028 | Low | Catalog skips h2; raw codes; fake today–today window in sheet (A, B) | Fixed — h2 titles, human direction, window hidden from catalog sheet; catalog as a list |
 | UX-029 | Low | N/A without reason; spinners instead of skeletons; page jump on load (A) | Fixed — reason line; `Skeleton` in pages and KPI panels |
-| UX-030 | Low | Middle dots / arrow in UI copy (B) | Fixed on these pages and the rubric; admin run summaries remain (slice 5) |
+| UX-030 | Low | Middle dots / arrow in UI copy (B) | Fixed everywhere (admin run summaries, schedule line, data-quality hints, audit details in slice 5) |
 | UX-031 | Low | Duplicate h2 "Monthly assessments"/"Monthly assessment" (B) | Fixed — form title "Write this month’s assessment" |
 | UX-032 | Low | KPI disclaimer repeated per panel (A) | Open — kept (ethics copy); revisit with owner |
 
@@ -75,3 +75,16 @@ probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence sk
 | UX-042 | Medium | Irreversible submit not explained | Fixed — note next to the actions ("shares it with Dana and locks it for this month") |
 | UX-043 | Low | No warning when leaving with unsaved text | Fixed — `beforeunload` while dirty |
 | UX-044 | Low | Person's name repeated on every row of their own assessment list; empty state boxed inside its section | Fixed |
+
+## Slice 5 (administration)
+
+| ID | Sev | Issue | Status |
+|---|---|---|---|
+| UX-045 | Medium | Admin fields used small inline labels ("at", "from", "time zone") that wrapped above or beside controls and misaligned rows | Fixed — caption label above every control (`.inline-field` column), rows aligned on the control edge, sentence-case labels |
+| UX-046 | Medium | People: search and "create person" mixed in one row with placeholder-only labels | Fixed — two labelled groups ("Find a person", "Add a person"), visible labels, specific button labels ("Add person", "Save details") |
+| UX-047 | Medium | Destructive actions looked like neutral buttons; "Deactivate team" had no confirmation | Fixed — `btn-danger`, small row actions, confirmation naming the team and what is kept |
+| UX-048 | Medium | Audit log showed only action codes (`auth.login`) | Fixed — plain-language action name with the code beneath; filter options show both; details as a wrapping list |
+| UX-049 | Low | Three different flash-message implementations; success shown as bare green text | Fixed — one `FlashMessage` with a tinted notice (`role=status`/`alert`) |
+| UX-050 | Low | Org tree: team links and member counts on different baselines; team panel heading level and "— members" copy | Fixed — aligned rows, "Members of Payments" as the section h2 |
+| UX-051 | Medium | With SSO configured, the sign-in button's long label overflowed at 320 px (`white-space: nowrap`) | Fixed — full-width buttons wrap; caught by the layout guard |
+| UX-052 | Low | Team and grade history as bulleted text ("Senior: 26 Mar 2026 – now") | Fixed — hairline lists with dates aligned to the end |

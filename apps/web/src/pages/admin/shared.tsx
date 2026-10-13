@@ -9,7 +9,7 @@ export function FlashMessage({ flash }: { flash: Flash }) {
   return (
     <p
       role={flash.kind === 'error' ? 'alert' : 'status'}
-      className={flash.kind === 'error' ? 'error-text' : 'ok-text'}
+      className={`flash ${flash.kind === 'error' ? 'flash-error' : 'flash-ok'}`}
     >
       {flash.text}
     </p>

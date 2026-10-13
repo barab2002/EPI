@@ -12,7 +12,15 @@ import {
   useMutation,
 } from './shared';
 
-function InlineName({ label, onSave }: { label: string; onSave: (name: string) => Promise<void> }) {
+function InlineName({
+  label,
+  action,
+  onSave,
+}: {
+  label: string;
+  action: string;
+  onSave: (name: string) => Promise<void>;
+}) {
   const [value, setValue] = useState('');
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -27,12 +35,13 @@ function InlineName({ label, onSave }: { label: string; onSave: (name: string) =
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={label}
+          placeholder={`${label}…`}
           maxLength={100}
+          autoComplete="off"
         />
       </label>
       <button type="submit" className="btn" disabled={!value.trim()}>
-        Save
+        {action}
       </button>
     </form>
   );
@@ -62,10 +71,11 @@ function TeamMembers({
 
   return (
     <section className="panel" aria-labelledby={`team-${team.id}`}>
-      <h3 id={`team-${team.id}`}>{team.name} — members</h3>
-      <div className="toolbar">
+      <h2 id={`team-${team.id}`}>Members of {team.name}</h2>
+      <div className="inline-form">
         <InlineName
           label={`Rename ${team.name}`}
+          action="Rename"
           onSave={(name) =>
             run(
               () => api.patch(`/api/v1/admin/teams/${team.id}`, { name }),
@@ -75,7 +85,7 @@ function TeamMembers({
           }
         />
         <label className="inline-field">
-          Move to group{' '}
+          Move to group
           <select
             value=""
             onChange={(e) =>
@@ -97,8 +107,11 @@ function TeamMembers({
         </label>
         <button
           type="button"
-          className="btn"
+          className="btn btn-danger"
           onClick={() =>
+            window.confirm(
+              `Deactivate ${team.name}? It disappears from navigation; its history and KPIs are kept.`,
+            ) &&
             run(
               () => api.patch(`/api/v1/admin/teams/${team.id}`, { active: false }),
               `${team.name} deactivated.`,
@@ -127,14 +140,14 @@ function TeamMembers({
               {current.map((m) => (
                 <tr key={m.id}>
                   <td>{m.display_name}</td>
-                  <td>{shortDate(m.effective_from)}</td>
-                  <td>
+                  <td className="nowrap">{shortDate(m.effective_from)}</td>
+                  <td className="cell-actions">
                     <button
                       type="button"
-                      className="btn"
+                      className="btn btn-sm btn-danger"
                       onClick={() =>
                         window.confirm(
-                          `End ${m.display_name}'s membership in ${team.name} today?`,
+                          `End ${m.display_name}’s membership in ${team.name} today?`,
                         ) &&
                         run(
                           () => api.post(`/api/v1/admin/memberships/${m.id}/end`, {}),
@@ -193,9 +206,9 @@ function TeamMembers({
             );
           }}
         >
-          <strong>{person.display_name}</strong>
+          <strong className="form-subject">{person.display_name}</strong>
           <label className="inline-field">
-            from{' '}
+            From
             <input
               type="date"
               value={from}
@@ -204,13 +217,13 @@ function TeamMembers({
               required
             />
           </label>
-          <label className="inline-field">
+          <label className="check-field">
             <input
               type="checkbox"
               checked={transfer}
               onChange={(e) => setTransfer(e.target.checked)}
             />{' '}
-            transfer (end other teams)
+            Transfer (end their other team memberships)
           </label>
           <button type="submit" className="btn btn-primary">
             Add
@@ -252,6 +265,7 @@ export function OrganizationTab() {
             <h3>{org.name}</h3>
             <InlineName
               label="New group name"
+              action="Add group"
               onSave={(name) =>
                 run(
                   () => api.post('/api/v1/admin/groups', { organizationId: org.id, name }),
@@ -269,6 +283,7 @@ export function OrganizationTab() {
                       <summary className="small">Rename / add team</summary>
                       <InlineName
                         label={`Rename ${g.name}`}
+                        action="Rename"
                         onSave={(name) =>
                           run(
                             () => api.patch(`/api/v1/admin/groups/${g.id}`, { name }),
@@ -279,6 +294,7 @@ export function OrganizationTab() {
                       />
                       <InlineName
                         label={`New team in ${g.name}`}
+                        action="Add team"
                         onSave={(name) =>
                           run(
                             () => api.post('/api/v1/admin/teams', { groupId: g.id, name }),
