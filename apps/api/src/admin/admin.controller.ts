@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -19,7 +20,17 @@ import {
   ApiPropertyOptional,
   ApiTags,
 } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, Length, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Max,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 import { DataSource } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { CurrentScope } from '../auth/current-scope.decorator';
@@ -27,7 +38,9 @@ import { DATA_SOURCE } from '../db/data-source';
 import { rows } from '../db/rows';
 import { GitLabSync } from '../ingestion/gitlab/gitlab.sync';
 import { JiraSync } from '../ingestion/jira/jira.sync';
+import { isValidTimezone } from '../ingestion/schedule';
 import { SyncAlreadyRunningError } from '../ingestion/sync-runs';
+import { SyncScheduler } from '../ingestion/sync-scheduler';
 import type { Scope } from '../org/scope.service';
 
 const CATEGORIES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'REVIEW', 'QA', 'DONE'] as const;
@@ -59,6 +72,23 @@ export class StatusMappingDto {
   category!: (typeof CATEGORIES)[number] | null;
 }
 
+export class SyncScheduleDto {
+  @ApiProperty({ description: 'Run all enabled Jira/GitLab connections once a day' })
+  @IsBoolean()
+  enabled!: boolean;
+
+  @ApiProperty({ minimum: 0, maximum: 23, description: 'Local hour of day' })
+  @IsInt()
+  @Min(0)
+  @Max(23)
+  hourLocal!: number;
+
+  @ApiProperty({ example: 'Asia/Jerusalem', description: 'IANA time zone' })
+  @IsString()
+  @Length(1, 64)
+  timezone!: string;
+}
+
 function requireAdmin(scope: Scope): void {
   if (!scope.isAdmin) throw new ForbiddenException('Administrator role required');
 }
@@ -73,7 +103,32 @@ export class AdminController {
     private readonly audit: AuditService,
     private readonly jira: JiraSync,
     private readonly gitlab: GitLabSync,
+    private readonly scheduler: SyncScheduler,
   ) {}
+
+  @Get('sync-schedule')
+  @ApiOperation({ summary: 'Daily sync schedule, last scheduled run and next run time' })
+  syncSchedule(@CurrentScope() scope: Scope) {
+    requireAdmin(scope);
+    return this.scheduler.describe();
+  }
+
+  @Put('sync-schedule')
+  @ApiOperation({ summary: 'Set the daily sync schedule (applies from the next minute)' })
+  async setSyncSchedule(@CurrentScope() scope: Scope, @Body() dto: SyncScheduleDto) {
+    requireAdmin(scope);
+    if (!isValidTimezone(dto.timezone)) throw new BadRequestException('Unknown time zone');
+    const schedule = { enabled: dto.enabled, hourLocal: dto.hourLocal, timezone: dto.timezone };
+    await this.scheduler.update(schedule, scope.userId);
+    await this.audit.record(
+      scope.userId,
+      'sync_schedule.update',
+      'app_setting',
+      'sync.schedule',
+      schedule,
+    );
+    return this.scheduler.describe();
+  }
 
   @Get('integrations')
   @ApiOperation({ summary: 'Configured source connections with their last sync' })
