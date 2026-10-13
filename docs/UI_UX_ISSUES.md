@@ -63,3 +63,15 @@ probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence sk
 | UX-035 | Medium | Desktop sidebar background ended after one screen on long pages | Fixed — column painted on `.shell` (RTL aware) |
 | UX-036 | Medium | Phone KPI strip overflowed its section (mobile rule overridden by later base rule) | Fixed — mobile override placed after base rules |
 | UX-037 | Low | Team overview table scrolls horizontally on phones | Open — acceptable (scrolls inside its section); revisit with a stacked mobile layout in slice 6 |
+
+## Slice 4 (reviews + assessment form)
+
+| ID | Sev | Issue | Status |
+|---|---|---|---|
+| UX-038 | **Critical** | The form opened empty even when the reviewer had a saved draft; saving again overwrote the draft with new values | Fixed — form starts from the reviewer's draft (`initial`), unit test |
+| UX-039 | **High** | "Already submitted" was computed over **all** months: after one submission, the reviewer could never assess that person again in later cycles | Fixed — form shown when the person is in the scoped `GET /reviews/due` list for the open cycle; e2e on a fresh database |
+| UX-040 | Medium | Submit/Save disabled until valid (2.5:1 contrast, no explanation of what is missing) | Fixed — always enabled; inline errors per field with `aria-invalid`, focus moves to the first problem |
+| UX-041 | Medium | After submitting, the form vanished and the success message with it | Fixed — lasting "You submitted this month’s assessment on …" confirmation |
+| UX-042 | Medium | Irreversible submit not explained | Fixed — note next to the actions ("shares it with Dana and locks it for this month") |
+| UX-043 | Low | No warning when leaving with unsaved text | Fixed — `beforeunload` while dirty |
+| UX-044 | Low | Person's name repeated on every row of their own assessment list; empty state boxed inside its section | Fixed |
