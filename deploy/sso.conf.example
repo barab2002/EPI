@@ -15,3 +15,9 @@ EPI_LDAP_GROUPS_DN=OU=Groups,DC=corp,DC=example
 
 # Pilot team groups, separated by ";". Only their members (incl. nested groups) can sign in.
 EPI_LDAP_TEAM_GROUPS=CN=Team-Payments,OU=Groups,DC=corp,DC=example;CN=Team-Platform,OU=Groups,DC=corp,DC=example
+
+# Optional server rules. Jira/GitLab host names that Administration › Settings may use
+# (comma-separated, recommended: EPI sends the source token to these addresses).
+EPI_SOURCE_HOSTS=jira.corp.example,gitlab.corp.example
+# Data retention in months (13–240, default 24) or "off".
+# EPI_RETENTION_MONTHS=24
