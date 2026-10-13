@@ -122,8 +122,8 @@ week of 2026-10-26, pilot 2026-11-02.
 ## Operating
 
 `./epi.sh status`, `logs`, `stop`/`start`, `backup`, `restore <file>`, `upgrade <bundle>` (backs up,
-migrates, rolls back automatically), `source-token <REF> --remove`. Changing the team groups after the
-first start: edit the Keycloak realm's "directory" provider (an `sso-apply` command is planned).
+migrates, rolls back automatically), `source-token <REF> --remove`. Changing the team groups, addresses or the
+bind account after the first start: edit `.epi/sso.conf` (and the password/CA files), then `./epi.sh sso-apply`.
 
 ## Verified by
 

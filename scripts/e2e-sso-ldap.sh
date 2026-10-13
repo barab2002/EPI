@@ -78,12 +78,25 @@ EPI_E2E_URL="http://127.0.0.1:$EPI_PORT" EPI_E2E_SSO_LDAP=1 LDAP_PW_TAYLOR="$LDA
   PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}" \
   npx playwright test e2e/sso-ldap.spec.ts --project=desktop
 
+echo "==> sso-apply: remove Team-Platform from the team groups on the running installation"
+sed -i 's/^EPI_LDAP_TEAM_GROUPS=.*/EPI_LDAP_TEAM_GROUPS=cn=Team-Payments,ou=Groups,dc=corp,dc=example/' "$EPI_STATE_DIR/sso.conf"
+bash "$ROOT/epi.sh" sso-apply | sed 's/^/    /'
+check=$(docker compose -p "$project" exec -T epi node dist/cli.js directory-check)
+echo "$check" | grep -q 'Team-Payments' && ! echo "$check" | grep -q 'Team-Platform' ||
+  { echo "FAIL: EPI still reads Team-Platform after sso-apply" >&2; exit 1; }
+cd "$ROOT"
+EPI_E2E_URL="http://127.0.0.1:$EPI_PORT" EPI_E2E_SSO_LDAP=1 EPI_E2E_SSO_APPLIED=1 \
+  LDAP_PW_TAYLOR="$LDAP_PW_TAYLOR" LDAP_PW_GAL="$LDAP_PW_GAL" LDAP_PW_OUTSIDER="$LDAP_PW_OUTSIDER" \
+  PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}" \
+  npx playwright test e2e/sso-ldap.spec.ts --project=desktop -g "after sso-apply"
+
 echo "==> Keycloak stores no passwords for directory users"
 q() { docker compose -p "$project" exec -T postgres psql -U epi -d keycloak -tAc "$1"; }
 users=$(q "SELECT count(*) FROM user_entity u JOIN realm r ON r.id = u.realm_id WHERE r.name = 'epi'")
 creds=$(q "SELECT count(*) FROM credential c JOIN user_entity u ON u.id = c.user_id JOIN realm r ON r.id = u.realm_id WHERE r.name = 'epi'")
 linked=$(q "SELECT count(*) FROM user_entity u JOIN realm r ON r.id = u.realm_id WHERE r.name = 'epi' AND u.federation_link IS NOT NULL")
-[ "$users" -ge 2 ] && [ "$linked" = "$users" ] || { echo "FAIL: epi realm users=$users federated=$linked" >&2; exit 1; }
+# After sso-apply only Taylor is in a team group (Keycloak drops users the filter no longer finds).
+[ "$users" -ge 1 ] && [ "$linked" = "$users" ] || { echo "FAIL: epi realm users=$users federated=$linked" >&2; exit 1; }
 [ "$creds" = "0" ] || { echo "FAIL: $creds stored credential(s) in realm epi" >&2; exit 1; }
 echo "    realm epi: $users directory-linked user(s), 0 stored credentials"
 echo "SSO LDAP E2E: PASS"

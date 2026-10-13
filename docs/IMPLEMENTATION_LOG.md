@@ -23,3 +23,4 @@
 - **2026-10-13** — Hebrew stage 3a: KPI catalog/explanations localized on the server (`@RequestLocale()`, `catalog-he.ts` with number/structure parity test), web sends `?lang`/Accept-Language, Hebrew layout guard opens the explanation; visual review fixed formula and source bidi and the English trend note.
 - **2026-10-13** — Hebrew stage 3b: server messages (errors, validation, import reasons, connection tests) translated on the way out by request language; source-scan test keeps it complete.
 - **2026-10-13** — Backups include sign-in (ADR-039): Keycloak dump next to EPI's, restored as the keycloak role (fixes a latent rollback bug).
+- **2026-10-13** — `./epi.sh sso-apply` (ADR-040): sso.conf changes applied to the running Keycloak via its admin API (directory provider, team-groups mapper, client addresses), proven in the AD e2e.
