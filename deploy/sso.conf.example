@@ -1,0 +1,17 @@
+# EPI single sign-on with your Active Directory (EPI-003b). Copy to .epi/sso.conf and edit.
+# NON-SECRET values only. The bind password goes into the file .epi/sso/ldap_bind_password
+# (one line, created by root, never in Git or chat); your internal CA into .epi/sso/ldap-ca.pem.
+
+# Where users open EPI and the sign-in page (HTTPS, through your TLS front end).
+EPI_PUBLIC_URL=https://epi.corp.example
+EPI_SSO_PUBLIC_URL=https://epi-sso.corp.example
+
+# Active Directory over LDAPS (port 636). Read-only service account.
+EPI_LDAP_VENDOR=ad
+EPI_LDAP_URL=ldaps://dc1.corp.example:636
+EPI_LDAP_BIND_DN=CN=svc-epi-read,OU=Service Accounts,DC=corp,DC=example
+EPI_LDAP_USERS_DN=OU=Users,DC=corp,DC=example
+EPI_LDAP_GROUPS_DN=OU=Groups,DC=corp,DC=example
+
+# Pilot team groups, separated by ";". Only their members (incl. nested groups) can sign in.
+EPI_LDAP_TEAM_GROUPS=CN=Team-Payments,OU=Groups,DC=corp,DC=example;CN=Team-Platform,OU=Groups,DC=corp,DC=example
