@@ -1,6 +1,6 @@
 # Access & approval requirements — consolidated request
 
-**Never paste passwords, tokens or certificates' private keys into chat, Markdown or Git.** Secure handoff: put secrets in a file outside the repo (e.g. `/etc/epi/secrets.env`, mode 0600) or in the approved secret store, and reference them from `epi.yaml` by name (`auth_secret_ref: EPI_JIRA_TOKEN`). EPI reads them from the environment / mounted files only.
+**Never paste passwords, tokens or certificates' private keys into chat, Markdown or Git.** Secure handoff: put secrets in a file outside the repo (e.g. `/etc/epi/secrets.env`, mode 0600) or in the approved secret store, and reference them from `epi.yaml` by name (`auth_secret_ref: EPI_JIRA_TOKEN`). EPI reads them from the environment / mounted files only. On the pilot server: `./epi.sh source-token EPI_JIRA_TOKEN` and `./epi.sh source-token EPI_GITLAB_TOKEN` (hidden input, stored in `.epi/sources/`), `./epi.sh source-ca <ca.pem>` for the company CA (ADR-036).
 
 Status legend: ✅ available · ⏳ requested · ❓ unknown · ⛔ blocked
 

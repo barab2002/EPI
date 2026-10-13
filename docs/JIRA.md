@@ -11,9 +11,9 @@ EPI reads **metadata only** from Jira: issue key, project, issue type, current s
 | Pilot project keys | e.g. `ENG,OPS` |
 | Status workflow → category list | EPI infers To Do / In Progress / Done from Jira's status categories; an EPI admin refines Blocked / Review / QA |
 | Story Points field | Auto-discovered; confirm if several candidates exist |
-| Internal CA certificate | If Jira uses an internal CA: `NODE_EXTRA_CA_CERTS` |
+| Internal CA certificate | If Jira uses an internal CA: `./epi.sh source-ca <ca.pem>` (sets `NODE_EXTRA_CA_CERTS`) |
 
-Put the token in a root-only file (e.g. `/etc/epi/jira_token`, `chmod 600`) and expose it as `EPI_JIRA_TOKEN_FILE`. **Never paste it into chat, tickets or Git.** EPI stores only the reference name `EPI_JIRA_TOKEN`.
+On the server, run `./epi.sh source-token EPI_JIRA_TOKEN` and paste the token when asked (input hidden). It is stored in `.epi/sources/epi_jira_token` and read by the running app, its scheduler and the CLI. **Never paste it into chat, tickets or Git.** EPI stores only the reference name `EPI_JIRA_TOKEN`. (Outside Docker, `EPI_JIRA_TOKEN_FILE` pointing to a root-only file still works and takes precedence.)
 
 ## 2. Configure and verify
 

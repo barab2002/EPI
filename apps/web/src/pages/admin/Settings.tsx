@@ -20,7 +20,10 @@ function TokenStatus({ c }: { c: SourceConnection }) {
     <span className="badge badge-managed">{ta('tokenFound')}</span>
   ) : (
     <span className="badge badge-bad">
-      {ta('tokenMissing')} <code translate="no">{c.secretRef}_FILE</code>
+      {ta('tokenMissing')}{' '}
+      <code translate="no" dir="ltr">
+        ./epi.sh source-token {c.secretRef}
+      </code>
     </span>
   );
 }

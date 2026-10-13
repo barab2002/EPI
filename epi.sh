@@ -73,6 +73,9 @@ Usage: ./epi.sh <command> [options]
                       (includes a demo Keycloak on :${EPI_KC_PORT:-8081}; EPI_DEMO_SSO=false to skip)
   credentials         Show this install's demo sign-in users and passwords
   sso-setup           Configure sign-in with Active Directory (.epi/sso.conf; see docs/KEYCLOAK.md)
+  source-token <REF> [--remove]
+                      Store a Jira/GitLab token on this server (asks for it; never in chat or Git)
+  source-ca <ca.pem>  Trust the company CA of Jira/GitLab https certificates
   start [--no-wait] | stop   Start / stop the stack (data volume is kept)
   status              Show containers and application health
   logs                Follow application logs
@@ -101,6 +104,47 @@ ensure_state() {
   # Compose (non-swarm) mounts secret files with host permissions; the app runs as non-root
   # uid 1000, so the file must be world-readable. Host protection comes from the 0700 directory.
   chmod 644 "$EPI_DB_PASSWORD_PATH"
+  # Jira/GitLab tokens (./epi.sh source-token); mounted read-only into the app container.
+  mkdir -p "$STATE_DIR/sources"; chmod 755 "$STATE_DIR/sources"
+  [ -f "$STATE_DIR/sources/ca.pem" ] || : >"$STATE_DIR/sources/ca.pem"
+  chmod 644 "$STATE_DIR/sources/ca.pem"
+}
+
+# Trusts the company CA that issued the Jira/GitLab https certificates (PEM; applies on restart).
+cmd_source_ca() {
+  local pem="${1:-}" target
+  [ -n "$pem" ] || die "usage: ./epi.sh source-ca <ca.pem>   (the CA that issued Jira's/GitLab's https certificates)"
+  [ -r "$pem" ] || die "cannot read $pem"
+  grep -q -- '-----BEGIN CERTIFICATE-----' "$pem" || die "$pem is not a PEM certificate"
+  ! grep -q -- 'PRIVATE KEY-----' "$pem" || die "$pem contains a private key — give only the CA certificate"
+  ensure_state
+  target="$STATE_DIR/sources/ca.pem"
+  cp "$pem" "$target.tmp" && mv "$target.tmp" "$target"
+  chmod 644 "$target"
+  info "Company CA saved. Restart EPI (./epi.sh stop && ./epi.sh start), then Test connection in Administration › Settings."
+}
+
+# Stores a Jira/GitLab token for a connection's reference name (Administration › Settings shows
+# it, e.g. EPI_JIRA_TOKEN). Read from the terminal without echo, or from stdin; never an argument.
+cmd_source_token() {
+  local ref="${1:-}" file token
+  [[ "$ref" =~ ^[A-Z][A-Z0-9_]{2,63}$ ]] || die "usage: ./epi.sh source-token <REFERENCE>  (e.g. EPI_JIRA_TOKEN; shown in Administration › Settings)"
+  ensure_state
+  file="$STATE_DIR/sources/$(printf '%s' "$ref" | tr 'A-Z' 'a-z')"
+  if [ "${2:-}" = "--remove" ]; then
+    rm -f "$file"; info "$ref removed"; return
+  fi
+  if [ -t 0 ]; then
+    read -r -s -p "Paste the token for $ref (input hidden), then Enter: " token; echo
+  else
+    IFS= read -r token || true
+  fi
+  token="${token%$'\r'}"
+  [ -n "$token" ] || die "no token given; nothing changed"
+  # 0644 inside the 0700 state dir: the non-root container user must read it (same as the DB secret).
+  (umask 022 && printf '%s\n' "$token" >"$file.tmp") && mv "$file.tmp" "$file"
+  chmod 644 "$file"
+  info "$ref saved on this server. In Administration › Settings, use Test connection."
 }
 
 cmd_doctor() {
@@ -446,6 +490,8 @@ case "${1:-help}" in
   status) cmd_status ;;
   logs) compose logs -f epi ;;
   sso-setup) cmd_sso_setup ;;
+  source-token) shift; cmd_source_token "$@" ;;
+  source-ca) shift; cmd_source_ca "$@" ;;
   credentials)
     [ -f "$KC_DIR/demo-credentials.txt" ] || die "no demo credentials yet — run ./epi.sh demo"
     cat "$KC_DIR/demo-credentials.txt" ;;
