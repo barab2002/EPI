@@ -46,6 +46,33 @@ describe('loadConfig', () => {
     expect(c.oidc?.linkByVerifiedEmail).toBe(false);
   });
 
+  it('allows http in production only for an install reachable from this computer (EPI_LOCAL_ONLY)', () => {
+    const local = {
+      DATABASE_URL: 'x',
+      EPI_LOCAL_ONLY: 'true',
+      EPI_PUBLIC_URL: 'http://127.0.0.1:8080',
+      ...oidcEnv(),
+      EPI_OIDC_ISSUER: 'http://127.0.0.1:8081/realms/epi-local',
+      EPI_OIDC_ALLOW_HTTP: 'true',
+    };
+    const c = loadConfig(local);
+    expect(c.mode).toBe('production');
+    expect(c.cookieSecure).toBe(false); // http on loopback: a Secure cookie would not be sent
+    expect(loadConfig({ ...local, EPI_PUBLIC_URL: 'http://localhost:9000' }).publicUrl).toBe(
+      'http://localhost:9000',
+    );
+    expect(() => loadConfig({ ...local, EPI_PUBLIC_URL: 'http://epi.corp.example' })).toThrow(
+      'EPI_LOCAL_ONLY needs EPI_PUBLIC_URL and EPI_OIDC_ISSUER on this computer',
+    );
+    expect(() =>
+      loadConfig({ ...local, EPI_OIDC_ISSUER: 'http://sso.corp.example/realms/epi' }),
+    ).toThrow('EPI_LOCAL_ONLY needs EPI_PUBLIC_URL and EPI_OIDC_ISSUER on this computer');
+    // Without the flag nothing changes.
+    expect(() => loadConfig({ ...local, EPI_LOCAL_ONLY: undefined })).toThrow(
+      'EPI_OIDC_ALLOW_HTTP is not allowed in production mode',
+    );
+  });
+
   it('refuses http public URLs and http issuers in production', () => {
     expect(() =>
       loadConfig({ DATABASE_URL: 'x', EPI_PUBLIC_URL: 'http://epi', ...oidcEnv() }),

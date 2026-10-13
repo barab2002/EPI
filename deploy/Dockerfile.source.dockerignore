@@ -1,0 +1,11 @@
+# Context for deploy/Dockerfile.source: sources only.
+.git
+**/node_modules
+**/dist
+build
+backups
+.epi
+test-results
+playwright-report
+docs
+e2e

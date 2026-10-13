@@ -1,0 +1,80 @@
+# REAL EPI on one computer (`./epi.sh up` without Active Directory): production mode, empty
+# database, sign-in through a bundled Keycloak (production mode, own database in EPI's PostgreSQL)
+# holding local accounts. Reachable from this computer only (127.0.0.1); EPI_LOCAL_ONLY lets EPI
+# use plain http because nothing leaves the machine. Files live in .epi/local/ (0700, never in Git).
+# With .epi/sso.conf present, `./epi.sh up` uses compose.sso.yaml (Active Directory) instead.
+services:
+  keycloak:
+    image: ${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}
+    pull_policy: ${EPI_PULL_POLICY:-missing}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - /bin/bash
+      - -c
+      - >-
+        export KC_DB_PASSWORD="$$(cat /run/secrets/kc_db_password)"
+        KC_BOOTSTRAP_ADMIN_PASSWORD="$$(cat /run/secrets/kc_admin_password)" &&
+        exec /opt/keycloak/bin/kc.sh start --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_HOSTNAME: http://127.0.0.1:${EPI_SSO_PORT:-8081}
+      KC_HTTP_ENABLED: 'true'
+      KC_HEALTH_ENABLED: 'true'
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+    secrets: [kc_db_password, kc_admin_password]
+    volumes:
+      - ${EPI_STATE_DIR:-../.epi}/local/epi-local-realm.json:/opt/keycloak/data/import/epi-local-realm.json:ro
+    ports:
+      - '127.0.0.1:${EPI_SSO_PORT:-8081}:8080'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    deploy:
+      resources:
+        limits: { memory: 1g }
+
+  epi:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      EPI_MODE: production
+      EPI_LOCAL_ONLY: 'true'
+      EPI_COOKIE_SECURE: 'false'
+      EPI_PUBLIC_URL: http://127.0.0.1:${EPI_PORT:-8080}
+      EPI_OIDC_ISSUER: http://127.0.0.1:${EPI_SSO_PORT:-8081}/realms/epi-local
+      EPI_OIDC_INTERNAL_URL: http://keycloak:8080
+      EPI_OIDC_ALLOW_HTTP: 'true'
+      EPI_OIDC_CLIENT_ID: epi-web
+      EPI_OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      EPI_OIDC_LINK_BY_VERIFIED_EMAIL: 'true'
+    secrets: [db_password, oidc_client_secret]
+
+  # Its own database volume: real data never mixes with `./epi.sh demo` (volume epi-db).
+  postgres:
+    volumes:
+      - epi-local-db:/var/lib/postgresql/data
+
+secrets:
+  kc_db_password:
+    file: ${EPI_STATE_DIR:-../.epi}/local/kc_db_password
+  kc_admin_password:
+    file: ${EPI_STATE_DIR:-../.epi}/local/kc_admin_password
+  oidc_client_secret:
+    file: ${EPI_STATE_DIR:-../.epi}/local/client_secret
+
+volumes:
+  epi-local-db:

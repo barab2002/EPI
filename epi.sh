@@ -45,8 +45,13 @@ fail() { printf '  %sFAIL%s %s\n' "$R" "$N" "$*"; FAILURES=$((FAILURES + 1)); }
 die() { printf '%serror:%s %s\n' "$R" "$N" "$*" >&2; exit 1; }
 info() { printf '%s==>%s %s\n' "$B" "$N" "$*"; }
 KC_DIR="$STATE_DIR/keycloak"
-prod_sso_enabled() { [ -f "$SSO_DIR/epi-realm.json" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; }
-demo_sso_enabled() { [ "${EPI_DEMO_SSO:-true}" != "false" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ] && ! prod_sso_enabled; }
+LOCAL_DIR="$STATE_DIR/local"   # `up` without AD: local sign-in realm and its secrets
+# Which stack the shared commands (start, stop, backup, …) act on: "demo" after `./epi.sh demo`,
+# "real" after `./epi.sh up`; unset on servers, where the configured sign-in decides.
+RUN_MODE="${EPI_RUN_MODE:-$(cat "$STATE_DIR/run-mode" 2>/dev/null || true)}"
+prod_sso_enabled() { [ "$RUN_MODE" != demo ] && [ -f "$SSO_DIR/epi-realm.json" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ]; }
+local_sso_enabled() { [ "$RUN_MODE" != demo ] && [ -f "$LOCAL_DIR/epi-local-realm.json" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ] && ! prod_sso_enabled; }
+demo_sso_enabled() { [ "${EPI_DEMO_SSO:-true}" != "false" ] && [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ] && ! prod_sso_enabled && ! local_sso_enabled; }
 compose() {
   # EPI_COMPOSE_EXTRA: optional extra Compose override file (site tweaks; used by the offline test).
   set -- ${EPI_COMPOSE_EXTRA:+-f "$EPI_COMPOSE_EXTRA"} "$@"
@@ -54,6 +59,8 @@ compose() {
     docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.oidc.yaml" "$@"
   elif prod_sso_enabled; then
     docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.sso.yaml" "$@"
+  elif local_sso_enabled; then
+    docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.local.yaml" "$@"
   elif demo_sso_enabled && [ -f "$KC_DIR/epi-demo-realm.json" ]; then
     docker compose -f "$COMPOSE_FILE" -f "$ROOT/deploy/compose.demo-sso.yaml" "$@"
   else
@@ -69,6 +76,9 @@ Usage: ./epi.sh <command> [options]
 
   doctor              Check prerequisites (PASS/WARN/FAIL with remediation)
   build               Build the app on this host and the runtime image ($EPI_IMAGE)
+  up                  Start the REAL app on this computer in one command: builds if needed (in Docker
+                      when Node/pnpm are missing), production mode, empty database, you become the
+                      administrator; sign-in with Active Directory if .epi/sso.conf exists
   demo                Build if needed and start a demo with SYNTHETIC data on http://$EPI_BIND:$EPI_PORT
                       (includes a demo Keycloak on :${EPI_KC_PORT:-8081}; EPI_DEMO_SSO=false to skip)
   credentials         Show this install's demo sign-in users and passwords
@@ -191,9 +201,50 @@ cmd_doctor() {
   [ "$FAILURES" -eq 0 ]
 }
 
+# Fingerprint of the sources that go into the image (empty outside a Git checkout): the image
+# carries it as a label, so `up`/`demo` rebuild only when the code changed.
+source_fingerprint() {
+  command -v git >/dev/null && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1 || return 0
+  { git -C "$ROOT" rev-parse HEAD
+    git -C "$ROOT" diff HEAD -- apps deploy/Dockerfile deploy/Dockerfile.source deploy/entrypoint.sh \
+      package.json pnpm-lock.yaml pnpm-workspace.yaml
+    git -C "$ROOT" ls-files --others --exclude-standard -- apps
+  } | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-16
+}
+
+# Builds the image when it is missing or older than the sources (never on offline installs).
+ensure_image() {
+  if [ -n "${EPI_OFFLINE:-}" ]; then
+    docker image inspect "$EPI_IMAGE" >/dev/null 2>&1 || die "image $EPI_IMAGE not found (load the bundle again)"
+    return 0
+  fi
+  local want have
+  if ! have="$(docker image inspect --format '{{ index .Config.Labels "org.epi.source" }}' "$EPI_IMAGE" 2>/dev/null)"; then
+    cmd_build; return 0
+  fi
+  want="$(source_fingerprint)"
+  if [ -n "$want" ] && [ "$want" != "$have" ]; then
+    info "The code changed since the last build: rebuilding"; cmd_build
+  fi
+}
+
 cmd_build() {
   [ -z "${EPI_OFFLINE:-}" ] || die "this is an offline install: the image comes from the bundle (nothing to build)"
-  command -v pnpm >/dev/null || die "pnpm is required to build (Node 22 + pnpm 10)"
+  local label="org.epi.source=$(source_fingerprint)"
+  if ! command -v pnpm >/dev/null || ! node -e 'process.exit(+process.versions.node.split(".")[0] === 22 ? 0 : 1)' 2>/dev/null; then
+    # No Node 22 + pnpm here: build inside Docker (downloads packages during the build only).
+    info "Building $EPI_IMAGE inside Docker (no Node 22 + pnpm on this computer; first build takes a few minutes)"
+    local ca=()
+    if [ -n "${EPI_BUILD_CA_FILE:-}" ]; then
+      [ -r "$EPI_BUILD_CA_FILE" ] || die "EPI_BUILD_CA_FILE is not readable: $EPI_BUILD_CA_FILE"
+      ca=(--secret "id=build_ca,src=$EPI_BUILD_CA_FILE")
+    fi
+    DOCKER_BUILDKIT=1 docker build -f "$ROOT/deploy/Dockerfile.source" \
+      --build-arg EPI_NODE_IMAGE="$EPI_NODE_IMAGE" --build-arg HTTPS_PROXY --build-arg HTTP_PROXY \
+      --build-arg NO_PROXY ${ca[@]+"${ca[@]}"} --label "$label" -t "$EPI_IMAGE" "$ROOT" ||
+      die "build failed. Behind a company proxy that inspects HTTPS, set EPI_BUILD_CA_FILE to its CA certificate (PEM) and retry"
+    return
+  fi
   info "Installing dependencies (frozen lockfile)"
   (cd "$ROOT" && pnpm install --frozen-lockfile --prefer-offline)
   info "Building API and web"
@@ -204,7 +255,8 @@ cmd_build() {
   rm -rf "$ROOT/build/api/src" "$ROOT/build/api/test"
   cp -r "$ROOT/apps/web/dist" "$ROOT/build/web"
   info "Building image $EPI_IMAGE"
-  docker build -f "$ROOT/deploy/Dockerfile" --build-arg EPI_NODE_IMAGE="$EPI_NODE_IMAGE" -t "$EPI_IMAGE" "$ROOT"
+  docker build -f "$ROOT/deploy/Dockerfile" --build-arg EPI_NODE_IMAGE="$EPI_NODE_IMAGE" \
+    --label "$label" -t "$EPI_IMAGE" "$ROOT"
 }
 
 wait_healthy() {
@@ -266,9 +318,12 @@ cmd_sso_setup() {
 
 # Creates Keycloak's database and role in the shared PostgreSQL (idempotent).
 ensure_keycloak_db() {
-  prod_sso_enabled || return 0
+  local pwfile
+  if prod_sso_enabled; then pwfile="$SSO_DIR/kc_db_password"
+  elif local_sso_enabled; then pwfile="$LOCAL_DIR/kc_db_password"
+  else return 0; fi
   compose up -d --wait postgres >/dev/null
-  { printf "\\set pw '%s'\n" "$(cat "$SSO_DIR/kc_db_password")"
+  { printf "\\set pw '%s'\n" "$(cat "$pwfile")"
     cat <<'SQL'
 SELECT 'CREATE ROLE keycloak LOGIN' WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'keycloak')\gexec
 ALTER ROLE keycloak WITH LOGIN PASSWORD :'pw';
@@ -322,10 +377,86 @@ cmd_offline_install() {
   printf 'Next:\n  cd %s && ./epi.sh doctor\n  ./epi.sh demo    # synthetic demo\nProduction (your Keycloak): see docs/OFFLINE_INSTALL.md\n' "$dir"
 }
 
-cmd_demo() {
+# Local sign-in realm (no AD) for `up`: host node, or node inside the EPI image.
+gen_local_realm() {
+  local url="http://127.0.0.1:$EPI_PORT"
+  mkdir -p "$LOCAL_DIR" && chmod 700 "$LOCAL_DIR"
+  if command -v node >/dev/null; then
+    node "$ROOT/scripts/kc-local-realm.mjs" "$LOCAL_DIR" "$url" "$1" "$2"
+  else
+    docker run --rm --network none --entrypoint node -u "$(id -u):$(id -g)" \
+      -v "$ROOT/scripts/kc-local-realm.mjs:/realm.mjs:ro" -v "$LOCAL_DIR:/out" \
+      "$EPI_IMAGE" /realm.mjs /out "$url" "$1" "$2"
+  fi
+}
+
+# Who becomes the first administrator: asked once, kept in .epi/admin.conf (not secret).
+ask_admin() {
+  local conf="$STATE_DIR/admin.conf"
+  if [ -f "$conf" ]; then load_conf "$conf"; return; fi
+  if [ -z "${EPI_ADMIN_NAME:-}" ] || [ -z "${EPI_ADMIN_EMAIL:-}" ] || [ -z "${EPI_ORG_NAME:-}" ]; then
+    [ -t 0 ] || die "first start: set EPI_ADMIN_NAME, EPI_ADMIN_EMAIL and EPI_ORG_NAME (you become the administrator)"
+    printf '%sFirst start: you will be the administrator.%s\n' "$B" "$N"
+    [ -n "${EPI_ADMIN_NAME:-}" ] || read -r -p "  Your full name: " EPI_ADMIN_NAME
+    [ -n "${EPI_ADMIN_EMAIL:-}" ] || read -r -p "  Your work e-mail${1:+ (as in Active Directory)}: " EPI_ADMIN_EMAIL
+    [ -n "${EPI_ORG_NAME:-}" ] || read -r -p "  Organization name: " EPI_ORG_NAME
+  fi
+  [[ "$EPI_ADMIN_EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] || die "not a valid e-mail: $EPI_ADMIN_EMAIL"
+  [ -n "${EPI_ADMIN_NAME// /}" ] && [ -n "${EPI_ORG_NAME// /}" ] || die "name and organization are required"
+  printf 'EPI_ADMIN_NAME=%s\nEPI_ADMIN_EMAIL=%s\nEPI_ORG_NAME=%s\n' "$EPI_ADMIN_NAME" "$EPI_ADMIN_EMAIL" "$EPI_ORG_NAME" >"$conf"
+  export EPI_ADMIN_NAME EPI_ADMIN_EMAIL EPI_ORG_NAME
+}
+
+# The real app in one command: builds if needed, starts in production mode with an empty database
+# and real sign-in (Active Directory when .epi/sso.conf exists, otherwise local accounts on this
+# computer), makes you the administrator and opens nothing to the network.
+cmd_up() {
+  [ -z "${EPI_OIDC_CLIENT_SECRET_PATH:-}" ] || die "with an external Keycloak (EPI_OIDC_CLIENT_SECRET_PATH) use ./epi.sh start"
   cmd_doctor || die "doctor reported failures; fix them and retry"
-  docker image inspect "$EPI_IMAGE" >/dev/null 2>&1 || cmd_build
   ensure_state
+  printf 'real\n' >"$STATE_DIR/run-mode"; RUN_MODE=real
+  ensure_image
+  local ad=""
+  if [ -f "$STATE_DIR/sso.conf" ]; then
+    ad=1
+    [ -f "$SSO_DIR/epi-realm.json" ] || cmd_sso_setup
+    load_conf "$STATE_DIR/sso.conf"
+    ask_admin ad
+  else
+    case "$EPI_BIND" in 127.0.0.1 | localhost) ;; *) die "without Active Directory, EPI stays on this computer: unset EPI_BIND" ;; esac
+    ask_admin
+    [ -f "$LOCAL_DIR/epi-local-realm.json" ] || gen_local_realm "$EPI_ADMIN_NAME" "$EPI_ADMIN_EMAIL"
+  fi
+  ensure_keycloak_db
+  info "Starting EPI (production mode, real data only)"
+  compose up -d
+  info "Waiting for EPI and its sign-in service (first start takes about a minute)"
+  if ! wait_healthy 150; then
+    compose logs --tail 50 epi keycloak >&2
+    die "EPI did not become healthy; see logs above"
+  fi
+  local admin
+  admin="$(compose exec -T epi node dist/cli.js setup-admin --name "$EPI_ADMIN_NAME" \
+    --email "$EPI_ADMIN_EMAIL" --org "$EPI_ORG_NAME")" || die "setup-admin failed: $admin"
+  printf '%s\n' "${admin%%$'\n'*}"
+  local url="http://127.0.0.1:$EPI_PORT"
+  [ -z "$ad" ] || url="${EPI_PUBLIC_URL:-$url}"
+  printf '\n%sEPI is running:%s %s\n' "$G" "$N" "$url"
+  if [ -n "$ad" ]; then
+    printf 'Sign in with your Active Directory account (%s).\n' "$EPI_ADMIN_EMAIL"
+  elif [ -f "$LOCAL_DIR/first-sign-in.txt" ]; then
+    cat "$LOCAL_DIR/first-sign-in.txt"
+    printf 'Shown again with: ./epi.sh credentials   Stop: ./epi.sh stop   Start again: ./epi.sh up\n'
+  fi
+  printf 'Next, in Administration: Organization (groups, teams) → People → Settings (Jira, GitLab).\n'
+}
+
+cmd_demo() {
+  RUN_MODE=demo
+  cmd_doctor || die "doctor reported failures; fix them and retry"
+  ensure_image
+  ensure_state
+  printf 'demo\n' >"$STATE_DIR/run-mode"
   if demo_sso_enabled; then
     gen_demo_realm
   fi
@@ -483,6 +614,7 @@ case "${1:-help}" in
   doctor) cmd_doctor ;;
   build) cmd_build ;;
   demo) cmd_demo ;;
+  up) cmd_up ;;
   start)
     ensure_state
     ensure_keycloak_db
@@ -499,6 +631,7 @@ case "${1:-help}" in
     shift
     if [ -t 0 ]; then compose exec epi node dist/cli.js "$@"; else compose exec -T epi node dist/cli.js "$@"; fi ;;
   credentials)
+    if [ "$RUN_MODE" = real ] && [ -f "$LOCAL_DIR/first-sign-in.txt" ]; then cat "$LOCAL_DIR/first-sign-in.txt"; exit 0; fi
     [ -f "$KC_DIR/demo-credentials.txt" ] || die "no demo credentials yet — run ./epi.sh demo"
     cat "$KC_DIR/demo-credentials.txt" ;;
   test) shift; bash "$ROOT/scripts/ci.sh" "$@" ;;

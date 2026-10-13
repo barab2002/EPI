@@ -12,6 +12,8 @@ Engineering (Claude, unattended via the hourly routine; each on its own branch �
 5c. ✅ **First setup** (ADR-037): `setup-admin` creates the organization and the first administrator; administrators see empty organizations/groups to build them.
 6. ✅ **Pilot install guide** — `docs/PILOT_INSTALL.md` (+ `./epi.sh cli`). Original scope (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind; Jira PAT and GitLab token via `./epi.sh source-token`), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
 
+5d. ✅ **One command on the owner's computer** (ADR-038): `./epi.sh up` — the real app (production mode, empty DB, local sign-in or AD, owner as administrator); `scripts/test-up.sh`.
+
 Owner (when each step is reached, Claude asks for the non-secret details one at a time):
 
 7. Collect non-secret details: Jira URL + project keys, GitLab URL + group/project IDs, AD LDAPS host + base DN + team group names, registry mirror host name, internal CA certificate file. **Never** paste passwords/tokens in chat — they go into files on the server.

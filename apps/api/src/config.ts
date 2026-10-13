@@ -74,15 +74,22 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): EpiConfig {
   const port = int(env, 'PORT', 8080);
   const publicUrl = (env.EPI_PUBLIC_URL || `http://127.0.0.1:${port}`).replace(/\/+$/, '');
   const oidc = resolveOidc(env);
+  // `./epi.sh up` on one computer: plain http is acceptable only when nothing leaves the machine.
+  const localOnly = env.EPI_LOCAL_ONLY === 'true';
+  if (localOnly && !(isLoopback(publicUrl) && oidc && isLoopback(oidc.issuer))) {
+    throw new Error(
+      'Config: EPI_LOCAL_ONLY needs EPI_PUBLIC_URL and EPI_OIDC_ISSUER on this computer (127.0.0.1 or localhost)',
+    );
+  }
   if (mode === 'production') {
     if (!oidc) {
       throw new Error(
         'Config: production mode requires OIDC (EPI_OIDC_ISSUER, EPI_OIDC_CLIENT_ID, EPI_OIDC_CLIENT_SECRET_FILE)',
       );
     }
-    if (oidc.allowHttp)
+    if (oidc.allowHttp && !localOnly)
       throw new Error('Config: EPI_OIDC_ALLOW_HTTP is not allowed in production mode');
-    if (!publicUrl.startsWith('https://')) {
+    if (!publicUrl.startsWith('https://') && !localOnly) {
       throw new Error('Config: EPI_PUBLIC_URL must be https:// in production mode');
     }
   }
@@ -93,7 +100,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): EpiConfig {
     port,
     databaseUrl,
     webDist: env.EPI_WEB_DIST || null,
-    cookieSecure: (env.EPI_COOKIE_SECURE ?? (mode === 'production' ? 'true' : 'false')) === 'true',
+    cookieSecure:
+      (env.EPI_COOKIE_SECURE ??
+        (mode === 'production' && publicUrl.startsWith('https://') ? 'true' : 'false')) === 'true',
     sessionIdleMinutes: int(env, 'EPI_SESSION_IDLE_MINUTES', 30),
     minimumAggregateSize: int(env, 'EPI_MIN_AGGREGATE_SIZE', 3),
     kpiMinimumSample: int(env, 'EPI_KPI_MIN_SAMPLE', 10),
@@ -155,6 +164,15 @@ function resolveDirectory(env: NodeJS.ProcessEnv, mode: EpiMode): DirectoryConfi
     vendor,
     teamGroups,
   };
+}
+
+/** True for http(s) URLs on this computer only. */
+function isLoopback(url: string): boolean {
+  try {
+    return ['127.0.0.1', 'localhost', '[::1]'].includes(new URL(url).hostname);
+  } catch {
+    return false;
+  }
 }
 
 function resolveOidc(env: NodeJS.ProcessEnv): OidcConfig | null {
