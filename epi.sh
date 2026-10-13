@@ -83,6 +83,7 @@ Usage: ./epi.sh <command> [options]
                       (includes a demo Keycloak on :${EPI_KC_PORT:-8081}; EPI_DEMO_SSO=false to skip)
   credentials         Show this install's demo sign-in users and passwords
   sso-setup           Configure sign-in with Active Directory (.epi/sso.conf; see docs/KEYCLOAK.md)
+  sso-apply           Apply later .epi/sso.conf changes (team groups, addresses) to a running install
   source-token <REF> [--remove]
                       Store a Jira/GitLab token on this server (asks for it; never in chat or Git)
   source-ca <ca.pem>  Trust the company CA of Jira/GitLab https certificates
@@ -313,7 +314,27 @@ cmd_sso_setup() {
   fi
   printf '\nSingle sign-on configured. Start with: ./epi.sh start\n'
   printf 'Keycloak admin console (emergency only): user "admin", password in %s\n' "$SSO_DIR/kc_admin_password"
-  printf 'Note: Keycloak imports the realm on its FIRST start only.\n'
+  printf 'Later changes to sso.conf: ./epi.sh sso-apply (with EPI running).\n'
+}
+
+# Applies .epi/sso.conf changes (team groups, addresses, bind account, CA) to a running
+# installation: Keycloak imports the realm on its first start only, so the running realm is
+# updated through Keycloak's admin API (scripts/kc-apply.mjs), then EPI and Keycloak restart.
+cmd_sso_apply() {
+  prod_sso_enabled || die "Active Directory sign-in is not set up here (./epi.sh sso-setup first)"
+  compose ps --status running keycloak | grep -q keycloak || die "sign-in (Keycloak) is not running: ./epi.sh start"
+  cmd_sso_setup >/dev/null
+  load_conf "$STATE_DIR/sso.conf"
+  info "Updating the running sign-in service"
+  compose run --rm --no-deps -T --entrypoint node \
+    -v "$ROOT/scripts/kc-apply.mjs:/kc-apply.mjs:ro" -v "$SSO_DIR/epi-realm.json:/realm.json:ro" \
+    epi /kc-apply.mjs /realm.json http://keycloak:8080 <"$SSO_DIR/kc_admin_password" ||
+    die "could not update Keycloak; nothing else was changed"
+  info "Restarting sign-in and EPI with the new settings"
+  compose restart keycloak >/dev/null
+  compose up -d >/dev/null
+  wait_healthy 150 || die "EPI did not become healthy after sso-apply; see ./epi.sh logs"
+  echo "Done. Check the team groups with: ./epi.sh cli directory-check"
 }
 
 # Creates Keycloak's database and role in the shared PostgreSQL (idempotent).
@@ -648,6 +669,7 @@ case "${1:-help}" in
   status) cmd_status ;;
   logs) compose logs -f epi ;;
   sso-setup) cmd_sso_setup ;;
+  sso-apply) cmd_sso_apply ;;
   source-token) shift; cmd_source_token "$@" ;;
   source-ca) shift; cmd_source_ca "$@" ;;
   cli)

@@ -35,7 +35,7 @@
 
 ## Not implemented yet / known limitations
 
-- Not yet run against the real AD (needs the owner's server, bind account and CA); `sso-apply` for realm changes after first start; Keycloak DB not in `./epi.sh backup`; TLS front end is the customer's.
+- Not yet run against the real AD (needs the owner's server, bind account and CA); TLS front end is the customer's.
 - No real Jira/GitLab connected (needs B1–B6); deleted-issue reconciliation; sprint data.
 - `install` (EPI-012) exits 2 with a message (use `offline-install`). Bundle signing; clean-VM offline test.
 - KPIs computed on request; `kpi_snapshots` not populated yet. Stratification by work type/complexity not shown in UI yet.
