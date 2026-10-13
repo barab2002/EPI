@@ -72,7 +72,7 @@ describe('OrganizationTab', () => {
     expect(await screen.findByText('Dana Dev')).toBeInTheDocument();
     await userEvent.type(screen.getByRole('searchbox', { name: 'Find a person to add…' }), 'eli');
     await userEvent.click(await screen.findByRole('button', { name: 'Eli Engineer' }));
-    const date = screen.getByLabelText(/from/);
+    const date = screen.getByLabelText(/^From/);
     await userEvent.clear(date);
     await userEvent.type(date, '2026-09-01');
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));

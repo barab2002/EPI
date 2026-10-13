@@ -8,6 +8,32 @@ export function formatValue(value: number | null, unit: string): string {
   return `${rounded} ${unit === 'days' ? (rounded === 1 ? 'day' : 'days') : rounded === 1 ? 'hour' : 'hours'}`;
 }
 
+/** Splits a formatted KPI value into number and unit for typographic emphasis on the number. */
+export function valueParts(value: number | null, unit: string): { number: string; unit: string } {
+  const text = formatValue(value, unit);
+  const i = text.indexOf(' ');
+  return i < 0 ? { number: text, unit: '' } : { number: text.slice(0, i), unit: text.slice(i + 1) };
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Administrator',
+  ENGINEERING_MANAGER: 'Engineering manager',
+  GROUP_MANAGER: 'Group manager',
+  TEAM_LEAD: 'Team lead',
+  HR_PARTNER: 'HR partner',
+  DEVELOPER: 'Developer',
+};
+
+/** Human role names (never enum codes in the UI, DESIGN.md §6). Highest role first. */
+export function roleLabel(roles: string[]): string {
+  const order = Object.keys(ROLE_LABELS);
+  const shown = roles.filter((r) => r !== 'DEVELOPER');
+  const list = (shown.length ? shown : ['DEVELOPER']).sort(
+    (a, b) => order.indexOf(a) - order.indexOf(b),
+  );
+  return list.map((r) => ROLE_LABELS[r] ?? r.toLowerCase().replace(/_/g, ' ')).join(', ');
+}
+
 export function confidenceLabel(c: KpiCard['confidence']): string {
   switch (c) {
     case 'normal':
@@ -47,5 +73,18 @@ export function formatDate(iso: string | null): string {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+  });
+}
+
+/**
+ * A calendar month ("October 2026") from a date-only value. The API sends DATE columns as UTC
+ * midnight, so format in UTC: local time west of UTC would show the previous day's month.
+ */
+export function formatMonth(iso: string | null): string {
+  if (!iso) return t('noData');
+  return new Date(iso).toLocaleDateString('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
   });
 }

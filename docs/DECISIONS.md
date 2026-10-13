@@ -157,3 +157,27 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
   - Keep React + Vite + plain CSS tokens (ADR-004) instead of the prompt's "new project" stack. Tailwind, shadcn/ui, Lucide or Motion are adopted only via an ADR with a license check and a clear benefit.
 - **Skills:** the five named skills are third-party code. They are installed only after their code is reviewed and the owner approves; until then their roles are done manually and reported as manual. Playwright is already present.
 - **Scheduling:** UI work enters the plan after the pilot-critical items (EPI-004c, 012c, retention, Hebrew), or earlier if the owner asks. Hebrew/RTL work will follow the new design system.
+
+## ADR-027 · 2026-10-13 · Accepted (owner: "I want skills") — Five UI/UX skills installed as reviewed project skills
+
+- **What:** `.claude/skills/{ui-ux-pro-max, frontend-design, impeccable, web-design-guidelines, webapp-testing}`, committed to the repo so every session (including after container resets) has them. Each folder has `SOURCE.md` (upstream, commit, license, review notes, local changes) and the upstream license.
+- **Review (before installation):** all code read in an isolated scratch clone; nothing executed from it except UI UX Pro Max's offline search script (stdlib Python, local CSV/JSON only, no network). Licenses: MIT (UI UX Pro Max, Vercel) and Apache-2.0 (Anthropic skills, Impeccable), compatible with EPI's Apache-2.0.
+- **Deliberate deviations (documented, not silent):**
+  - **Impeccable:** guidance only. Its launcher downloads and runs a prebuilt binary that cannot be reviewed, so the launcher, its browser-injection scripts and its edit hooks are not installed. The skill's own "launcher unavailable" path is used.
+  - **Vercel Web Design Guidelines:** the rule list is vendored (`guidelines.md`, commit `434b7f9`) instead of being fetched at run time. This works offline and stops remote content from steering reviews.
+  - **Playwright role:** Anthropic's `webapp-testing` skill (Playwright-based) is used with the project's existing Node Playwright; no Python Playwright install.
+- **Activation:** Claude Code registers project skills at session start; the session that installed them reads their `SKILL.md` directly and says so.
+- **Hygiene:** vendored files are excluded from Prettier but **included** in the secret scan (passes).
+
+## ADR-028 · 2026-10-13 · Accepted — KPI disclaimer stays on every KPI section (UX-032)
+
+- **Context:** the critique flagged the sentence "KPIs describe how work flows. They are not individual performance scores and must be read with context." as repeated when a page shows several KPI sections (e.g. a developer's home: own KPIs and team aggregate).
+- **Decision:** keep it on every KPI section, next to the window dates. The caveat must travel with the numbers it qualifies: a section is often read, screenshotted or shared on its own, and the product's ethical-measurement rule (CLAUDE.md non-negotiable 6) outranks the cost of one secondary line. It is set in secondary footnote text so it does not compete with the values.
+- **Revisit:** with the owner/HR during the pilot if users report it as noise; a shorter per-section form plus one full statement per page is the fallback.
+
+## ADR-029 · 2026-10-13 · Accepted — Contrast checked in CI from the real tokens
+
+- `scripts/check-contrast.mjs` reads the light and dark tokens from `apps/web/src/styles.css`, composites translucent tokens, and fails CI when a pair falls below WCAG 2.2 AA (text 4.5:1, input edges 3:1 per 1.4.11). Tested with `node --test`.
+- It found input borders at 1.47:1 (light) and 1.76:1 (dark). Inputs now use `--input-border` (≥3.1:1); buttons keep the lighter `--field-border` because their text identifies them.
+- No new dependency (axe-core would need approval).
+

@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { api, GroupNode, Membership, OrgNode, PersonOption, TeamNode } from '../../api';
-import { ErrorState, Loading } from '../../components/States';
+import { ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import {
   dateToIso,
@@ -12,13 +12,27 @@ import {
   useMutation,
 } from './shared';
 
-function InlineName({ label, onSave }: { label: string; onSave: (name: string) => Promise<void> }) {
+function InlineName({
+  label,
+  action,
+  onSave,
+}: {
+  label: string;
+  action: string;
+  onSave: (name: string) => Promise<void>;
+}) {
   const [value, setValue] = useState('');
+  const [busy, setBusy] = useState(false);
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!value.trim()) return;
-    await onSave(value.trim());
-    setValue('');
+    if (!value.trim() || busy) return;
+    setBusy(true);
+    try {
+      await onSave(value.trim());
+      setValue('');
+    } finally {
+      setBusy(false);
+    }
   }
   return (
     <form className="inline-form" onSubmit={submit}>
@@ -27,12 +41,13 @@ function InlineName({ label, onSave }: { label: string; onSave: (name: string) =
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={label}
+          placeholder={`${label}…`}
           maxLength={100}
+          autoComplete="off"
         />
       </label>
-      <button type="submit" className="btn" disabled={!value.trim()}>
-        Save
+      <button type="submit" className="btn" disabled={busy || !value.trim()}>
+        {action}
       </button>
     </form>
   );
@@ -62,10 +77,11 @@ function TeamMembers({
 
   return (
     <section className="panel" aria-labelledby={`team-${team.id}`}>
-      <h3 id={`team-${team.id}`}>{team.name} — members</h3>
-      <div className="toolbar">
+      <h2 id={`team-${team.id}`}>Members of {team.name}</h2>
+      <div className="inline-form">
         <InlineName
           label={`Rename ${team.name}`}
+          action="Rename"
           onSave={(name) =>
             run(
               () => api.patch(`/api/v1/admin/teams/${team.id}`, { name }),
@@ -75,7 +91,7 @@ function TeamMembers({
           }
         />
         <label className="inline-field">
-          Move to group{' '}
+          Move to group
           <select
             value=""
             onChange={(e) =>
@@ -97,8 +113,11 @@ function TeamMembers({
         </label>
         <button
           type="button"
-          className="btn"
+          className="btn btn-danger"
           onClick={() =>
+            window.confirm(
+              `Deactivate ${team.name}? It disappears from navigation; its history and KPIs are kept.`,
+            ) &&
             run(
               () => api.patch(`/api/v1/admin/teams/${team.id}`, { active: false }),
               `${team.name} deactivated.`,
@@ -109,51 +128,55 @@ function TeamMembers({
           Deactivate team
         </button>
       </div>
-      {members.state === 'loading' && <Loading />}
+      {members.state === 'loading' && <Skeleton lines={4} />}
       {members.state === 'error' && <ErrorState error={members.error} onRetry={members.reload} />}
       {members.state === 'ready' && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Person</th>
-              <th scope="col">Since</th>
-              <th scope="col">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {current.map((m) => (
-              <tr key={m.id}>
-                <td>{m.display_name}</td>
-                <td>{shortDate(m.effective_from)}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() =>
-                      window.confirm(`End ${m.display_name}'s membership in ${team.name} today?`) &&
-                      run(
-                        () => api.post(`/api/v1/admin/memberships/${m.id}/end`, {}),
-                        `${m.display_name} left ${team.name}.`,
-                        reload,
-                      )
-                    }
-                  >
-                    End membership
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {current.length === 0 && (
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
               <tr>
-                <td colSpan={3} className="muted">
-                  No current members.
-                </td>
+                <th scope="col">Person</th>
+                <th scope="col">Since</th>
+                <th scope="col">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {current.map((m) => (
+                <tr key={m.id}>
+                  <td>{m.display_name}</td>
+                  <td className="nowrap">{shortDate(m.effective_from)}</td>
+                  <td className="cell-actions">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger"
+                      onClick={() =>
+                        window.confirm(
+                          `End ${m.display_name}’s membership in ${team.name} today?`,
+                        ) &&
+                        run(
+                          () => api.post(`/api/v1/admin/memberships/${m.id}/end`, {}),
+                          `${m.display_name} left ${team.name}.`,
+                          reload,
+                        )
+                      }
+                    >
+                      End membership
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {current.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="muted">
+                    No current members.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
       {past.length > 0 && (
         <details>
@@ -167,7 +190,7 @@ function TeamMembers({
           </ul>
         </details>
       )}
-      <h4>Add a member</h4>
+      <h3>Add a member</h3>
       {person ? (
         <form
           className="inline-form"
@@ -189,9 +212,9 @@ function TeamMembers({
             );
           }}
         >
-          <strong>{person.display_name}</strong>
+          <strong className="form-subject">{person.display_name}</strong>
           <label className="inline-field">
-            from{' '}
+            From
             <input
               type="date"
               value={from}
@@ -200,15 +223,15 @@ function TeamMembers({
               required
             />
           </label>
-          <label className="inline-field">
+          <label className="check-field">
             <input
               type="checkbox"
               checked={transfer}
               onChange={(e) => setTransfer(e.target.checked)}
             />{' '}
-            transfer (end other teams)
+            Transfer (end their other team memberships)
           </label>
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" disabled={run.pending} className="btn btn-primary">
             Add
           </button>
           <button type="button" className="btn" onClick={() => setPerson(null)}>
@@ -228,7 +251,7 @@ export function OrganizationTab() {
   const [flash, setFlash] = useState<Flash>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const run = useMutation(setFlash);
-  if (tree.state === 'loading') return <Loading />;
+  if (tree.state === 'loading') return <Skeleton lines={4} />;
   if (tree.state === 'error') return <ErrorState error={tree.error} onRetry={tree.reload} />;
   const groups = tree.data.flatMap((o) => o.groups);
   const team = groups.flatMap((g) => g.teams).find((t) => t.id === selected);
@@ -248,6 +271,7 @@ export function OrganizationTab() {
             <h3>{org.name}</h3>
             <InlineName
               label="New group name"
+              action="Add group"
               onSave={(name) =>
                 run(
                   () => api.post('/api/v1/admin/groups', { organizationId: org.id, name }),
@@ -265,6 +289,7 @@ export function OrganizationTab() {
                       <summary className="small">Rename / add team</summary>
                       <InlineName
                         label={`Rename ${g.name}`}
+                        action="Rename"
                         onSave={(name) =>
                           run(
                             () => api.patch(`/api/v1/admin/groups/${g.id}`, { name }),
@@ -275,6 +300,7 @@ export function OrganizationTab() {
                       />
                       <InlineName
                         label={`New team in ${g.name}`}
+                        action="Add team"
                         onSave={(name) =>
                           run(
                             () => api.post('/api/v1/admin/teams', { groupId: g.id, name }),
@@ -297,7 +323,9 @@ export function OrganizationTab() {
                           {t.name}
                         </button>
                         {t.memberCount !== null && (
-                          <span className="muted small">{t.memberCount} members</span>
+                          <span className="muted small">
+                            {t.memberCount} {t.memberCount === 1 ? 'member' : 'members'}
+                          </span>
                         )}
                       </li>
                     ))}

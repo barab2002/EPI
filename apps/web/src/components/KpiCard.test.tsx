@@ -23,7 +23,8 @@ const base: KpiCard = {
 describe('KpiCardView', () => {
   it('shows value, sample, confidence, trend and synthetic label', () => {
     render(<KpiCardView card={base} onExplain={() => undefined} />);
-    expect(screen.getByText('4.2 days')).toBeInTheDocument();
+    // Number and unit are separate elements (unit set smaller) but read as one phrase.
+    expect(document.querySelector('.kpi-value')?.textContent).toBe('4.2 days');
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('Improved')).toBeInTheDocument();
     expect(screen.getByText('Synthetic')).toBeInTheDocument();

@@ -1,24 +1,59 @@
 import { useEffect, useRef } from 'react';
 import type { KpiCard, KpiExplanation } from '../api';
-import { formatValue } from '../format';
+import { formatDate, formatValue } from '../format';
 import { t } from '../i18n';
 import { useApi } from '../useApi';
+import { CloseIcon } from './Icons';
 import { ErrorState, Loading } from './States';
 
 /** "How calculated?" drawer: definition, worked example, and (if permitted) the items behind the value. */
-export function KpiDrawer({ card, onClose }: { card: KpiCard; onClose: () => void }) {
+export function KpiDrawer({
+  card,
+  onClose,
+  showWindow = true,
+}: {
+  card: KpiCard;
+  onClose: () => void;
+  /** False when opened from the catalog: there is no measured window to show. */
+  showWindow?: boolean;
+}) {
   const exp = useApi<KpiExplanation>(`/api/v1/kpis/${card.code}/explanation`);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLElement>(null);
   useEffect(() => {
+    // Modal sheet: focus moves in, Tab stays inside, Esc closes, focus returns to the opener.
+    const opener = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') return onClose();
+      if (e.key !== 'Tab' || !sheetRef.current) return;
+      const focusable = sheetRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = overflow;
+      opener?.focus();
+    };
   }, [onClose]);
 
   return (
     <div className="drawer-backdrop" onClick={onClose}>
       <aside
+        ref={sheetRef}
         className="drawer"
         role="dialog"
         aria-modal="true"
@@ -27,8 +62,14 @@ export function KpiDrawer({ card, onClose }: { card: KpiCard; onClose: () => voi
       >
         <header className="drawer-head">
           <h2 id="drawer-title">{card.title}</h2>
-          <button ref={closeRef} type="button" className="btn" onClick={onClose}>
-            {t('close')}
+          <button
+            ref={closeRef}
+            type="button"
+            className="icon-btn"
+            aria-label={t('close')}
+            onClick={onClose}
+          >
+            <CloseIcon />
           </button>
         </header>
         {exp.state === 'loading' && <Loading />}
@@ -39,22 +80,27 @@ export function KpiDrawer({ card, onClose }: { card: KpiCard; onClose: () => voi
             <dl className="defs">
               <dt>{t('formula')}</dt>
               <dd>
-                <code>{exp.data.formula}</code>
+                <code translate="no">{exp.data.formula}</code>
               </dd>
               <dt>{t('population')}</dt>
               <dd>{exp.data.population}</dd>
               <dt>{t('source')}</dt>
               <dd>{exp.data.source}</dd>
-              <dt>{t('window')}</dt>
-              <dd>
-                {new Date(card.window.start).toLocaleDateString('en-GB')} –{' '}
-                {new Date(card.window.end).toLocaleDateString('en-GB')}
-              </dd>
+              {showWindow && (
+                <>
+                  <dt>{t('window')}</dt>
+                  <dd>
+                    <time dateTime={card.window.start}>{formatDate(card.window.start)}</time> –{' '}
+                    <time dateTime={card.window.end}>{formatDate(card.window.end)}</time>
+                  </dd>
+                </>
+              )}
               <dt>{t('minimumSample')}</dt>
               <dd>{exp.data.minimumSample}</dd>
               <dt>{t('version')}</dt>
               <dd>
-                {exp.data.code} v{exp.data.version} · <code>{exp.data.implementation}</code>
+                {exp.data.code} v{exp.data.version},{' '}
+                <code translate="no">{exp.data.implementation}</code>
               </dd>
             </dl>
             <h3>{t('exclusions')}</h3>
@@ -73,7 +119,7 @@ export function KpiDrawer({ card, onClose }: { card: KpiCard; onClose: () => voi
             <h3>{t('example')}</h3>
             <p>{exp.data.example.description}</p>
             <p className="muted small">
-              Input: [{exp.data.example.input.join(', ')}] → engine result:{' '}
+              Input: [{exp.data.example.input.join(', ')}]; engine result:{' '}
               <strong>{formatValue(exp.data.example.result.value, exp.data.unit)}</strong> (n=
               {exp.data.example.result.sampleSize}, {exp.data.example.result.confidence})
             </p>
@@ -89,22 +135,26 @@ export function KpiDrawer({ card, onClose }: { card: KpiCard; onClose: () => voi
                 {card.evidence.observations.length === 0 ? (
                   <p className="muted">{t('noData')}</p>
                 ) : (
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Item</th>
-                        <th scope="col">Value</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {card.evidence.observations.map((o) => (
-                        <tr key={o.key}>
-                          <td>{o.key}</td>
-                          <td>{formatValue(o.value, card.unit)}</td>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Item</th>
+                          <th scope="col" className="num">
+                            Value
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {card.evidence.observations.map((o) => (
+                          <tr key={o.key}>
+                            <td translate="no">{o.key}</td>
+                            <td className="num">{formatValue(o.value, card.unit)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
                 {card.evidence.exclusions.length > 0 && (
                   <p className="muted small">

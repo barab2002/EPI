@@ -1,20 +1,20 @@
 # EPI screenshots
 
-Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak) with Playwright/Chromium. **All people and data are synthetic.** Regenerate after UI changes (see “How these were made” below).
+Captured 2026-10-12, refreshed 2026-10-13 after the UI/UX pass (UX-01), from `./epi.sh demo` (Docker Compose, bundled demo Keycloak) with Playwright/Chromium. **All people and data are synthetic.** Regenerate after UI changes (see “How these were made” below).
 
 ## Sign-in
 
-### Sign-in page: single sign-on button and demo people (synthetic)
+### Sign-in page: single sign-on, demo people grouped by role (synthetic)
 
-![Sign-in page: single sign-on button and demo people (synthetic)](screenshots/01-sign-in.png)
+![Sign-in page: single sign-on, demo people grouped by role (synthetic)](screenshots/01-sign-in.png)
 
 ### Keycloak login page (demo realm epi-demo)
 
 ![Keycloak login page (demo realm epi-demo)](screenshots/02-keycloak-login.png)
 
-### Team lead home after SSO sign-in: own KPIs and managed team
+### Team lead home: assessments to write this month, team overview, own KPIs
 
-![Team lead home after SSO sign-in: own KPIs and managed team](screenshots/03-home-team-lead-sso.png)
+![Team lead home: assessments to write this month, team overview, own KPIs](screenshots/03-home-team-lead-sso.png)
 
 ### Sign-in refused (no EPI account): clear message, no auto-provisioning
 
@@ -22,9 +22,9 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 ## Role-based home pages
 
-### Engineering manager home: organization KPIs and managed teams
+### Engineering manager home: organization KPIs and teams
 
-![Engineering manager home: organization KPIs and managed teams](screenshots/04-home-engineering-manager.png)
+![Engineering manager home: organization KPIs and teams](screenshots/04-home-engineering-manager.png)
 
 ### Developer home: own flow KPIs and team aggregate (no member-level evidence)
 
@@ -44,17 +44,17 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 ![Organization → group → team tree with access badges](screenshots/05-organization-tree.png)
 
-### Group overview: group KPIs with trends and its teams
+### Group overview: group KPIs and its teams (alphabetical, never ranked)
 
-![Group overview: group KPIs with trends and its teams](screenshots/06-group-overview.png)
+![Group overview: group KPIs and its teams (alphabetical, never ranked)](screenshots/06-group-overview.png)
 
-### Team overview (managed): KPI cards, trend, sample, confidence, freshness, members
+### Team overview (managed): KPI strip with trend, sample, confidence and freshness; members
 
-![Team overview (managed): KPI cards, trend, sample, confidence, freshness, members](screenshots/07-team-overview.png)
+![Team overview (managed): KPI strip with trend, sample, confidence and freshness; members](screenshots/07-team-overview.png)
 
-### Developer profile (manager view): grade, team, flow KPIs, assessments
+### Developer profile (manager view): grade, team, flow KPIs with neutral trends, assessments
 
-![Developer profile (manager view): grade, team, flow KPIs, assessments](screenshots/11-developer-profile.png)
+![Developer profile (manager view): grade, team, flow KPIs with neutral trends, assessments](screenshots/11-developer-profile.png)
 
 ### Out-of-scope team opened by URL: “Not available” (server returns 404)
 
@@ -62,17 +62,17 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 ## Explainable KPIs
 
-### Switching the KPI window (30/90/180 days)
+### Switching the KPI window (30/90/180 days; kept in the URL)
 
-![Switching the KPI window (30/90/180 days)](screenshots/08-kpi-window-180d.png)
+![Switching the KPI window (30/90/180 days; kept in the URL)](screenshots/08-kpi-window-180d.png)
 
-### "How calculated?" drawer: formula, population, source, window, version, exclusions
+### "How calculated?" sheet: formula, population, source, window, version, exclusions
 
-!["How calculated?" drawer: formula, population, source, window, version, exclusions](screenshots/09-kpi-explanation-drawer.png)
+!["How calculated?" sheet: formula, population, source, window, version, exclusions](screenshots/09-kpi-explanation-drawer.png)
 
-### Drawer continued: limitations, worked example computed by the engine, items behind the value
+### Sheet continued: limitations, worked example computed by the engine, items behind the value
 
-![Drawer continued: limitations, worked example computed by the engine, items behind the value](screenshots/10-kpi-evidence.png)
+![Sheet continued: limitations, worked example computed by the engine, items behind the value](screenshots/10-kpi-evidence.png)
 
 ### KPI catalog: versioned definitions, units, direction, scopes
 
@@ -84,9 +84,9 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 ![Monthly manager assessment: anchored 1–5 rubrics with required evidence](screenshots/12-assessment-form.png)
 
-### Submitted assessment (locked) in the developer profile
+### After submitting: lasting confirmation; the assessment is locked for the month
 
-![Submitted assessment (locked) in the developer profile](screenshots/13-assessment-submitted.png)
+![After submitting: lasting confirmation; the assessment is locked for the month](screenshots/13-assessment-submitted.png)
 
 ### Reviews: the developer sees submitted assessments about themselves
 
@@ -98,13 +98,13 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 ![Dark mode (follows the operating system setting)](screenshots/22-dark-mode.png)
 
-### Mobile layout: home
+### Phone layout: home
 
-![Mobile layout: home](screenshots/23-mobile-home.png)
+![Phone layout: home](screenshots/23-mobile-home.png)
 
-### Mobile layout: team KPIs
+### Phone layout: team KPIs
 
-![Mobile layout: team KPIs](screenshots/24-mobile-team.png)
+![Phone layout: team KPIs](screenshots/24-mobile-team.png)
 
 ### OpenAPI / Swagger UI at /api/docs
 
@@ -115,9 +115,9 @@ Captured 2026-10-12 from `./epi.sh demo` (Docker Compose, bundled demo Keycloak)
 
 Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process fake Jira DC and GitLab servers (synthetic data).
 
-### Administration › Integrations: daily sync schedule, Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)
+### Administration › Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)
 
-![Administration › Integrations: daily sync schedule, Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)](screenshots/25-admin-integrations.png)
+![Administration › Integrations: Jira/GitLab connections, Sync now, recent runs (fake sources, synthetic data)](screenshots/25-admin-integrations.png)
 
 ### Administration › Identity mapping: accounts seen in syncs, mapped to EPI people by search
 
@@ -145,8 +145,7 @@ Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process 
 
 ## How these were made
 
-1. `./epi.sh demo` (signs-in users from `./epi.sh credentials`).
-2. A Playwright script signs in as each demo role (demo sign-in and Keycloak SSO for `taylor`), navigates every screen at 1366×900, Pixel 7 and dark color scheme, and saves PNGs here; `screenshots/index.json` lists file → caption.
-3. No passwords appear in any screenshot (the Keycloak page is captured before the password is typed).
-
-Admin shots (25–30) come from `scripts/e2e-admin.sh --screenshots`; mobile shots were refreshed after the mobile navigation fix.
+1. `./epi.sh demo` (synthetic people only).
+2. `EPI_DOC_SHOTS=1 npx playwright test e2e/doc-screenshots.spec.ts --project=desktop` signs in as each demo role, visits every screen at 1366×900, in dark mode and at phone width (390×844), saves the PNGs here and rewrites `screenshots/index.json` (file → caption). It submits one synthetic assessment for the demo person Dana Dev; re-runs find it already submitted.
+3. Admin shots (25–31) come from `scripts/e2e-admin.sh --screenshots` (fake Jira/GitLab).
+4. The Keycloak page (02) is Keycloak's own, captured before any password is typed; no password appears in any screenshot.

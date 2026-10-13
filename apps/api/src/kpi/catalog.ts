@@ -181,7 +181,7 @@ export const KPI_CATALOG: KpiDefinition[] = [
   {
     code: 'MR_OPEN_TO_FIRST_REVIEW',
     version: MR_OPEN_TO_FIRST_REVIEW_VERSION,
-    title: 'MR Open → First Review (proxy)',
+    title: 'MR open to first review (proxy)',
     question: 'How long until an MR gets its first human review?',
     unit: 'hours',
     direction: 'lower_is_better',
