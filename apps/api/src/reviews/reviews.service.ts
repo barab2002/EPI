@@ -53,6 +53,56 @@ export class ReviewsService {
     );
   }
 
+  /**
+   * People the caller may assess who have no submitted assessment from the caller in the open
+   * monthly cycle (home page "Assessments due"). Alphabetical by team then name — a to-do list,
+   * not a ranking. Scope comes only from `reviewableUserIds` (server-side RBAC).
+   */
+  async due(scope: Scope) {
+    const [cycle] = await this.ds.query(
+      `SELECT id, period_start, period_end FROM review_cycles
+       WHERE status = 'open' AND review_type = 'monthly' ORDER BY period_start DESC LIMIT 1`,
+    );
+    const ids = [...scope.reviewableUserIds];
+    if (!cycle || ids.length === 0)
+      return { cycle: cycle ? this.cycleOut(cycle) : null, people: [] };
+    const people: {
+      user_id: string;
+      display_name: string;
+      team_name: string | null;
+      status: string | null;
+    }[] = await this.ds.query(
+      `SELECT u.id AS user_id, u.display_name,
+                (SELECT t.name FROM team_memberships m JOIN teams t ON t.id = m.team_id
+                  WHERE m.user_id = u.id AND m.effective_to IS NULL
+                  ORDER BY m.effective_from DESC LIMIT 1) AS team_name,
+                a.status
+         FROM users u
+         LEFT JOIN assessments a
+           ON a.subject_user_id = u.id AND a.reviewer_user_id = $2 AND a.cycle_id = $3
+         WHERE u.id = ANY($1::uuid[]) AND u.active
+           AND (a.status IS NULL OR a.status <> 'submitted')
+         ORDER BY team_name NULLS LAST, u.display_name`,
+      [ids, scope.userId, cycle.id],
+    );
+    return {
+      cycle: this.cycleOut(cycle),
+      people: people.map((p) => ({
+        userId: p.user_id,
+        displayName: p.display_name,
+        teamName: p.team_name,
+        status: p.status === 'draft' ? 'draft' : 'not_started',
+      })),
+    };
+  }
+
+  private cycleOut(c: { period_start: Date | string; period_end: Date | string }) {
+    return {
+      periodStart: new Date(c.period_start).toISOString(),
+      periodEnd: new Date(c.period_end).toISOString(),
+    };
+  }
+
   private async openCycleId(): Promise<string> {
     const [c] = await this.ds.query(
       `SELECT id FROM review_cycles WHERE status = 'open' AND review_type = 'monthly'
