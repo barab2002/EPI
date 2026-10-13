@@ -12,4 +12,6 @@
 - **Evidence:** web unit 33/33; demo e2e 6 passed (20 skipped by design); admin e2e 2/2 ×2; 40 post-slice captures reviewed (team, mobile, tablet admin, sheet).
 - **Slice 1 merged:** PR #17.
 - **Slice 2 done:** Impeccable critique (dual sub-agents, 27/40) → 13 fixes (UX-019…031): group team overview, URL-persisted window with dates, neutral individual trends, consistent breadcrumbs, org hierarchy, `PageTitle`, contrast/focus/touch fixes, catalog list, skeletons, N/A reasons, copy. Skills **invoked** this time (impeccable via Skill tool; the skills became available mid-session, without a restart).
-- **Next:** Slice 3 — home + sign-in (UX-013).
+- **Slice 2 merged:** PR #18.
+- **Slice 3 done:** home leads with assessments to write (new API `GET /api/v1/reviews/due`, 5 integration tests: scope, alphabetical, draft→done, empty for developer/admin, group isolation, auth), team overview reused on home, context line under the greeting, admin home points to data quality; sign-in with product identity, purpose line, SSO divider, role hints. Fixed sidebar column height and phone KPI strip overflow.
+- **Next:** Slice 4 — reviews page + assessment form (field states, errors announced, confirmation after submit).
