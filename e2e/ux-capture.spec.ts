@@ -49,6 +49,10 @@ test('capture key screens', async ({ page }) => {
   await page.getByRole('link', { name: 'Eli Engineer' }).first().click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await shoot(page, '05-developer');
+  await page.goBack();
+  await page.getByRole('link', { name: 'Dana Dev' }).first().click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Dana Dev');
+  await shoot(page, '05b-assessment-form');
   await page.getByRole('link', { name: 'Reviews' }).first().click();
   await shoot(page, '06-reviews');
   await page.getByRole('link', { name: 'KPI catalog' }).click();

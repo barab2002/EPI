@@ -1048,6 +1048,28 @@ input[type='radio'] {
 .rubric label.selected {
   background: var(--accent-soft);
 }
+.rubric.invalid {
+  border-color: var(--critical);
+}
+.field-error {
+  color: var(--critical);
+  font-size: var(--text-footnote);
+  margin: var(--s-1) 0 0;
+}
+textarea[aria-invalid='true'] {
+  border-color: var(--critical);
+}
+.notice-ok {
+  background: var(--positive-soft);
+  color: var(--positive);
+  border-radius: var(--r-control);
+  padding: var(--s-3) var(--s-4);
+  margin: 0 0 var(--s-4);
+}
+.actions-note {
+  margin-inline-end: auto;
+  align-self: center;
+}
 .rubric-score {
   display: inline-grid;
   place-items: center;
@@ -1111,6 +1133,14 @@ input[type='radio'] {
   background: var(--surface);
   border: 1px solid var(--separator);
   border-radius: var(--r-section);
+}
+/* Inside a section the section is the container: no box in a box. */
+.panel .state-empty,
+.panel .state-error {
+  border: 0;
+  background: none;
+  padding: var(--s-2) 0;
+  color: var(--text-secondary);
 }
 .state-error h2 {
   color: var(--text);
