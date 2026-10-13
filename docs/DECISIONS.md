@@ -127,3 +127,14 @@ Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `depl
 - **Install:** `offline-install` verifies the outer and inner checksums, loads images, checks each loaded image's identity (manifest or config digest recorded at bundle time) and writes `deploy/offline.env` so the installation only uses bundled images (`pull_policy: never`). It does not start services; the operator chooses demo or production.
 - **Why not a private registry or OCI layout tool:** `docker save/load` exists on every Docker host and needs no extra component (lean architecture). Signing (cosign/GPG) is planned once a tool is approved; until then the sidecar hash must come through a trusted channel.
 - **Licenses:** `scripts/license-report.mjs` (CI) fails on any production dependency license outside a reviewed permissive allowlist.
+
+## ADR-024 · 2026-10-13 · Accepted (owner answers) — Pilot deployment shape
+
+Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
+
+- **Sources:** Jira Data Center + GitLab Self-Managed, reachable **only on the internal network** → EPI runs on an internal Linux server with Docker; this cloud session never connects to them. Real-system checks are done by the owner with scripted commands and pasted (non-secret) output.
+- **Delivery:** internal registry mirror exists (`EPI_IMAGE_REGISTRY`), but code arrives as a **file**: the owner builds `./epi.sh bundle` on their own connected machine and copies the `.tar` + `.sha256` to the server (`offline-install`).
+- **Sign-in:** users log in with **AD credentials** through an **EPI-bundled production Keycloak** federated read-only to AD over **LDAPS** (read-only bind account from IT; password only in a root-only secret file). Replaces the demo Keycloak for real use.
+- **People & teams:** imported from AD — **one existing AD group per team**; only those groups' members are imported. **Roles (team lead, managers) are assigned in EPI**, not derived from AD.
+- **Tokens:** Jira = owner's personal PAT for the pilot (replace with a service account afterwards); GitLab = group/project access token (Reporter, `read_api`). Tokens live only in secret files on the server.
+- **Policy:** retention **24 months** with automatic deletion; privacy minimum stays **5** until HR/privacy answers (C7); HR/privacy sign-off still required before real data (B7). Languages **English + Hebrew**. Grades **Junior/Mid/Senior/Tech Lead**. No SBOM/CVE scanner for the pilot (C11). Pilot start **2026-11-02**.
