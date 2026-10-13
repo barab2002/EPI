@@ -2,7 +2,7 @@
 
 Engineering (Claude, unattended via the hourly routine; each on its own branch → CI → PR → merge):
 
-1. ✅ **EPI-003b Production Keycloak in the install** — done (PR #14, ADR-025); follow-ups: `sso-apply` (update the directory provider after first start), Keycloak DB in `backup`.
+1. ✅ **EPI-003b Production Keycloak in the install** — done (PR #14, ADR-025); follow-ups: `sso-apply` (update the directory provider after first start), Keycloak DB in `backup` (done, ADR-039).
    Original scope (~2.5 d): Keycloak (production mode, its own PostgreSQL database, health checks) in `deploy/compose.keycloak.yaml`; realm/client provisioned at install; **LDAPS user federation to AD, read-only** (bind password from a secret file, internal CA trust, user search limited to the pilot team groups); EPI uses it via OIDC. Tests: ephemeral OpenLDAP (synthetic users/groups) + Keycloak.
 2. ✅ **EPI-004c AD team import** — done (ADR-030): EPI reads the team groups directly over LDAPS (same read-only account), admin maps group → team, preview → apply exactly the previewed plan, dated memberships, audited; no automatic deactivation (deliberate), roles stay manual. Follow-up: optional daily import on the sync schedule.
 3. ✅ **EPI-012c `upgrade` + rollback** — done (ADR-031): `./epi.sh upgrade <bundle>` verifies, backs up (incl. Keycloak DB), loads images, swaps files, migrates on start, health-checks and rolls back automatically; `scripts/test-upgrade.sh`.

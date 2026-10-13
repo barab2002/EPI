@@ -56,6 +56,22 @@ EPI_E2E_URL="http://127.0.0.1:$EPI_PORT" EPI_E2E_UP=1 EPI_UP_EMAIL="$EPI_ADMIN_E
   PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}" \
   npx playwright test e2e/local-up.spec.ts --project=desktop
 
+echo "==> Backup and restore include sign-in (Keycloak) accounts"
+kq() { docker compose -p "$project" exec -T postgres psql -U epi -d keycloak -tAc "$1"; }
+first=$(kq "SELECT first_name FROM user_entity WHERE email = '$EPI_ADMIN_EMAIL'")
+backup=$(bash "$ROOT/epi.sh" backup)
+echo "$backup" | sed 's/^/    /'
+file=$(sed -n 's/^Backup written: \(.*\.sql\.gz\) .*/\1/p' <<<"$backup")
+grep -q '^Sign-in backup written: .*/keycloak-' <<<"$backup" || { echo "FAIL: no sign-in backup" >&2; exit 1; }
+# Changes after the backup, in EPI and in sign-in; the restore must undo both.
+q "INSERT INTO organizations(name) VALUES ('After backup')" >/dev/null
+kq "UPDATE user_entity SET first_name = 'Changed' WHERE email = '$EPI_ADMIN_EMAIL'" >/dev/null
+bash "$ROOT/epi.sh" restore "$file" --yes | sed 's/^/    /'
+[ "$(q "SELECT count(*) FROM organizations WHERE name = 'After backup'")" = 0 ] || { echo "FAIL: EPI data not restored" >&2; exit 1; }
+[ "$(kq "SELECT first_name FROM user_entity WHERE email = '$EPI_ADMIN_EMAIL'")" = "$first" ] || { echo "FAIL: sign-in not restored" >&2; exit 1; }
+curl -fsS "http://127.0.0.1:$EPI_PORT/health/ready" | grep -q '"oidc":"ok"' || { echo "FAIL: sign-in not ready after restore" >&2; exit 1; }
+rm -f "$file" "$(dirname "$file")/keycloak-$(basename "$file" | sed 's/^epi-//')"
+
 echo "==> Second ./epi.sh up: no questions, nothing duplicated"
 again=$(bash "$ROOT/epi.sh" up </dev/null)
 grep -q 'already an administrator' <<<"$again" || { echo "FAIL: second up: $again" >&2; exit 1; }

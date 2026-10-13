@@ -249,3 +249,9 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 - **Run mode:** `.epi/run-mode` (`real`/`demo`) tells `start`, `stop`, `backup`, `credentials`… which stack they act on; servers without the file behave as before.
 - **Limits:** more local accounts are added in the Keycloak admin console (`.epi/local/kc_admin_password`); for teams use AD. Changing `EPI_PORT` after the first `up` needs a new local realm.
 - **Evidence:** config unit tests, realm generator tests, Dockerfile parity test, `scripts/test-up.sh` (empty state → real app, no synthetic data, demo sign-in 404, 127.0.0.1 only, browser first sign-in with forced new password → Administration, second `up` idempotent).
+
+## ADR-039 · 2026-10-13 · Accepted — Backups include sign-in (Keycloak)
+
+- `./epi.sh backup` writes `backups/keycloak-<time>.sql.gz` next to `epi-<time>.sql.gz` whenever Keycloak's database exists here (AD sign-in or `up`'s local accounts); `restore <epi-file>` restores the matching sign-in file too, and `upgrade` uses the same backup.
+- Keycloak's dump is restored with `SET ROLE keycloak` so Keycloak still owns its tables; restoring as `epi` made Keycloak fail on start (`databasechangeloglock already exists`) — found by the new test, and the same latent bug was in the upgrade rollback.
+- Evidence: `scripts/test-up.sh` changes EPI data and a sign-in account after a backup, restores, and checks both are back and sign-in is ready; `scripts/test-upgrade.sh` still passes.

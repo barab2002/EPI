@@ -92,7 +92,7 @@ Usage: ./epi.sh <command> [options]
   status              Show containers and application health
   logs                Follow application logs
   test [--no-integration]   Run the CI checks (scripts/ci.sh)
-  backup              Write a compressed database dump to ./backups/
+  backup              Write compressed dumps of the data (and sign-in, when it runs here) to ./backups/
   restore <file> [--yes]    Replace the database with a backup (destructive; asks first)
   bundle [--no-keycloak]    Build an offline bundle in dist/ (EPI + pinned images, checksums)
   offline-install <bundle.tar> [--dir DIR]
@@ -484,31 +484,61 @@ cmd_status() {
   if curl -fsS "http://127.0.0.1:$EPI_PORT/health/ready" 2>/dev/null; then echo; else echo "health: not ready"; return 1; fi
 }
 
+# Restores Keycloak's database as its own role, so Keycloak still owns (and can migrate) its tables.
+restore_keycloak_db() {
+  { echo 'SET ROLE keycloak;'; gunzip -c "$1"; } |
+    compose exec -T postgres psql -U epi -d keycloak -v ON_ERROR_STOP=1 -q >/dev/null
+}
+
+has_keycloak_db() {
+  [ "$(compose exec -T postgres psql -U epi -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = 'keycloak'" 2>/dev/null | tr -d '[:space:]')" = 1 ]
+}
+
+# Writes backups/epi-<UTC time>.sql.gz and, when sign-in runs here (AD or local accounts),
+# backups/keycloak-<same time>.sql.gz: sign-in settings and local accounts are restored with the data.
 cmd_backup() {
   ensure_state
   compose ps --status running postgres | grep -q postgres || die "postgres is not running (./epi.sh start)"
   mkdir -p "$ROOT/backups"
-  local file="$ROOT/backups/epi-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+  local stamp file kc
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  file="$ROOT/backups/epi-$stamp.sql.gz"
   (umask 077 && compose exec -T postgres pg_dump -U epi -d epi --clean --if-exists --no-owner | gzip >"$file")
   [ -s "$file" ] || die "backup is empty"
   gzip -t "$file" || die "backup is corrupt"
   printf 'Backup written: %s (%s)\n' "$file" "$(du -h "$file" | cut -f1)"
-  BACKUP_FILE="$file"
+  BACKUP_FILE="$file" KC_BACKUP_FILE=""
+  if has_keycloak_db; then
+    kc="$ROOT/backups/keycloak-$stamp.sql.gz"
+    (umask 077 && compose exec -T postgres pg_dump -U epi -d keycloak --clean --if-exists --no-owner | gzip >"$kc")
+    gzip -t "$kc" || die "sign-in (Keycloak) backup is corrupt"
+    printf 'Sign-in backup written: %s (%s)\n' "$kc" "$(du -h "$kc" | cut -f1)"
+    KC_BACKUP_FILE="$kc"
+  fi
 }
 
 cmd_restore() {
-  local file="${1:-}" yes="${2:-}"
+  local file="${1:-}" yes="${2:-}" kc
   [ -n "$file" ] && [ -f "$file" ] || die "usage: ./epi.sh restore <backup.sql.gz> [--yes]"
   gzip -t "$file" || die "not a valid gzip backup: $file"
+  # The sign-in backup taken at the same time, if any (backups/keycloak-<time>.sql.gz).
+  kc="$(dirname "$file")/keycloak-$(basename "$file" | sed 's/^epi-//')"
+  [ "$(basename "$file")" != "$(basename "$kc")" ] && [ -f "$kc" ] || kc=""
+  if [ -n "$kc" ]; then gzip -t "$kc" || die "not a valid gzip backup: $kc"; fi
   if [ "$yes" != "--yes" ]; then
-    printf '%sThis REPLACES all EPI data with %s.%s Type "restore" to continue: ' "$Y" "$file" "$N"
+    printf '%sThis REPLACES all EPI data%s with %s.%s Type "restore" to continue: ' "$Y" "${kc:+ and sign-in accounts}" "$file" "$N"
     read -r answer
     [ "$answer" = "restore" ] || die "aborted"
   fi
   compose stop epi >/dev/null
   gunzip -c "$file" | compose exec -T postgres psql -U epi -d epi -v ON_ERROR_STOP=1 -q >/dev/null
-  compose start epi >/dev/null
-  wait_healthy && echo "Restore complete; EPI healthy." || die "EPI unhealthy after restore"
+  if [ -n "$kc" ] && has_keycloak_db; then
+    compose stop keycloak >/dev/null 2>&1 || true
+    restore_keycloak_db "$kc"
+    echo "Sign-in (Keycloak) restored from $kc"
+  fi
+  compose up -d >/dev/null 2>&1
+  wait_healthy 150 && echo "Restore complete; EPI healthy." || die "EPI unhealthy after restore"
 }
 
 # Installation files replaced by an upgrade (state in .epi/ and backups/ are never touched).
@@ -562,13 +592,7 @@ cmd_upgrade() {
 
   info "Backing up the database"
   cmd_backup
-  local db_backup="$BACKUP_FILE" kc_backup=""
-  if prod_sso_enabled; then
-    kc_backup="${db_backup%/*}/keycloak-${db_backup##*/epi-}"
-    (umask 077 && compose exec -T postgres pg_dump -U epi -d keycloak --clean --if-exists --no-owner | gzip >"$kc_backup")
-    gzip -t "$kc_backup" || die "Keycloak backup is corrupt"
-    echo "Keycloak backup written: $kc_backup"
-  fi
+  local db_backup="$BACKUP_FILE" kc_backup="$KC_BACKUP_FILE"
 
   load_bundle_images "$new"
   info "Installing EPI $target files (previous files kept in $work/previous)"
@@ -596,7 +620,7 @@ cmd_upgrade() {
     compose exec -T postgres psql -U epi -d epi -v ON_ERROR_STOP=1 -q >/dev/null
   if [ -n "$kc_backup" ]; then
     compose stop keycloak >/dev/null 2>&1 || true
-    gunzip -c "$kc_backup" | compose exec -T postgres psql -U epi -d keycloak -v ON_ERROR_STOP=1 -q >/dev/null
+    restore_keycloak_db "$kc_backup"
   fi
   compose up -d >/dev/null 2>&1
   if wait_healthy; then
