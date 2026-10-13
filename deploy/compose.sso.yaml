@@ -1,0 +1,77 @@
+# PRODUCTION single sign-on (EPI-003b, ADR-025): Keycloak in production mode, its own database in
+# the shared PostgreSQL, READ-ONLY federation to Active Directory over LDAPS. Enabled by
+# `./epi.sh sso-setup`; all paths below live in the 0700 state directory, never in Git.
+# Put a TLS front end (your reverse proxy / load balancer) before EPI and Keycloak.
+services:
+  keycloak:
+    image: ${EPI_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.3.3}
+    pull_policy: ${EPI_PULL_POLICY:-missing}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Secrets are read from files at start (Keycloak has no *_FILE variables).
+    entrypoint:
+      - /bin/bash
+      - -c
+      - >-
+        export KC_DB_PASSWORD="$$(cat /run/secrets/kc_db_password)"
+        KC_BOOTSTRAP_ADMIN_PASSWORD="$$(cat /run/secrets/kc_admin_password)" &&
+        exec /opt/keycloak/bin/kc.sh start --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_HOSTNAME: ${EPI_SSO_PUBLIC_URL:?run ./epi.sh sso-setup}
+      KC_HTTP_ENABLED: 'true'
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: 'true'
+      KC_VAULT: file
+      KC_VAULT_DIR: /opt/keycloak/vault
+      KC_TRUSTSTORE_PATHS: /opt/keycloak/conf/truststores
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+    secrets: [kc_db_password, kc_admin_password]
+    volumes:
+      - ${EPI_STATE_DIR}/sso/epi-realm.json:/opt/keycloak/data/import/epi-realm.json:ro
+      - ${EPI_STATE_DIR}/sso/vault:/opt/keycloak/vault:ro
+      - ${EPI_STATE_DIR}/sso/ca:/opt/keycloak/conf/truststores:ro
+    ports:
+      - '${EPI_BIND:-127.0.0.1}:${EPI_SSO_PORT:-8081}:8080'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    deploy:
+      resources:
+        limits: { memory: 1g }
+
+  epi:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      EPI_MODE: ${EPI_MODE:-production}
+      EPI_COOKIE_SECURE: ${EPI_COOKIE_SECURE:-true}
+      EPI_PUBLIC_URL: ${EPI_PUBLIC_URL:?run ./epi.sh sso-setup}
+      EPI_OIDC_ISSUER: ${EPI_SSO_PUBLIC_URL}/realms/epi
+      EPI_OIDC_INTERNAL_URL: http://keycloak:8080
+      EPI_OIDC_ALLOW_HTTP: ${EPI_SSO_ALLOW_HTTP:-false}
+      EPI_OIDC_CLIENT_ID: epi-web
+      EPI_OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      EPI_OIDC_LINK_BY_VERIFIED_EMAIL: 'true'
+    secrets: [db_password, oidc_client_secret]
+
+secrets:
+  kc_db_password:
+    file: ${EPI_STATE_DIR}/sso/kc_db_password
+  kc_admin_password:
+    file: ${EPI_STATE_DIR}/sso/kc_admin_password
+  oidc_client_secret:
+    file: ${EPI_STATE_DIR}/sso/client_secret
