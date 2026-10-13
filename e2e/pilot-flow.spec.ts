@@ -61,8 +61,10 @@ test('team lead submits a monthly assessment; the developer sees it; a peer does
     await form.getByLabel('3: Progressing as agreed').check();
     await form.getByRole('textbox').fill('Drove the offline sync redesign with minimal guidance.');
     await form.getByRole('button', { name: 'Submit' }).click();
-    await expect(page.getByText('Submitted.')).toBeVisible();
   }
+  // The form gives way to a lasting confirmation for this month (also on re-runs).
+  await expect(page.getByText(/You submitted this month’s assessment on/)).toBeVisible();
+  await expect(form).toHaveCount(0);
   await expect(page.getByText('Drove the offline sync redesign')).toBeVisible();
   await signOut(page);
 

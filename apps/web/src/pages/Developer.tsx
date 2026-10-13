@@ -9,6 +9,11 @@ import { useSession } from '../session';
 import { useApi } from '../useApi';
 import { AssessmentForm } from './AssessmentForm';
 
+interface DueList {
+  cycle: { periodStart: string; periodEnd: string } | null;
+  people: { userId: string; status: 'draft' | 'not_started' }[];
+}
+
 interface DeveloperDetail {
   id: string;
   display_name: string;
@@ -26,14 +31,20 @@ interface DeveloperDetail {
   }[];
 }
 
-export function AssessmentList({ items }: { items: Assessment[] }) {
+export function AssessmentList({
+  items,
+  showSubject = true,
+}: {
+  items: Assessment[];
+  showSubject?: boolean;
+}) {
   if (!items.length) return <Empty>{t('noAssessments')}</Empty>;
   return (
     <ul className="assessments">
       {items.map((a) => (
         <li key={a.id} className="assessment">
           <div className="assessment-head">
-            <strong>{a.subject_name}</strong>
+            {showSubject && <strong>{a.subject_name}</strong>}
             <span className="muted small">
               {formatDate(a.period_start)}, {t('by')} {a.reviewer_name}
             </span>
@@ -63,6 +74,7 @@ export function DeveloperPage() {
   const { me } = useSession();
   const dev = useApi<DeveloperDetail>(`/api/v1/developers/${id}`);
   const reviews = useApi<Assessment[]>(`/api/v1/reviews?subject_user_id=${id}`);
+  const due = useApi<DueList>(me.canReview ? '/api/v1/reviews/due' : null);
   if (dev.state === 'loading') return <Skeleton title lines={5} />;
   if (dev.state === 'error') return <ErrorState error={dev.error} onRetry={dev.reload} />;
   const d = dev.data;
@@ -79,9 +91,14 @@ export function DeveloperPage() {
   }
   crumbs.push({ label: d.display_name });
   const canAssess = !d.isSelf && me.canReview;
+  // This month's state comes from the server (open cycle, scoped): due → show the form (with my
+  // draft if any); not due → already submitted this month → show the confirmation.
+  const dueEntry =
+    due.state === 'ready' ? due.data.people.find((p) => p.userId === d.id) : undefined;
   const mine =
     reviews.state === 'ready' ? reviews.data.filter((a) => a.reviewer_user_id === me.user.id) : [];
-  const alreadySubmitted = mine.some((a) => a.status === 'submitted');
+  const myDraft = mine.find((a) => a.status === 'draft');
+  const mySubmitted = mine.find((a) => a.status === 'submitted');
 
   return (
     <>
@@ -115,10 +132,25 @@ export function DeveloperPage() {
         <h2>{t('assessments')}</h2>
         {reviews.state === 'loading' && <Skeleton lines={3} />}
         {reviews.state === 'error' && <ErrorState error={reviews.error} onRetry={reviews.reload} />}
-        {reviews.state === 'ready' && <AssessmentList items={reviews.data} />}
+        {reviews.state === 'ready' && <AssessmentList items={reviews.data} showSubject={false} />}
       </section>
-      {canAssess && reviews.state === 'ready' && !alreadySubmitted && (
-        <AssessmentForm subjectUserId={d.id} onSaved={reviews.reload} />
+      {canAssess && reviews.state === 'ready' && due.state === 'ready' && dueEntry && (
+        <AssessmentForm
+          key={myDraft?.id ?? 'new'}
+          subjectUserId={d.id}
+          subjectName={d.display_name.split(' ')[0]}
+          initial={myDraft}
+          onSaved={() => {
+            reviews.reload();
+            due.reload();
+          }}
+        />
+      )}
+      {canAssess && due.state === 'ready' && due.data.cycle && !dueEntry && mySubmitted && (
+        <p className="notice-ok" role="status">
+          {t('assessmentDoneFor')} {formatDate(mySubmitted.submitted_at)}.{' '}
+          {t('assessmentDoneVisible').replace('{name}', d.display_name.split(' ')[0])}
+        </p>
       )}
     </>
   );
