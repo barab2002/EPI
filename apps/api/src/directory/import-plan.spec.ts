@@ -68,7 +68,7 @@ describe('planImport', () => {
       }),
     );
     expect(plan.creates).toEqual([]);
-    expect(plan.links).toEqual([{ userId: 'u-1', externalId: 'g-1' }]);
+    expect(plan.links).toEqual([{ userId: 'u-1', externalId: 'g-1', displayName: 'Ada Lane' }]);
     expect(plan.updates).toEqual([
       {
         userId: 'u-1',

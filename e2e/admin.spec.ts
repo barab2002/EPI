@@ -162,3 +162,47 @@ test('admin builds a team and onboards a person; the group manager sees the new 
   await expect(page.getByRole('link', { name: 'Mobile' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Edge' })).toHaveCount(0);
 });
+
+test('admin imports team membership from the directory: map, preview, apply', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Avery Admin/ }).click();
+  await page.goto('/admin/directory');
+  await expect(page.getByRole('heading', { name: 'Directory import' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preview import' })).toBeDisabled();
+
+  // Team-Payments (synthetic directory: Eli, Taylor) feeds the Payments team.
+  await page
+    .getByLabel('EPI team for Team-Payments')
+    .selectOption({ label: 'Payments (Platform)' });
+  await expect(page.locator('p.flash-ok')).toContainText('Team-Payments now feeds Payments');
+  await page.getByRole('button', { name: 'Preview import' }).click();
+  await expect(page.getByText(/^Applying will link 2 existing people by e-mail/)).toBeVisible();
+  const leaving = page.locator('.form-group').filter({ hasText: 'Leaving a team' });
+  await expect(leaving).toContainText('Dana Dev');
+  await expect(
+    page.getByText('Group Team-Platform is not mapped to a team', { exact: false }),
+  ).toBeVisible();
+  await shot(page, '32-admin-directory');
+
+  page.once('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: /^Apply \d+ changes$/ }).click();
+  await expect(page.locator('p.flash-ok')).toContainText('Import applied');
+  await expect(page.getByText(/^Last import:/)).toBeVisible();
+
+  // Payments now has exactly the directory group's members.
+  await page.goto('/admin/organization');
+  await page.getByRole('button', { name: 'Payments', exact: true }).click();
+  const members = page.getByRole('table').last();
+  await expect(members.getByRole('row')).toHaveCount(3); // header + Eli + Taylor
+  await expect(members).toContainText('Eli Engineer');
+  await expect(members).toContainText('Taylor Lead');
+
+  // A second preview has nothing left to do.
+  await page.goto('/admin/directory');
+  await page.getByRole('button', { name: 'Preview import' }).click();
+  await expect(
+    page.getByText('EPI already matches the directory. Nothing to change.'),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Apply 0 changes' })).toBeDisabled();
+});

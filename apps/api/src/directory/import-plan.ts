@@ -21,7 +21,7 @@ export interface EpiState {
 
 export interface ImportPlan {
   creates: { externalId: string; displayName: string; email: string | null; teamId: string }[];
-  links: { userId: string; externalId: string }[];
+  links: { userId: string; externalId: string; displayName: string }[];
   updates: {
     userId: string;
     from: { displayName: string; email: string | null };
@@ -126,7 +126,7 @@ export function planImport(groups: DirectoryGroup[], s: EpiState): ImportPlan {
       }
       if (matches[0]) {
         user = matches[0];
-        plan.links.push({ userId: user.id, externalId: p.externalId });
+        plan.links.push({ userId: user.id, externalId: p.externalId, displayName: p.displayName });
       }
     }
     if (!user) {

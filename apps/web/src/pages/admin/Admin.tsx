@@ -6,6 +6,7 @@ import { useSession } from '../../session';
 const TABS = [
   ['organization', 'Organization'],
   ['people', 'People'],
+  ['directory', 'Directory'],
   ['integrations', 'Integrations'],
   ['identities', 'Identity mapping'],
   ['statuses', 'Status mappings'],

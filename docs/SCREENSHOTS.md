@@ -143,9 +143,13 @@ Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process 
 
 ![Administration › Audit log: who changed what and when, filterable; review subjects and text never shown](screenshots/31-admin-audit-log.png)
 
+### Administration › Directory: AD team groups mapped to EPI teams, preview of every change before applying (synthetic directory)
+
+![Administration › Directory: AD team groups mapped to EPI teams, preview of every change before applying (synthetic directory)](screenshots/32-admin-directory.png)
+
 ## How these were made
 
 1. `./epi.sh demo` (synthetic people only).
 2. `EPI_DOC_SHOTS=1 npx playwright test e2e/doc-screenshots.spec.ts --project=desktop` signs in as each demo role, visits every screen at 1366×900, in dark mode and at phone width (390×844), saves the PNGs here and rewrites `screenshots/index.json` (file → caption). It submits one synthetic assessment for the demo person Dana Dev; re-runs find it already submitted.
-3. Admin shots (25–31) come from `scripts/e2e-admin.sh --screenshots` (fake Jira/GitLab).
+3. Admin shots (25–32) come from `scripts/e2e-admin.sh --screenshots` (fake Jira/GitLab, synthetic LDAPS directory).
 4. The Keycloak page (02) is Keycloak's own, captured before any password is typed; no password appears in any screenshot.
