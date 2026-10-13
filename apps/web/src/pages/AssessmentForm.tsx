@@ -4,18 +4,18 @@ import { t } from '../i18n';
 
 const ANCHORS: Record<'independence' | 'growth', string[]> = {
   independence: [
-    '1 · Substantially dependent',
-    '2 · Needs frequent guidance',
-    '3 · Meets grade expectations',
-    '4 · Above-grade autonomy',
-    '5 · Demonstrates and develops others',
+    'Substantially dependent',
+    'Needs frequent guidance',
+    'Meets grade expectations',
+    'Above-grade autonomy',
+    'Demonstrates and develops others',
   ],
   growth: [
-    '1 · No progress on plan',
-    '2 · Limited progress',
-    '3 · Progressing as agreed',
-    '4 · Ahead of plan',
-    '5 · Exceptional growth, helps others grow',
+    'No progress on plan',
+    'Limited progress',
+    'Progressing as agreed',
+    'Ahead of plan',
+    'Exceptional growth, helps others grow',
   ],
 };
 
@@ -42,7 +42,11 @@ function Rubric({
             checked={value === i + 1}
             onChange={() => onChange(i + 1)}
           />
-          {anchor}
+          <span className="rubric-score">{i + 1}</span>
+          <span>
+            <span className="sr-only">: </span>
+            {anchor}
+          </span>
         </label>
       ))}
     </fieldset>

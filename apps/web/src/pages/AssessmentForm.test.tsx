@@ -10,8 +10,8 @@ describe('AssessmentForm', () => {
     render(<AssessmentForm subjectUserId="u1" onSaved={() => undefined} />);
     const submit = screen.getByRole('button', { name: 'Submit' });
     expect(submit).toBeDisabled();
-    await userEvent.click(screen.getByLabelText('3 · Meets grade expectations'));
-    await userEvent.click(screen.getByLabelText('4 · Ahead of plan'));
+    await userEvent.click(screen.getByLabelText('3: Meets grade expectations'));
+    await userEvent.click(screen.getByLabelText('4: Ahead of plan'));
     await userEvent.type(screen.getByRole('textbox'), 'too short');
     expect(submit).toBeDisabled();
     await userEvent.type(screen.getByRole('textbox'), ' — now long enough evidence');
@@ -27,8 +27,8 @@ describe('AssessmentForm', () => {
       );
     const onSaved = vi.fn();
     render(<AssessmentForm subjectUserId="u1" onSaved={onSaved} />);
-    await userEvent.click(screen.getByLabelText('3 · Meets grade expectations'));
-    await userEvent.click(screen.getByLabelText('3 · Progressing as agreed'));
+    await userEvent.click(screen.getByLabelText('3: Meets grade expectations'));
+    await userEvent.click(screen.getByLabelText('3: Progressing as agreed'));
     await userEvent.type(
       screen.getByRole('textbox'),
       'Led the incident review and fixed root cause.',
@@ -54,8 +54,8 @@ describe('AssessmentForm', () => {
       }),
     );
     render(<AssessmentForm subjectUserId="u1" onSaved={() => undefined} />);
-    await userEvent.click(screen.getByLabelText('3 · Meets grade expectations'));
-    await userEvent.click(screen.getByLabelText('3 · Progressing as agreed'));
+    await userEvent.click(screen.getByLabelText('3: Meets grade expectations'));
+    await userEvent.click(screen.getByLabelText('3: Progressing as agreed'));
     await userEvent.type(screen.getByRole('textbox'), 'Evidence that is long enough to pass.');
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('already submitted');

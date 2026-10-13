@@ -7,7 +7,16 @@ import { CloseIcon } from './Icons';
 import { ErrorState, Loading } from './States';
 
 /** "How calculated?" drawer: definition, worked example, and (if permitted) the items behind the value. */
-export function KpiDrawer({ card, onClose }: { card: KpiCard; onClose: () => void }) {
+export function KpiDrawer({
+  card,
+  onClose,
+  showWindow = true,
+}: {
+  card: KpiCard;
+  onClose: () => void;
+  /** False when opened from the catalog: there is no measured window to show. */
+  showWindow?: boolean;
+}) {
   const exp = useApi<KpiExplanation>(`/api/v1/kpis/${card.code}/explanation`);
   const closeRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLElement>(null);
@@ -77,11 +86,15 @@ export function KpiDrawer({ card, onClose }: { card: KpiCard; onClose: () => voi
               <dd>{exp.data.population}</dd>
               <dt>{t('source')}</dt>
               <dd>{exp.data.source}</dd>
-              <dt>{t('window')}</dt>
-              <dd>
-                <time dateTime={card.window.start}>{formatDate(card.window.start)}</time> –{' '}
-                <time dateTime={card.window.end}>{formatDate(card.window.end)}</time>
-              </dd>
+              {showWindow && (
+                <>
+                  <dt>{t('window')}</dt>
+                  <dd>
+                    <time dateTime={card.window.start}>{formatDate(card.window.start)}</time> –{' '}
+                    <time dateTime={card.window.end}>{formatDate(card.window.end)}</time>
+                  </dd>
+                </>
+              )}
               <dt>{t('minimumSample')}</dt>
               <dd>{exp.data.minimumSample}</dd>
               <dt>{t('version')}</dt>

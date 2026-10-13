@@ -51,12 +51,12 @@ test('team lead submits a monthly assessment; the developer sees it; a peer does
     .first()
     .click();
   await page.getByRole('link', { name: 'Maya Mobile' }).click();
-  const form = page.getByRole('form', { name: 'Monthly assessment' });
+  const form = page.getByRole('form', { name: 'Write this month’s assessment' });
   const existing = page.getByText('Drove the offline sync redesign');
   await expect(form.or(existing).first()).toBeVisible(); // re-runs find it already submitted
   if (await form.isVisible()) {
-    await form.getByLabel('4 · Above-grade autonomy').check();
-    await form.getByLabel('3 · Progressing as agreed').check();
+    await form.getByLabel('4: Above-grade autonomy').check();
+    await form.getByLabel('3: Progressing as agreed').check();
     await form.getByRole('textbox').fill('Drove the offline sync redesign with minimal guidance.');
     await form.getByRole('button', { name: 'Submit' }).click();
     await expect(page.getByText('Submitted.')).toBeVisible();
