@@ -67,7 +67,7 @@ printf 'subjectAltName=DNS:localhost\n' >"$pki/ext"
 openssl x509 -req -in "$pki/srv.csr" -CA "$pki/ca.pem" -CAkey "$pki/ca.key" -CAcreateserial \
   -days 2 -extfile "$pki/ext" -out "$pki/srv.pem" 2>/dev/null
 (cd "$dir" && ./epi.sh source-ca "$pki/ca.pem")
-(cd "$dir" && ./epi.sh start --no-wait)
+(cd "$dir" && EPI_SOURCE_HOSTS=jira.corp.example,gitlab.corp.example ./epi.sh start --no-wait)
 health() { docker inspect --format '{{.State.Health.Status}}' "$(docker compose -p "$project" ps -q "$1")" 2>/dev/null; }
 for i in $(seq 1 90); do
   [ "$(health postgres)" = healthy ] && [ "$(health epi)" = healthy ] && break
@@ -88,6 +88,9 @@ docker compose -p "$project" exec -T epi node -e '
   try { resolveSecret("EPI_GITLAB_TOKEN"); process.exit(1); } catch (e) { console.log("    " + e.message); }
 ' || { echo "FAIL: app cannot read the token stored with source-token" >&2; exit 1; }
 echo "    source token visible to the app: OK"
+hosts=$(docker compose -p "$project" exec -T epi printenv EPI_SOURCE_HOSTS)
+[ "$hosts" = jira.corp.example,gitlab.corp.example ] || { echo "FAIL: EPI_SOURCE_HOSTS not passed: $hosts" >&2; exit 1; }
+echo "    EPI_SOURCE_HOSTS reaches the app: OK"
 # An https server whose certificate the company CA issued: trusted only through NODE_EXTRA_CA_CERTS.
 tls_probe='
   const https = require("https");

@@ -213,6 +213,8 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 - **Tokens never in the browser:** they stay in files referenced by `<NAME>_FILE`; the page only shows whether the file is present.
 - **Token-exfiltration guard:** EPI sends the token to the configured address, so: https only (http only in demo mode), no credentials/query in the URL, every change audited (host before/after), and an optional server allow-list `EPI_SOURCE_HOSTS` (recommended in production) that a browser session cannot change.
 
+- **Deployment (2026-10-13):** `EPI_SOURCE_HOSTS` and `EPI_RETENTION_MONTHS` are passed to the app container from `.epi/sso.conf` (before, the allow-list could not be set on a Compose install).
+
 ## ADR-034 · 2026-10-13 · Accepted (owner) — Minimum group size 3
 
 - The small-group privacy threshold (`EPI_MIN_AGGREGATE_SIZE`) defaults to **3** (was 5): viewers who only see aggregates get no numbers for teams of fewer than 3 people. Managers of the members still see their own people. Answers C7's threshold question; HR/privacy sign-off for real data (B7) is still required.
