@@ -1,5 +1,7 @@
 /** Typed client for the EPI API. Same-origin; the session lives in an HttpOnly cookie. */
 
+import { getLocale } from './i18n';
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -16,7 +18,11 @@ export function setCsrfToken(token: string | null): void {
 }
 
 async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  // Server texts (KPI definitions, messages) follow the language the page shows.
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Accept-Language': getLocale(),
+  };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (method !== 'GET' && csrfToken) headers['x-csrf-token'] = csrfToken;
   const res = await fetch(url, {

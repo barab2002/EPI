@@ -12,6 +12,8 @@ import {
 } from './engine/review';
 import type { Direction } from './engine/trend';
 import type { KpiResult } from './engine/types';
+import type { Locale } from '../common/locale';
+import { KPI_TEXTS_HE } from './catalog-he';
 
 export interface KpiDefinition {
   code: string;
@@ -226,4 +228,28 @@ export const KPI_CATALOG: KpiDefinition[] = [
 
 export function findKpi(code: string): KpiDefinition | undefined {
   return KPI_CATALOG.find((k) => k.code === code);
+}
+
+/** The definition's texts in the requested language (English when no translation exists). */
+export function localizedKpi(k: KpiDefinition, locale: Locale) {
+  const { example, ...rest } = k;
+  const he = locale === 'he' ? KPI_TEXTS_HE[k.code] : undefined;
+  const run = () => {
+    const e = example();
+    return he ? { ...e, description: he.exampleDescription } : e;
+  };
+  if (!he) return { ...rest, example: run };
+  return {
+    ...rest,
+    title: he.title,
+    question: he.question,
+    formula: he.formula,
+    population: he.population,
+    source: he.source,
+    exclusions: he.exclusions,
+    minimumSample: he.minimumSample,
+    caveats: he.caveats,
+    possibleActions: he.possibleActions,
+    example: run,
+  };
 }

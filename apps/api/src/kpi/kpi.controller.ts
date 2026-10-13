@@ -4,12 +4,14 @@ import {
   ApiOperation,
   ApiProperty,
   ApiPropertyOptional,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsUUID } from 'class-validator';
 import { CurrentScope } from '../auth/current-scope.decorator';
 import type { Scope } from '../org/scope.service';
-import { findKpi, KPI_CATALOG } from './catalog';
+import { RequestLocale, type Locale } from '../common/locale';
+import { findKpi, KPI_CATALOG, localizedKpi } from './catalog';
 import { EntityType, KpiService, WindowKey, WINDOWS } from './kpi.service';
 
 export class KpiQueryDto {
@@ -27,7 +29,7 @@ export class KpiQueryDto {
   window?: WindowKey;
 }
 
-const summary = (k: (typeof KPI_CATALOG)[number]) => ({
+const summary = (k: ReturnType<typeof localizedKpi>) => ({
   code: k.code,
   version: k.version,
   title: k.title,
@@ -54,19 +56,23 @@ export class KpiController {
   }
 
   @Get('catalog')
-  @ApiOperation({ summary: 'All KPI definitions (no data)' })
-  catalog() {
-    return KPI_CATALOG.map(summary);
+  @ApiOperation({
+    summary: 'All KPI definitions (no data); texts in ?lang=en|he or Accept-Language',
+  })
+  @ApiQuery({ name: 'lang', required: false, enum: ['en', 'he'] })
+  catalog(@RequestLocale() locale: Locale) {
+    return KPI_CATALOG.map((k) => summary(localizedKpi(k, locale)));
   }
 
   @Get(':code/explanation')
   @ApiOperation({
     summary: 'Full definition with a reproducible worked example computed by the engine',
   })
-  explanation(@Param('code') code: string) {
+  @ApiQuery({ name: 'lang', required: false, enum: ['en', 'he'] })
+  explanation(@Param('code') code: string, @RequestLocale() locale: Locale) {
     const k = findKpi(code);
     if (!k) throw new NotFoundException('Unknown KPI');
-    const { example, ...rest } = k;
+    const { example, ...rest } = localizedKpi(k, locale);
     return { ...rest, example: example() };
   }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { KpiCard, KpiExplanation } from '../api';
 import { formatDate, formatValue } from '../format';
-import { kpiTitle, t, tf } from '../i18n';
+import { getLocale, kpiTitle, t, tf } from '../i18n';
 import { useApi } from '../useApi';
 import { CloseIcon } from './Icons';
 import { ErrorState, Loading } from './States';
@@ -17,7 +17,8 @@ export function KpiDrawer({
   /** False when opened from the catalog: there is no measured window to show. */
   showWindow?: boolean;
 }) {
-  const exp = useApi<KpiExplanation>(`/api/v1/kpis/${card.code}/explanation`);
+  // The language is part of the URL so switching language loads the texts again.
+  const exp = useApi<KpiExplanation>(`/api/v1/kpis/${card.code}/explanation?lang=${getLocale()}`);
   const closeRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -102,7 +103,7 @@ export function KpiDrawer({
               <dt>{t('minimumSample')}</dt>
               <dd dir="auto">{exp.data.minimumSample}</dd>
               <dt>{t('version')}</dt>
-              <dd>
+              <dd dir="ltr">
                 {exp.data.code} v{exp.data.version},{' '}
                 <code translate="no" dir="ltr">
                   {exp.data.implementation}
@@ -125,7 +126,7 @@ export function KpiDrawer({
                 </li>
               ))}
             </ul>
-            {card.trend && <p className="muted small">{card.trend.note}</p>}
+            {card.trend && <p className="muted small">{t('trendHypothesisNote')}</p>}
             <h3>{t('example')}</h3>
             <p dir="auto">{exp.data.example.description}</p>
             <p className="muted small">
