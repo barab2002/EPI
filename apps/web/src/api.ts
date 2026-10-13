@@ -264,6 +264,36 @@ export interface DataQuality {
   };
 }
 
+/** AD team import (EPI-004c). */
+export interface DirectoryStatus {
+  configured: boolean;
+  groups: { dn: string; teamId: string | null; teamName: string | null }[];
+  lastImport?: { at: string; counts: Record<string, number> } | null;
+}
+
+export interface ImportPlan {
+  creates: { externalId: string; displayName: string; email: string | null; teamId: string }[];
+  links: { userId: string; externalId: string; displayName: string }[];
+  updates: {
+    userId: string;
+    from: { displayName: string; email: string | null };
+    to: { displayName: string; email: string | null };
+  }[];
+  adds: { userId: string; displayName: string; teamId: string; endMembershipIds: string[] }[];
+  ends: { membershipId: string; userId: string; displayName: string; teamId: string }[];
+  conflicts: { externalId: string; displayName: string; reason: string }[];
+  warnings: string[];
+  total: number;
+}
+
+export interface DirectoryPreview {
+  readAt: string;
+  hash: string;
+  plan: ImportPlan;
+  groups: { dn: string; name: string | null; memberCount: number }[];
+  teamNames: Record<string, string>;
+}
+
 export interface Membership {
   id: string;
   user_id: string;

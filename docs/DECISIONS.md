@@ -181,3 +181,11 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 - It found input borders at 1.47:1 (light) and 1.76:1 (dark). Inputs now use `--input-border` (≥3.1:1); buttons keep the lighter `--field-border` because their text identifies them.
 - No new dependency (axe-core would need approval).
 
+## ADR-030 · 2026-10-13 · Accepted — AD team import: EPI reads AD directly; mapped teams follow their group; preview then apply
+
+- **Source:** EPI reads the configured team groups over LDAPS with the same read-only bind account Keycloak uses (`ldapts`, MIT), instead of Keycloak's admin API, which would need a realm-management role. Only name, e-mail, username and the stable ID (objectGUID / entryUUID) are read; AD nested groups count, disabled accounts are excluded.
+- **Authority:** a group mapped to an EPI team decides that team's membership; teams without a group stay managed by hand and are never touched. People are matched by directory ID, then by e-mail (so SSO links them on first sign-in). Two groups may feed one team.
+- **Deliberate deviation from NEXT_ACTIONS ("deactivation when removed"):** leaving a team group ends the membership only; nobody is deactivated or reactivated automatically (leaving a team ≠ leaving the company; deactivation revokes sessions and stays an administrator decision). Roles are never imported (owner decision ADR-024).
+- **Safety:** preview reads and plans without changing anything; apply re-reads the directory, re-plans inside one transaction under an advisory lock and runs only if the plan's SHA-256 equals the previewed one (else 409 "preview again"). Ambiguous people (two teams, shared e-mail, inactive in EPI, e-mail linked to another directory account) are skipped and listed. Every change is audited with `source: directory`; `directory.import` records the counts.
+- **Manual for the pilot:** no scheduled import yet (can reuse the daily-sync schedule later).
+- **Found while wiring:** `epi.sh` loaded `sso.conf` with `source`, which cut `EPI_LDAP_TEAM_GROUPS` at `;` and would fail on DNs with spaces (`OU=Service Accounts`). Replaced by a literal `KEY=value` reader that matches the realm generator (test: `scripts/epi-conf.test.mjs`).

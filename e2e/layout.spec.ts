@@ -40,6 +40,7 @@ test('no horizontal overflow on key screens', async ({ page }) => {
   for (const path of [
     '/admin/organization',
     '/admin/people',
+    '/admin/directory',
     '/admin/integrations',
     '/admin/identities',
     '/admin/statuses',

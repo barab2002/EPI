@@ -26,7 +26,7 @@ Status legend: ✅ available · ⏳ requested · ❓ unknown · ⛔ blocked
 | B6 | Branch naming and Jira-key conventions; known bot accounts | Yes | Team leads | — | MR↔issue linking, bot exclusion | ❓ | Chat |
 | B7 | Approval to ingest 6 months of Jira/GitLab **metadata** | Yes | Privacy/HR + sponsor | Metadata only, no code content | Backfill | ❓ still needed: HR/privacy sign-off before real data (owner to ask with C7) | Written approval |
 | B8 | Approval to evaluate a self-hosted Jira/GitLab MCP server (else REST only) | No | Security | Read-only | Spec §7 MCP rule | ❓ default: REST | Reply |
-| B9 | Org chart for pilot teams: groups, teams, people, managers, grades, historical membership; Jira/GitLab user IDs | Yes | Pilot managers/HR | Pilot teams only | Hierarchy + identity mapping | ✅ decided: people and teams imported from AD (one AD group per team, via Keycloak LDAP); roles assigned in EPI | Approved CSV via secure channel, not Git |
+| B9 | Org chart for pilot teams: groups, teams, people, managers, grades, historical membership; Jira/GitLab user IDs | Yes | Pilot managers/HR | Pilot teams only | Hierarchy + identity mapping | ✅ decided: people and teams imported from AD (one AD group per team); implemented as EPI-004c (EPI reads the team groups with the same read-only bind account, ADR-030); roles assigned in EPI | Approved CSV via secure channel, not Git |
 
 ## Needed for production / pilot install (EPI-003, EPI-012)
 

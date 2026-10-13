@@ -122,5 +122,9 @@
   {
     "name": "31-admin-audit-log",
     "title": "Administration › Audit log: who changed what and when, filterable; review subjects and text never shown"
+  },
+  {
+    "name": "32-admin-directory",
+    "title": "Administration › Directory: AD team groups mapped to EPI teams, preview of every change before applying (synthetic directory)"
   }
 ]

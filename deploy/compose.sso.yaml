@@ -66,7 +66,15 @@ services:
       EPI_OIDC_CLIENT_ID: epi-web
       EPI_OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
       EPI_OIDC_LINK_BY_VERIFIED_EMAIL: 'true'
-    secrets: [db_password, oidc_client_secret]
+      # AD team import (EPI-004c): EPI reads the team groups with the same read-only account.
+      EPI_LDAP_VENDOR: ${EPI_LDAP_VENDOR:-ad}
+      EPI_LDAP_URL: ${EPI_LDAP_URL:?run ./epi.sh sso-setup}
+      EPI_LDAP_BIND_DN: ${EPI_LDAP_BIND_DN}
+      EPI_LDAP_USERS_DN: ${EPI_LDAP_USERS_DN}
+      EPI_LDAP_TEAM_GROUPS: ${EPI_LDAP_TEAM_GROUPS}
+      EPI_LDAP_BIND_PASSWORD_FILE: /run/secrets/ldap_bind_password
+      EPI_LDAP_CA_FILE: /run/secrets/ldap_ca
+    secrets: [db_password, oidc_client_secret, ldap_bind_password, ldap_ca]
 
 secrets:
   kc_db_password:
@@ -75,3 +83,8 @@ secrets:
     file: ${EPI_STATE_DIR}/sso/kc_admin_password
   oidc_client_secret:
     file: ${EPI_STATE_DIR}/sso/client_secret
+  # Prepared by ./epi.sh sso-setup (same files Keycloak uses): one-line password, PEM CA.
+  ldap_bind_password:
+    file: ${EPI_STATE_DIR}/sso/vault/epi_ldapbind
+  ldap_ca:
+    file: ${EPI_STATE_DIR}/sso/ca/ldap-ca.pem

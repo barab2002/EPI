@@ -19,8 +19,9 @@ if [ -d apps/web ] && [ -f apps/web/package.json ]; then
   step "web tests";        pnpm --filter @epi/web run test
 fi
 if [ "${1:-}" != "--no-integration" ]; then
-  step "integration tests (PostgreSQL + Keycloak)"
-  EPI_REQUIRE_KEYCLOAK=1 bash scripts/test-db.sh run -- bash scripts/test-keycloak.sh run -- \
+  step "integration tests (PostgreSQL + Keycloak + synthetic LDAPS directory)"
+  EPI_REQUIRE_KEYCLOAK=1 EPI_REQUIRE_LDAP=1 bash scripts/test-db.sh run -- \
+    bash scripts/test-keycloak.sh run -- bash scripts/test-ldap.sh run -- \
     pnpm --filter @epi/api run test:int
 fi
 step "build";              pnpm run build
