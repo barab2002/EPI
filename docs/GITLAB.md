@@ -51,3 +51,5 @@ Same schedule as Jira — see `JIRA.md` › Daily automatic sync.
 - Removed reviewer requests ("removed review request for @x") are not yet subtracted.
 - Page-number pagination; keyset pagination for very large projects (>10k MRs per window) is a later optimization.
 - MRs deleted in GitLab are not removed from EPI yet.
+
+**In the UI:** Administration › Settings adds or changes connections (address, projects, token secret name, on/off) and has *Test connection*; the token itself stays a file on the server (`<NAME>_FILE`). With `EPI_SOURCE_HOSTS` set, only listed hosts are accepted (ADR-033).

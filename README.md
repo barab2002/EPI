@@ -35,7 +35,7 @@ A tour of every screen (sign-in, role-based homes, drill-down, KPI explanations,
 | Gal Groupman | Group manager (Platform) | Platform teams and people, not Product |
 | Taylor Lead | Team lead (Payments) | Payments members, their KPIs; can write assessments |
 | Eli Engineer | Developer | Own profile/KPIs, Payments as an aggregate only |
-| Jo Small | Developer in a 3-person team | Team aggregate **suppressed** (privacy minimum 5) |
+| Jo Small | Developer in a 3-person team | Sees team totals (privacy minimum 3 people; smaller groups are hidden) |
 | Avery Admin | Administrator | Structure, integrations, identity mapping, data quality; no KPIs or private reviews |
 
 Every KPI card has **How calculated?** with the formula, population, exclusions, minimum sample, limitations and a worked example computed by the same engine.

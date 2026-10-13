@@ -264,6 +264,31 @@ export interface DataQuality {
   };
 }
 
+/** Administration › Settings (ADR-033). Tokens are never sent; only whether one is present. */
+export interface SourceConnection {
+  id: string;
+  kind: 'jira' | 'gitlab';
+  name: string;
+  url: string;
+  enabled: boolean;
+  projects: string[];
+  secretRef: string | null;
+  tokenPresent: boolean;
+}
+
+export interface AdminSettings {
+  connections: SourceConnection[];
+  rules: { httpAllowed: boolean; allowedHosts: string[] | null };
+  server: {
+    mode: string;
+    publicUrl: string;
+    signIn: { issuer: string } | null;
+    directory: { url: string; usersDn: string; teamGroups: string[] } | null;
+    minimumGroupSize: number;
+    retentionMonths: number | null;
+  };
+}
+
 /** Data retention (ADR-032). */
 export interface RetentionInfo {
   months: number | null;

@@ -30,9 +30,9 @@ Captured 2026-10-12, refreshed 2026-10-13 after the UI/UX pass (UX-01), from `./
 
 ![Developer home: own flow KPIs and team aggregate (no member-level evidence)](screenshots/15-home-developer.png)
 
-### Privacy: team aggregate hidden for a 3-person team (minimum 5)
+### Privacy: a 3-person team shows team totals (minimum group size 3; smaller groups are hidden)
 
-![Privacy: team aggregate hidden for a 3-person team (minimum 5)](screenshots/17-small-team-suppressed.png)
+![Privacy: a 3-person team shows team totals (minimum group size 3; smaller groups are hidden)](screenshots/17-small-team-suppressed.png)
 
 ### Administrator: organization structure only — no KPIs or private reviews
 
@@ -147,9 +147,13 @@ Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process 
 
 ![Administration › Directory: AD team groups mapped to EPI teams, preview of every change before applying (synthetic directory)](screenshots/32-admin-directory.png)
 
+### Administration › Settings: Jira/GitLab addresses and projects with Test connection; sign-in, directory, privacy and retention read-only (synthetic setup)
+
+![Administration › Settings: Jira/GitLab addresses and projects with Test connection; sign-in, directory, privacy and retention read-only (synthetic setup)](screenshots/33-admin-settings.png)
+
 ## How these were made
 
 1. `./epi.sh demo` (synthetic people only).
 2. `EPI_DOC_SHOTS=1 npx playwright test e2e/doc-screenshots.spec.ts --project=desktop` signs in as each demo role, visits every screen at 1366×900, in dark mode and at phone width (390×844), saves the PNGs here and rewrites `screenshots/index.json` (file → caption). It submits one synthetic assessment for the demo person Dana Dev; re-runs find it already submitted.
-3. Admin shots (25–32) come from `scripts/e2e-admin.sh --screenshots` (fake Jira/GitLab, synthetic LDAPS directory).
+3. Admin shots (25–33) come from `scripts/e2e-admin.sh --screenshots` (fake Jira/GitLab, synthetic LDAPS directory).
 4. The Keycloak page (02) is Keycloak's own, captured before any password is typed; no password appears in any screenshot.

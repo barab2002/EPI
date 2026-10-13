@@ -30,6 +30,8 @@ import { ScopeService } from './org/scope.service';
 import { RetentionController } from './retention/retention.controller';
 import { RetentionService } from './retention/retention.service';
 import { ReviewsController } from './reviews/reviews.controller';
+import { SettingsController } from './settings/settings.controller';
+import { SettingsService } from './settings/settings.service';
 import { ReviewsService } from './reviews/reviews.service';
 
 /** Single application module: the slice is small enough that feature modules would be ceremony. */
@@ -51,6 +53,7 @@ export class AppModule {
         AuditController,
         DirectoryController,
         RetentionController,
+        SettingsController,
       ],
       providers: [
         { provide: EPI_CONFIG, useValue: config },
@@ -68,6 +71,7 @@ export class AppModule {
         OrgAdminService,
         DirectoryService,
         RetentionService,
+        SettingsService,
         {
           provide: DIRECTORY_READER,
           useValue: config.directory ? new DirectoryClient(config.directory) : null,

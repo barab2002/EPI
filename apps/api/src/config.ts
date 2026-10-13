@@ -1,3 +1,4 @@
+import { parseSourceHosts } from './settings/connection-input';
 import { retentionMonths } from './retention/retention';
 import { readFileSync } from 'node:fs';
 
@@ -51,6 +52,8 @@ export interface EpiConfig {
   directory: DirectoryConfig | null;
   /** Delete source activity, audit entries and runs older than this (EPI_RETENTION_MONTHS). */
   retentionMonths: number | null;
+  /** EPI_SOURCE_HOSTS: hosts allowed for Jira/GitLab connections set in the UI (null = any). */
+  sourceHosts: string[] | null;
 }
 
 function int(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
@@ -92,13 +95,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): EpiConfig {
     webDist: env.EPI_WEB_DIST || null,
     cookieSecure: (env.EPI_COOKIE_SECURE ?? (mode === 'production' ? 'true' : 'false')) === 'true',
     sessionIdleMinutes: int(env, 'EPI_SESSION_IDLE_MINUTES', 30),
-    minimumAggregateSize: int(env, 'EPI_MIN_AGGREGATE_SIZE', 5),
+    minimumAggregateSize: int(env, 'EPI_MIN_AGGREGATE_SIZE', 3),
     kpiMinimumSample: int(env, 'EPI_KPI_MIN_SAMPLE', 10),
     kpiLowConfidenceFloor: int(env, 'EPI_KPI_LOW_CONFIDENCE_FLOOR', 5),
     trendThresholdPct: int(env, 'EPI_TREND_THRESHOLD_PCT', 8),
     syncScheduler: syncSchedulerFlag(env.EPI_SYNC_SCHEDULER),
     directory: resolveDirectory(env, mode),
     retentionMonths: retentionMonths(env.EPI_RETENTION_MONTHS),
+    sourceHosts: parseSourceHosts(env.EPI_SOURCE_HOSTS),
   };
 }
 

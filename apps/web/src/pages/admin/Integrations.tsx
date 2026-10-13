@@ -170,8 +170,7 @@ export function IntegrationsTab() {
         <h2 id="integrations-title">Source connections</h2>
         <p className="muted small">
           Read-only Jira and GitLab connections. Tokens are never shown — only the name of the
-          secret that holds them. Add connections with <code>jira-add</code> /{' '}
-          <code>gitlab-add</code> (see docs/JIRA.md, docs/GITLAB.md).
+          secret that holds them. Add or change connections under Settings.
         </p>
         <FlashMessage flash={message} />
         {list.state === 'loading' && <Skeleton lines={4} />}

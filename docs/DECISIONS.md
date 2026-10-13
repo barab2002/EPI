@@ -205,3 +205,14 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 - **Deleted when older than the cutoff (now − months, UTC calendar months):** Jira work items by last update (with status history; links from kept merge requests are cleared), merge requests by merge/creation date (with review events), sync runs, stored KPI snapshots, source accounts not seen since, audit entries. Expired sessions and sign-in requests are deleted at any age.
 - **Kept (deliberately):** assessments and review cycles, people, memberships, roles, grades, identity mappings. Deleting assessments or people is an HR/privacy decision (B7/C7); until HR answers they follow the organization's HR records policy, not this job. **Open question for the owner/HR.**
 - **How:** one transaction per run, counted with `WITH … DELETE … RETURNING`, audited as `retention.run` (counts only); daily in-process job claimed once per UTC day (safe with several processes); disabled with the other in-process jobs by `EPI_SYNC_SCHEDULER=off`. CLI `retention --dry-run` / `retention`. Administration › Data quality shows the window, what is due and the last run. No delete button in the UI.
+
+## ADR-033 · 2026-10-13 · Accepted (owner: "set all the URLs in the UI") — Administration › Settings
+
+- **Editable in the UI:** Jira and GitLab connections — add, change address, projects, token secret name, on/off — and a read-only "Test connection" with the server-side token. Replaces the CLI (`jira-add`/`gitlab-add` still work).
+- **Not editable in the UI (owner choice):** EPI's address, sign-in (Keycloak) and the AD directory are shown read-only; they change on the server (`./epi.sh sso-setup`), so a browser session can never redirect sign-in and EPI needs no Keycloak admin rights. Privacy minimum and retention are shown read-only (server settings).
+- **Tokens never in the browser:** they stay in files referenced by `<NAME>_FILE`; the page only shows whether the file is present.
+- **Token-exfiltration guard:** EPI sends the token to the configured address, so: https only (http only in demo mode), no credentials/query in the URL, every change audited (host before/after), and an optional server allow-list `EPI_SOURCE_HOSTS` (recommended in production) that a browser session cannot change.
+
+## ADR-034 · 2026-10-13 · Accepted (owner) — Minimum group size 3
+
+- The small-group privacy threshold (`EPI_MIN_AGGREGATE_SIZE`) defaults to **3** (was 5): viewers who only see aggregates get no numbers for teams of fewer than 3 people. Managers of the members still see their own people. Answers C7's threshold question; HR/privacy sign-off for real data (B7) is still required.
