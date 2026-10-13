@@ -1,28 +1,31 @@
 import { useState } from 'react';
 import { api, DirectoryPreview, DirectoryStatus, ImportPlan, OrgNode } from '../../api';
 import { Empty, ErrorState, Skeleton } from '../../components/States';
+import { intlLocale } from '../../i18n';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 import { Flash, FlashMessage, useMutation } from './shared';
+import { AdminKey, ta, taf } from './i18n-admin';
 
 /** "cn=Team-Payments,ou=Groups,…" → "Team-Payments". */
 export const groupLabel = (dn: string) => /^cn=([^,]+)/i.exec(dn)?.[1] ?? dn;
 
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+/** One/many message for a count, e.g. ('dirCreate', 2) → "add 2 new people". */
+const count = (base: string, n: number) =>
+  taf(`${base}${n === 1 ? 'One' : 'Many'}` as AdminKey, { n });
 
 /** One sentence that says what applying will do (the confirmation repeats it). */
 export function planSummary(p: ImportPlan): string {
   const parts = [
-    p.creates.length && `add ${plural(p.creates.length, 'new person', 'new people')}`,
-    p.links.length &&
-      `link ${plural(p.links.length, 'existing person', 'existing people')} by e-mail`,
-    p.updates.length && `update the details of ${plural(p.updates.length, 'person', 'people')}`,
-    p.adds.length && `move ${plural(p.adds.length, 'person', 'people')} into a team`,
-    p.ends.length && `remove ${plural(p.ends.length, 'person', 'people')} from a team`,
+    p.creates.length && count('dirCreate', p.creates.length),
+    p.links.length && count('dirLink', p.links.length),
+    p.updates.length && count('dirUpdate', p.updates.length),
+    p.adds.length && count('dirAdd', p.adds.length),
+    p.ends.length && count('dirEnd', p.ends.length),
   ].filter(Boolean) as string[];
-  if (!parts.length) return 'EPI already matches the directory. Nothing to change.';
-  const text = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
-  return `Applying will ${text}.`;
+  if (!parts.length) return ta('dirNothing');
+  const list = new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(parts);
+  return taf('dirApplying', { list });
 }
 
 function ChangeList({
@@ -60,54 +63,51 @@ function PreviewView({
   onApplied: () => void;
 }) {
   const { plan, teamNames } = preview;
-  const team = (id: string) => teamNames[id] ?? 'Unknown team';
+  const team = (id: string) => teamNames[id] ?? ta('unknownTeam');
 
   function apply() {
-    const ends = plan.ends.length
-      ? ` ${plural(plan.ends.length, 'membership')} will end today; history is kept.`
-      : '';
-    if (!window.confirm(`${planSummary(plan)}${ends} Continue?`)) return;
+    const ends = plan.ends.length ? ` ${count('dirEndsToday', plan.ends.length)}` : '';
+    if (!window.confirm(`${planSummary(plan)}${ends} ${ta('continueQ')}`)) return;
     void run(
       () => api.post('/api/v1/admin/directory/apply', { hash: preview.hash }),
-      'Import applied. Every change is in the audit log.',
+      ta('importApplied'),
       onApplied,
     );
   }
 
   return (
     <section className="panel" aria-labelledby="preview-title">
-      <h2 id="preview-title">Preview</h2>
-      <p className="muted small">
-        Read from the directory at {formatTime(preview.readAt)}. Nothing has changed yet.
-      </p>
+      <h2 id="preview-title">{ta('preview')}</h2>
+      <p className="muted small">{taf('readAt', { when: formatTime(preview.readAt) })}</p>
       <p>{planSummary(plan)}</p>
       {plan.conflicts.length > 0 && (
         <div className="form-group">
           <h3>
-            Skipped: needs your attention{' '}
-            <span className="badge badge-bad">{plan.conflicts.length}</span>
+            {ta('skipped')} <span className="badge badge-bad">{plan.conflicts.length}</span>
           </h3>
           <ul className="plain-list">
             {plan.conflicts.map((c) => (
               <li key={c.externalId}>
                 <strong>{c.displayName}</strong>
-                <div className="small error-text">{c.reason}</div>
+                <div className="small error-text" dir="auto">
+                  {c.reason}
+                </div>
               </li>
             ))}
           </ul>
         </div>
       )}
       {plan.warnings.length > 0 && (
-        <ul className="plain-list small muted" aria-label="Warnings">
+        <ul className="plain-list small muted" aria-label={ta('warnings')}>
           {plan.warnings.map((w) => (
-            <li key={w}>
+            <li key={w} dir="auto">
               {preview.groups.reduce((text, g) => text.replace(g.dn, groupLabel(g.dn)), w)}
             </li>
           ))}
         </ul>
       )}
       <ChangeList
-        title="New people"
+        title={ta('newPeople')}
         items={plan.creates.map((c) => ({
           key: c.externalId,
           main: c.displayName,
@@ -115,46 +115,45 @@ function PreviewView({
         }))}
       />
       <ChangeList
-        title="Linked by e-mail"
+        title={ta('linkedByEmail')}
         items={plan.links.map((l) => ({
           key: l.externalId,
           main: l.displayName,
-          detail: 'existing EPI person',
+          detail: ta('existingPerson'),
         }))}
       />
       <ChangeList
-        title="Details updated"
+        title={ta('detailsUpdated')}
         items={plan.updates.map((u) => ({
           key: u.userId,
           main: u.to.displayName,
           detail: [
-            u.from.displayName !== u.to.displayName && `was “${u.from.displayName}”`,
-            u.from.email !== u.to.email && `e-mail ${u.to.email ?? 'removed'}`,
+            u.from.displayName !== u.to.displayName && taf('wasName', { name: u.from.displayName }),
+            u.from.email !== u.to.email &&
+              (u.to.email ? taf('emailNow', { email: u.to.email }) : ta('emailRemoved')),
           ]
             .filter(Boolean)
             .join(', '),
         }))}
       />
       <ChangeList
-        title="Joining a team"
+        title={ta('joiningTeam')}
         items={plan.adds.map((a) => ({
           key: `${a.userId}:${a.teamId}`,
           main: a.displayName,
-          detail: `${team(a.teamId)}${a.endMembershipIds.length ? ', leaves their current team' : ''}`,
+          detail: `${team(a.teamId)}${a.endMembershipIds.length ? `, ${ta('leavesCurrent')}` : ''}`,
         }))}
       />
       <ChangeList
-        title="Leaving a team"
+        title={ta('leavingTeam')}
         items={plan.ends.map((e) => ({
           key: e.membershipId,
           main: e.displayName,
-          detail: `${team(e.teamId)}, ends today`,
+          detail: `${team(e.teamId)}, ${ta('endsToday')}`,
         }))}
       />
       <div className="actions">
-        <span className="muted small actions-note">
-          Roles are never imported, and nobody is deactivated: assign roles under People.
-        </span>
+        <span className="muted small actions-note">{ta('rolesNeverImported')}</span>
         <button
           type="button"
           className="btn btn-primary"
@@ -162,7 +161,7 @@ function PreviewView({
           aria-busy={run.pending}
           onClick={apply}
         >
-          {run.pending ? 'Applying…' : `Apply ${plural(plan.total, 'change')}`}
+          {run.pending ? ta('applying') : count('applyChanges', plan.total)}
         </button>
       </div>
     </section>
@@ -184,11 +183,9 @@ export function DirectoryTab() {
   if (!s.configured) {
     return (
       <section className="panel" aria-labelledby="directory-title">
-        <h2 id="directory-title">Directory import</h2>
+        <h2 id="directory-title">{ta('directoryImport')}</h2>
         <Empty>
-          The directory import is not set up on this server. Set the{' '}
-          <code translate="no">EPI_LDAP_*</code> settings (read-only LDAPS account and the team
-          groups) as described in the installation guide, then restart EPI.
+          {ta('dirNotSetUp')} (<code translate="no">EPI_LDAP_*</code>)
         </Empty>
       </section>
     );
@@ -219,19 +216,15 @@ export function DirectoryTab() {
   return (
     <>
       <section className="panel" aria-labelledby="directory-title">
-        <h2 id="directory-title">Directory import</h2>
-        <p className="muted small">
-          Team groups in Active Directory decide who belongs to the EPI teams they are mapped to.
-          Teams without a group stay managed by hand. EPI only reads the directory, and you see
-          every change before it happens.
-        </p>
+        <h2 id="directory-title">{ta('directoryImport')}</h2>
+        <p className="muted small">{ta('directoryIntro')}</p>
         <FlashMessage flash={flash} />
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Directory group</th>
-                <th scope="col">EPI team</th>
+                <th scope="col">{ta('directoryGroup')}</th>
+                <th scope="col">{ta('epiTeam')}</th>
               </tr>
             </thead>
             <tbody>
@@ -245,7 +238,7 @@ export function DirectoryTab() {
                   </td>
                   <td>
                     <label className="sr-only" htmlFor={`map-${g.dn}`}>
-                      EPI team for {groupLabel(g.dn)}
+                      {taf('epiTeamFor', { group: groupLabel(g.dn) })}
                     </label>
                     <select
                       id={`map-${g.dn}`}
@@ -259,8 +252,11 @@ export function DirectoryTab() {
                               teamId: e.target.value || null,
                             }),
                           e.target.value
-                            ? `${groupLabel(g.dn)} now feeds ${teams.find((t) => t.id === e.target.value)?.name ?? 'the team'}.`
-                            : `${groupLabel(g.dn)} is no longer imported.`,
+                            ? taf('nowFeeds', {
+                                group: groupLabel(g.dn),
+                                team: teams.find((t) => t.id === e.target.value)?.name ?? '',
+                              })
+                            : taf('noLongerImported', { group: groupLabel(g.dn) }),
                           () => {
                             setPreview(null);
                             status.reload();
@@ -268,7 +264,7 @@ export function DirectoryTab() {
                         )
                       }
                     >
-                      <option value="">Not imported</option>
+                      <option value="">{ta('notImported')}</option>
                       {teams.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
@@ -284,8 +280,8 @@ export function DirectoryTab() {
         <div className="actions">
           <span className="muted small actions-note">
             {s.lastImport
-              ? `Last import: ${formatTime(s.lastImport.at)}.`
-              : 'No import has been applied yet.'}
+              ? taf('lastImport', { when: formatTime(s.lastImport.at) })
+              : ta('noImportYet')}
           </span>
           <button
             type="button"
@@ -294,7 +290,7 @@ export function DirectoryTab() {
             aria-busy={reading}
             onClick={readDirectory}
           >
-            {reading ? 'Reading the directory…' : 'Preview import'}
+            {reading ? ta('readingDirectory') : ta('previewImport')}
           </button>
         </div>
       </section>

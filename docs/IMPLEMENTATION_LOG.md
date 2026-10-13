@@ -15,3 +15,4 @@
 - **2026-10-13** — Data retention (ADR-032): `RetentionService` (daily, one transaction, audited), `retention` CLI, admin view on Data quality; assessments/people kept pending HR.
 - **2026-10-13** — Administration › Settings (ADR-033): connections editable in the UI with Test connection, token presence only, `EPI_SOURCE_HOSTS` allow-list; minimum group size 3 (ADR-034).
 - **2026-10-13** — Hebrew UI stage 1 (ADR-035): typed he catalog, per-user locale (`users.locale`, `PUT /me/locale`), language switch, RTL, Hebrew Intl formatting, layout guard in Hebrew.
+- **2026-10-13** — Hebrew UI stage 2 (ADR-035): administration screens via typed `i18n-admin.ts`, audit actions/resources translated, Hebrew layout guard covers all admin tabs.

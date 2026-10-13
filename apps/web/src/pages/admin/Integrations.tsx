@@ -4,18 +4,21 @@ import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 import { Flash, FlashMessage } from './shared';
+import { AdminKey, ta, taf } from './i18n-admin';
 
-const RUN_LABELS: Record<string, string> = {
-  succeeded: 'Succeeded',
-  failed: 'Failed',
-  running: 'Running',
+const RUN_LABELS: Record<string, AdminKey> = {
+  succeeded: 'runSucceeded',
+  failed: 'runFailed',
+  running: 'runRunning',
 };
 
 function RunBadge({ status }: { status: string | undefined }) {
-  if (!status) return <span className="badge">No runs yet</span>;
+  if (!status) return <span className="badge">{ta('noRunsYet')}</span>;
   const cls =
     status === 'succeeded' ? 'badge-managed' : status === 'failed' ? 'badge-bad' : 'badge-warn';
-  return <span className={`badge ${cls}`}>{RUN_LABELS[status] ?? status}</span>;
+  return (
+    <span className={`badge ${cls}`}>{RUN_LABELS[status] ? ta(RUN_LABELS[status]) : status}</span>
+  );
 }
 
 function timezones(): string[] {
@@ -55,8 +58,8 @@ export function SyncScheduleCard() {
       setMessage({
         kind: 'ok',
         text: saved.enabled
-          ? `Daily sync at ${pad(saved.hourLocal)} ${saved.timezone} saved.`
-          : 'Daily sync turned off.',
+          ? taf('dailySaved', { time: pad(saved.hourLocal), zone: saved.timezone })
+          : ta('dailyOff'),
       });
       info.reload();
     } catch (err) {
@@ -68,15 +71,11 @@ export function SyncScheduleCard() {
 
   return (
     <section className="panel" aria-labelledby="schedule-title">
-      <h2 id="schedule-title">Daily sync</h2>
-      <p className="muted small">
-        Runs every enabled connection once a day, one after another. If EPI was down at that hour,
-        it catches up later the same day. Failed runs never advance a connection’s cursor.
-      </p>
+      <h2 id="schedule-title">{ta('dailySync')}</h2>
+      <p className="muted small">{ta('dailyIntro')}</p>
       {!s.schedulerActive && (
         <p role="note" className="error-text small">
-          The scheduler is switched off on this server (<code>EPI_SYNC_SCHEDULER=off</code>). The
-          schedule is saved, but nothing runs automatically.
+          {ta('schedulerOff')} (<code translate="no">EPI_SYNC_SCHEDULER=off</code>)
         </p>
       )}
       <FlashMessage flash={message} />
@@ -86,10 +85,10 @@ export function SyncScheduleCard() {
         key={`${s.enabled}-${s.hourLocal}-${s.timezone}`}
       >
         <label className="check-field">
-          <input type="checkbox" name="enabled" defaultChecked={s.enabled} /> Sync daily
+          <input type="checkbox" name="enabled" defaultChecked={s.enabled} /> {ta('syncDaily')}
         </label>
         <label className="inline-field">
-          Time
+          {ta('time')}
           <select name="hourLocal" defaultValue={s.hourLocal}>
             {Array.from({ length: 24 }, (_, h) => (
               <option key={h} value={h}>
@@ -99,7 +98,7 @@ export function SyncScheduleCard() {
           </select>
         </label>
         <label className="inline-field">
-          Time zone
+          {ta('timeZone')}
           <input
             name="timezone"
             defaultValue={s.timezone}
@@ -116,13 +115,16 @@ export function SyncScheduleCard() {
           ))}
         </datalist>
         <button type="submit" className="btn btn-primary" disabled={saving} aria-busy={saving}>
-          {saving ? 'Saving…' : 'Save schedule'}
+          {saving ? ta('saving') : ta('saveSchedule')}
         </button>
       </form>
       <p className="meta-row">
-        <span>Next run: {s.nextRunAt ? formatTime(s.nextRunAt) : 'not scheduled'}</span>
         <span>
-          Last scheduled run: {s.lastRunStartedAt ? formatTime(s.lastRunStartedAt) : 'never'}
+          {ta('nextRun')}: {s.nextRunAt ? formatTime(s.nextRunAt) : ta('notScheduled')}
+        </span>
+        <span>
+          {ta('lastScheduledRun')}:{' '}
+          {s.lastRunStartedAt ? formatTime(s.lastRunStartedAt) : ta('neverLower')}
         </span>
       </p>
     </section>
@@ -154,7 +156,7 @@ export function IntegrationsTab() {
     setMessage(null);
     try {
       await api.post('/api/v1/admin/sync', { connection: name });
-      setMessage({ kind: 'ok', text: `Sync of ${name} started.` });
+      setMessage({ kind: 'ok', text: taf('syncStarted', { name }) });
       reloadRuns();
     } catch (e) {
       setMessage({ kind: 'error', text: (e as Error).message });
@@ -167,31 +169,26 @@ export function IntegrationsTab() {
     <>
       <SyncScheduleCard />
       <section className="panel" aria-labelledby="integrations-title">
-        <h2 id="integrations-title">Source connections</h2>
-        <p className="muted small">
-          Read-only Jira and GitLab connections. Tokens are never shown — only the name of the
-          secret that holds them. Add or change connections under Settings.
-        </p>
+        <h2 id="integrations-title">{ta('sourceConnections')}</h2>
+        <p className="muted small">{ta('integrationsIntro')}</p>
         <FlashMessage flash={message} />
         {list.state === 'loading' && <Skeleton lines={4} />}
         {list.state === 'error' && <ErrorState error={list.error} onRetry={list.reload} />}
         {list.state === 'ready' && list.data.length === 0 && (
-          <Empty>
-            No Jira or GitLab connection is configured yet. The demo uses synthetic data.
-          </Empty>
+          <Empty>{ta('noConnectionDemo')}</Empty>
         )}
         {list.state === 'ready' && list.data.length > 0 && (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Source</th>
-                  <th scope="col">Last success</th>
-                  <th scope="col">Last run</th>
-                  <th scope="col">Secret</th>
+                  <th scope="col">{ta('name')}</th>
+                  <th scope="col">{ta('source')}</th>
+                  <th scope="col">{ta('lastSuccess')}</th>
+                  <th scope="col">{ta('lastRun')}</th>
+                  <th scope="col">{ta('secret')}</th>
                   <th scope="col">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{ta('actions')}</span>
                   </th>
                 </tr>
               </thead>
@@ -220,7 +217,7 @@ export function IntegrationsTab() {
                         disabled={!c.enabled || busy === c.name || running}
                         onClick={() => syncNow(c.name)}
                       >
-                        Sync now
+                        {ta('syncNow')}
                       </button>
                     </td>
                   </tr>
@@ -229,19 +226,19 @@ export function IntegrationsTab() {
             </table>
           </div>
         )}
-        <h3>Recent sync runs</h3>
+        <h3>{ta('recentRuns')}</h3>
         {runs.state === 'ready' && runs.data.length === 0 && (
-          <p className="muted">No sync has run yet. Runs appear here after the first sync.</p>
+          <p className="muted">{ta('noSyncYet')}</p>
         )}
         {runs.state === 'ready' && runs.data.length > 0 && (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Connection</th>
-                  <th scope="col">Started</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Summary</th>
+                  <th scope="col">{ta('connection')}</th>
+                  <th scope="col">{ta('started')}</th>
+                  <th scope="col">{ta('status')}</th>
+                  <th scope="col">{ta('summary')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,10 +270,20 @@ export function IntegrationsTab() {
 function summarize(c: Record<string, unknown>): string {
   const n = (k: string) => (typeof c[k] === 'number' ? (c[k] as number) : null);
   if (n('issuesSeen') !== null) {
-    return `${n('issuesSeen')} issues: ${n('itemsInserted')} new, ${n('itemsUpdated')} updated, ${n('unmappedAssignees')} unmapped people`;
+    return taf('jiraRunSummary', {
+      seen: n('issuesSeen')!,
+      inserted: n('itemsInserted') ?? 0,
+      updated: n('itemsUpdated') ?? 0,
+      unmapped: n('unmappedAssignees') ?? 0,
+    });
   }
   if (n('mrsSeen') !== null) {
-    return `${n('mrsSeen')} MRs: ${n('mrsInserted')} new, ${n('reviewRequests')} review requests, ${n('unmappedUsers')} unmapped people`;
+    return taf('gitlabRunSummary', {
+      seen: n('mrsSeen')!,
+      inserted: n('mrsInserted') ?? 0,
+      reviews: n('reviewRequests') ?? 0,
+      unmapped: n('unmappedUsers') ?? 0,
+    });
   }
   return '';
 }

@@ -4,6 +4,7 @@ import { Empty, ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { Flash, FlashMessage } from './shared';
 import { formatTime } from './Admin';
+import { ta, taf } from './i18n-admin';
 
 type Status = 'unmapped' | 'mapped';
 
@@ -28,19 +29,19 @@ function PersonPicker({
   return (
     <div className="picker">
       <label htmlFor={id} className="sr-only">
-        Find the EPI person for {account.display_name ?? account.external_id}
+        {taf('findPersonFor', { name: account.display_name ?? account.external_id })}
       </label>
       <input
         id={id}
         type="search"
-        placeholder="Type a name to map…"
+        placeholder={ta('typeNameToMap')}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         autoComplete="off"
       />
       {debounced.length >= 2 && people.state === 'ready' && (
-        <ul className="picker-results" aria-label="Matching people">
-          {people.data.length === 0 && <li className="muted small">No matching people</li>}
+        <ul className="picker-results" aria-label={ta('matchingPeople')}>
+          {people.data.length === 0 && <li className="muted small">{ta('noMatchingPeople')}</li>}
           {people.data.map((p) => {
             const taken = p.identities?.find((i) => i.source === account.source);
             return (
@@ -55,7 +56,10 @@ function PersonPicker({
                 </button>
                 {p.email && <span className="muted small"> {p.email}</span>}
                 {taken && (
-                  <span className="muted small"> — already mapped to {taken.external_id}</span>
+                  <span className="muted small">
+                    {' '}
+                    — {taf('alreadyMappedTo', { id: taken.external_id })}
+                  </span>
                 )}
               </li>
             );
@@ -87,7 +91,11 @@ export function IdentitiesTab() {
       );
       setMessage({
         kind: 'ok',
-        text: `Mapped ${a.display_name ?? a.external_id} to ${p.display_name} (${r.reattributed} records attributed).`,
+        text: taf('mapped', {
+          account: a.display_name ?? a.external_id,
+          person: p.display_name,
+          n: r.reattributed,
+        }),
       });
       accounts.reload();
     } catch (e) {
@@ -100,7 +108,10 @@ export function IdentitiesTab() {
   async function unmap(a: SourceAccount) {
     if (
       !window.confirm(
-        `Remove the mapping of ${a.display_name ?? a.external_id} to ${a.user_name}? Their synced work will no longer be attributed to them.`,
+        taf('confirmUnmap', {
+          account: a.display_name ?? a.external_id,
+          person: a.user_name ?? '',
+        }),
       )
     )
       return;
@@ -109,7 +120,7 @@ export function IdentitiesTab() {
       const r = await api.delete<{ reattributed: number }>(
         `/api/v1/admin/accounts/${a.source}/${encodeURIComponent(a.external_id)}/mapping`,
       );
-      setMessage({ kind: 'ok', text: `Mapping removed (${r.reattributed} records unattributed).` });
+      setMessage({ kind: 'ok', text: taf('unmapped', { n: r.reattributed }) });
       accounts.reload();
     } catch (e) {
       setMessage({ kind: 'error', text: (e as Error).message });
@@ -118,14 +129,10 @@ export function IdentitiesTab() {
 
   return (
     <section className="panel" aria-labelledby="identities-title">
-      <h2 id="identities-title">Identity mapping</h2>
-      <p className="muted small">
-        Link Jira and GitLab accounts to EPI people. Work is attributed only through these verified
-        mappings — never by matching display names. Each change is audited and applies to data
-        already synced.
-      </p>
+      <h2 id="identities-title">{ta('tabIdentities')}</h2>
+      <p className="muted small">{ta('identitiesIntro')}</p>
       <div className="inline-form">
-        <div className="segmented" role="group" aria-label="Mapping status">
+        <div className="segmented" role="group" aria-label={ta('mappingStatus')}>
           {(['unmapped', 'mapped'] as const).map((s) => (
             <button
               key={s}
@@ -134,14 +141,14 @@ export function IdentitiesTab() {
               className={status === s ? 'active' : ''}
               onClick={() => setStatus(s)}
             >
-              {s === 'unmapped' ? 'Unmapped' : 'Mapped'}
+              {s === 'unmapped' ? ta('statusUnmapped') : ta('statusMapped')}
             </button>
           ))}
         </div>
         <label className="inline-field">
-          Source
+          {ta('source')}
           <select value={source} onChange={(e) => setSource(e.target.value as typeof source)}>
-            <option value="">All</option>
+            <option value="">{ta('all')}</option>
             <option value="jira">Jira</option>
             <option value="gitlab">GitLab</option>
           </select>
@@ -153,24 +160,20 @@ export function IdentitiesTab() {
         <ErrorState error={accounts.error} onRetry={accounts.reload} />
       )}
       {accounts.state === 'ready' && accounts.data.length === 0 && (
-        <Empty>
-          {status === 'unmapped'
-            ? 'Every account seen in syncs is mapped (or no sync has run yet).'
-            : 'No accounts are mapped yet.'}
-        </Empty>
+        <Empty>{status === 'unmapped' ? ta('allMapped') : ta('noneMapped')}</Empty>
       )}
       {accounts.state === 'ready' && accounts.data.length > 0 && (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Account</th>
-                <th scope="col">Source</th>
+                <th scope="col">{ta('account')}</th>
+                <th scope="col">{ta('source')}</th>
                 <th scope="col" className="num">
-                  Activity
+                  {ta('activity')}
                 </th>
-                <th scope="col">Last seen</th>
-                <th scope="col">{status === 'unmapped' ? 'Map to person' : 'Mapped to'}</th>
+                <th scope="col">{ta('lastSeen')}</th>
+                <th scope="col">{status === 'unmapped' ? ta('mapToPerson') : ta('mappedTo')}</th>
               </tr>
             </thead>
             <tbody>
@@ -194,7 +197,7 @@ export function IdentitiesTab() {
                           className="btn btn-sm btn-danger"
                           onClick={() => unmap(a)}
                         >
-                          Unmap
+                          {ta('unmap')}
                         </button>
                       </>
                     ) : (

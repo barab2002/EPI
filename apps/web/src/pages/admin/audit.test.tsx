@@ -67,7 +67,7 @@ describe('AuditTab', () => {
     );
     render(<AuditTab />);
     expect(await screen.findByText('system')).toBeInTheDocument();
-    expect(screen.getByText('app setting')).toBeInTheDocument();
+    expect(screen.getByText('setting')).toBeInTheDocument(); // app_setting, in plain words
     const from = screen.getByLabelText('From');
     await userEvent.type(from, '2026-10-01');
     expect(await screen.findByText(/No audit events match/)).toBeInTheDocument();

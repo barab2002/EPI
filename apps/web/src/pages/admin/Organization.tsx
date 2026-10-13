@@ -11,6 +11,7 @@ import {
   today,
   useMutation,
 } from './shared';
+import { ta, taf } from './i18n-admin';
 
 function InlineName({
   label,
@@ -77,33 +78,33 @@ function TeamMembers({
 
   return (
     <section className="panel" aria-labelledby={`team-${team.id}`}>
-      <h2 id={`team-${team.id}`}>Members of {team.name}</h2>
+      <h2 id={`team-${team.id}`}>{taf('membersOf', { team: team.name })}</h2>
       <div className="inline-form">
         <InlineName
-          label={`Rename ${team.name}`}
-          action="Rename"
+          label={taf('renameX', { name: team.name })}
+          action={ta('rename')}
           onSave={(name) =>
             run(
               () => api.patch(`/api/v1/admin/teams/${team.id}`, { name }),
-              `Team renamed to ${name}.`,
+              taf('teamRenamed', { name }),
               onChanged,
             )
           }
         />
         <label className="inline-field">
-          Move to group
+          {ta('moveToGroup')}
           <select
             value=""
             onChange={(e) =>
               e.target.value &&
               run(
                 () => api.patch(`/api/v1/admin/teams/${team.id}`, { groupId: e.target.value }),
-                `${team.name} moved.`,
+                taf('teamMoved', { name: team.name }),
                 onChanged,
               )
             }
           >
-            <option value="">Choose…</option>
+            <option value="">{ta('choose')}</option>
             {groups.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.name}
@@ -115,17 +116,15 @@ function TeamMembers({
           type="button"
           className="btn btn-danger"
           onClick={() =>
-            window.confirm(
-              `Deactivate ${team.name}? It disappears from navigation; its history and KPIs are kept.`,
-            ) &&
+            window.confirm(taf('confirmDeactivateTeam', { name: team.name })) &&
             run(
               () => api.patch(`/api/v1/admin/teams/${team.id}`, { active: false }),
-              `${team.name} deactivated.`,
+              taf('teamDeactivated', { name: team.name }),
               onChanged,
             )
           }
         >
-          Deactivate team
+          {ta('deactivateTeam')}
         </button>
       </div>
       {members.state === 'loading' && <Skeleton lines={4} />}
@@ -135,10 +134,10 @@ function TeamMembers({
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Person</th>
-                <th scope="col">Since</th>
+                <th scope="col">{ta('person')}</th>
+                <th scope="col">{ta('since')}</th>
                 <th scope="col">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{ta('actions')}</span>
                 </th>
               </tr>
             </thead>
@@ -153,16 +152,16 @@ function TeamMembers({
                       className="btn btn-sm btn-danger"
                       onClick={() =>
                         window.confirm(
-                          `End ${m.display_name}’s membership in ${team.name} today?`,
+                          taf('confirmEndMembership', { name: m.display_name, team: team.name }),
                         ) &&
                         run(
                           () => api.post(`/api/v1/admin/memberships/${m.id}/end`, {}),
-                          `${m.display_name} left ${team.name}.`,
+                          taf('leftTeam', { name: m.display_name, team: team.name }),
                           reload,
                         )
                       }
                     >
-                      End membership
+                      {ta('endMembership')}
                     </button>
                   </td>
                 </tr>
@@ -170,7 +169,7 @@ function TeamMembers({
               {current.length === 0 && (
                 <tr>
                   <td colSpan={3} className="muted">
-                    No current members.
+                    {ta('noCurrentMembers')}
                   </td>
                 </tr>
               )}
@@ -180,7 +179,7 @@ function TeamMembers({
       )}
       {past.length > 0 && (
         <details>
-          <summary className="small">Past members ({past.length})</summary>
+          <summary className="small">{taf('pastMembers', { n: past.length })}</summary>
           <ul className="small">
             {past.map((m) => (
               <li key={m.id}>
@@ -190,7 +189,7 @@ function TeamMembers({
           </ul>
         </details>
       )}
-      <h3>Add a member</h3>
+      <h3>{ta('addMember')}</h3>
       {person ? (
         <form
           className="inline-form"
@@ -204,7 +203,7 @@ function TeamMembers({
                   effectiveFrom: dateToIso(from),
                   transfer,
                 }),
-              `${person.display_name} added to ${team.name}.`,
+              taf('addedToTeam', { name: person.display_name, team: team.name }),
               () => {
                 setPerson(null);
                 reload();
@@ -214,7 +213,7 @@ function TeamMembers({
         >
           <strong className="form-subject">{person.display_name}</strong>
           <label className="inline-field">
-            From
+            {ta('from')}
             <input
               type="date"
               value={from}
@@ -229,17 +228,17 @@ function TeamMembers({
               checked={transfer}
               onChange={(e) => setTransfer(e.target.checked)}
             />{' '}
-            Transfer (end their other team memberships)
+            {ta('transfer')}
           </label>
           <button type="submit" disabled={run.pending} className="btn btn-primary">
-            Add
+            {ta('add')}
           </button>
           <button type="button" className="btn" onClick={() => setPerson(null)}>
-            Cancel
+            {ta('cancel')}
           </button>
         </form>
       ) : (
-        <PersonSearch label="Find a person to add…" onPick={setPerson} />
+        <PersonSearch label={ta('findPersonToAdd')} onPick={setPerson} />
       )}
     </section>
   );
@@ -259,23 +258,19 @@ export function OrganizationTab() {
   return (
     <>
       <section className="panel" aria-labelledby="org-structure-title">
-        <h2 id="org-structure-title">Groups and teams</h2>
-        <p className="muted small">
-          Changes take effect immediately for access (e.g. moving a team changes which group manager
-          sees it). Nothing is deleted: memberships end with a date so historical KPIs stay
-          attributed correctly.
-        </p>
+        <h2 id="org-structure-title">{ta('groupsAndTeams')}</h2>
+        <p className="muted small">{ta('orgIntro')}</p>
         <FlashMessage flash={flash} />
         {tree.data.map((org) => (
           <div key={org.id}>
             <h3>{org.name}</h3>
             <InlineName
-              label="New group name"
-              action="Add group"
+              label={ta('newGroupName')}
+              action={ta('addGroup')}
               onSave={(name) =>
                 run(
                   () => api.post('/api/v1/admin/groups', { organizationId: org.id, name }),
-                  `Group ${name} created.`,
+                  taf('groupCreated', { name }),
                   tree.reload,
                 )
               }
@@ -286,25 +281,25 @@ export function OrganizationTab() {
                   <div className="tree-row">
                     <strong>{g.name}</strong>
                     <details className="inline-details">
-                      <summary className="small">Rename / add team</summary>
+                      <summary className="small">{ta('renameAddTeam')}</summary>
                       <InlineName
-                        label={`Rename ${g.name}`}
-                        action="Rename"
+                        label={taf('renameX', { name: g.name })}
+                        action={ta('rename')}
                         onSave={(name) =>
                           run(
                             () => api.patch(`/api/v1/admin/groups/${g.id}`, { name }),
-                            `Group renamed to ${name}.`,
+                            taf('groupRenamed', { name }),
                             tree.reload,
                           )
                         }
                       />
                       <InlineName
-                        label={`New team in ${g.name}`}
-                        action="Add team"
+                        label={taf('newTeamIn', { group: g.name })}
+                        action={ta('addTeam')}
                         onSave={(name) =>
                           run(
                             () => api.post('/api/v1/admin/teams', { groupId: g.id, name }),
-                            `Team ${name} created.`,
+                            taf('teamCreated', { name }),
                             tree.reload,
                           )
                         }
@@ -324,7 +319,9 @@ export function OrganizationTab() {
                         </button>
                         {t.memberCount !== null && (
                           <span className="muted small">
-                            {t.memberCount} {t.memberCount === 1 ? 'member' : 'members'}
+                            {taf(t.memberCount === 1 ? 'memberCountOne' : 'memberCountMany', {
+                              n: t.memberCount,
+                            })}
                           </span>
                         )}
                       </li>
