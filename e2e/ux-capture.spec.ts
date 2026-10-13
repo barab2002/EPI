@@ -68,8 +68,20 @@ test('capture key screens', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign out' }).click();
 
   await signIn(page, /^Avery Admin/);
+  await page.goto('/admin/organization');
+  await page.getByRole('button', { name: 'Payments', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /Payments/, level: 2 })).toBeVisible();
+  await shoot(page, '09a-admin-organization');
   await page.goto('/admin/people');
+  await page.getByRole('searchbox').first().fill('Dana');
+  await page.getByRole('button', { name: 'Dana Dev' }).click();
+  await expect(page.getByRole('heading', { name: /Dana Dev/ })).toBeVisible();
   await shoot(page, '09-admin-people');
+  for (const tab of ['integrations', 'identities', 'statuses', 'audit']) {
+    await page.goto(`/admin/${tab}`);
+    await page.waitForLoadState('networkidle');
+    await shoot(page, `09-admin-${tab}`);
+  }
   await page.goto('/admin/data-quality');
   await shoot(page, '10-admin-data-quality');
 });

@@ -84,18 +84,33 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
       <FlashMessage flash={flash} />
       <form className="inline-form" onSubmit={rename} key={`${p.display_name}-${p.email}`}>
         <label className="inline-field">
-          Name <input name="displayName" defaultValue={p.display_name} required maxLength={120} />
+          Name
+          <input
+            name="displayName"
+            defaultValue={p.display_name}
+            required
+            maxLength={120}
+            autoComplete="off"
+          />
         </label>
         <label className="inline-field">
-          E-mail <input name="email" type="email" defaultValue={p.email ?? ''} maxLength={200} />
+          E-mail
+          <input
+            name="email"
+            type="email"
+            defaultValue={p.email ?? ''}
+            maxLength={200}
+            autoComplete="off"
+            spellCheck={false}
+          />
         </label>
         <button type="submit" className="btn">
-          Save
+          Save details
         </button>
         {!isSelf && (
           <button
             type="button"
-            className="btn"
+            className={p.active ? 'btn btn-danger' : 'btn'}
             onClick={() =>
               (p.active
                 ? window.confirm(
@@ -118,11 +133,15 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
       {p.memberships.length === 0 ? (
         <p className="muted">Not in any team. Add them from the Organization tab.</p>
       ) : (
-        <ul>
+        <ul className="plain-list history-list" aria-label="Team history">
           {p.memberships.map((m) => (
             <li key={m.id}>
-              {m.team_name} <span className="muted small">({m.group_name})</span>:{' '}
-              {shortDate(m.effective_from)} – {m.effective_to ? shortDate(m.effective_to) : 'now'}
+              <span>
+                {m.team_name} <span className="muted small">{m.group_name}</span>
+              </span>
+              <span className="muted small">
+                {shortDate(m.effective_from)} – {m.effective_to ? shortDate(m.effective_to) : 'now'}
+              </span>
             </li>
           ))}
         </ul>
@@ -159,14 +178,14 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
                   {shortDate(r.effective_from)} –{' '}
                   {r.effective_to ? shortDate(r.effective_to) : 'now'}
                 </td>
-                <td>
+                <td className="cell-actions">
                   {!r.effective_to && !isSelf && (
                     <button
                       type="button"
-                      className="btn"
+                      className="btn btn-sm btn-danger"
                       onClick={() =>
                         window.confirm(
-                          `End this ${r.role.toLowerCase().replace('_', ' ')} role today?`,
+                          `End the ${(ROLES.find((x) => x.role === r.role)?.label ?? r.role).toLowerCase()} role of ${p.display_name} today?`,
                         ) &&
                         run(
                           () => api.post(`/api/v1/admin/role-assignments/${r.id}/end`, {}),
@@ -203,7 +222,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           }}
         >
           <label className="inline-field">
-            Role{' '}
+            Role
             <select
               value={role}
               onChange={(e) => {
@@ -222,14 +241,14 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           </label>
           {def.scopes.length > 1 && (
             <label className="inline-field">
-              On{' '}
+              Level
               <select
                 value={scopeType}
                 onChange={(e) => (setScopeType(e.target.value), setScopeId(''))}
               >
                 {def.scopes.map((s) => (
                   <option key={s} value={s}>
-                    {s.toLowerCase()}
+                    {s === 'ORGANIZATION' ? 'Organization' : 'Group'}
                   </option>
                 ))}
               </select>
@@ -237,7 +256,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           )}
           {scopeType !== 'SYSTEM' && (
             <label className="inline-field">
-              Scope{' '}
+              Scope
               <select value={scopeId} onChange={(e) => setScopeId(e.target.value)} required>
                 <option value="">Choose…</option>
                 {options.map((o) => (
@@ -255,14 +274,16 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
       )}
 
       <h3>Grade</h3>
-      <ul>
+      <ul className="plain-list history-list" aria-label="Grade history">
         {p.grades.map((g) => (
           <li key={g.id}>
-            {g.label}: {shortDate(g.effective_from)} –{' '}
-            {g.effective_to ? shortDate(g.effective_to) : 'now'}
+            <span>{g.label}</span>
+            <span className="muted small">
+              {shortDate(g.effective_from)} – {g.effective_to ? shortDate(g.effective_to) : 'now'}
+            </span>
           </li>
         ))}
-        {p.grades.length === 0 && <li className="muted">No grade recorded.</li>}
+        {p.grades.length === 0 && <li className="muted">No grade recorded yet.</li>}
       </ul>
       <form
         className="inline-form"
@@ -280,7 +301,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
         }}
       >
         <label className="inline-field">
-          New grade{' '}
+          New grade
           <select value={grade} onChange={(e) => setGrade(e.target.value)} required>
             <option value="">Choose…</option>
             {grades.state === 'ready' &&
@@ -292,7 +313,7 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
           </select>
         </label>
         <label className="inline-field">
-          from{' '}
+          From
           <input
             type="date"
             value={gradeFrom}
@@ -337,20 +358,34 @@ export function PeopleTab() {
     <>
       <section className="panel" aria-labelledby="people-title">
         <h2 id="people-title">People</h2>
+        <p className="muted small">
+          Find someone to change their details, roles or grade, or add a person who is not in EPI
+          yet. Team membership is managed under Organization.
+        </p>
         <FlashMessage flash={flash} />
-        <div className="toolbar">
+        <div className="form-group">
+          <h3>Find a person</h3>
           <PersonSearch label="Find a person…" onPick={setSelected} />
+        </div>
+        <div className="form-group">
+          <h3>Add a person</h3>
           <form className="inline-form" onSubmit={create}>
             <label className="inline-field">
-              New person{' '}
-              <input name="displayName" placeholder="Full name" required maxLength={120} />
+              Full name
+              <input name="displayName" required maxLength={120} autoComplete="off" />
             </label>
-            <label>
-              <span className="sr-only">E-mail</span>
-              <input name="email" type="email" placeholder="E-mail (optional)" maxLength={200} />
+            <label className="inline-field">
+              E-mail (optional)
+              <input
+                name="email"
+                type="email"
+                maxLength={200}
+                autoComplete="off"
+                spellCheck={false}
+              />
             </label>
             <button type="submit" className="btn">
-              Create
+              Add person
             </button>
           </form>
         </div>

@@ -42,7 +42,10 @@ export function DataQualityTab() {
       <section className="panel" aria-labelledby="freshness-title">
         <h2 id="freshness-title">Freshness</h2>
         {d.connections.length === 0 ? (
-          <p className="muted">No source connections configured — KPIs use synthetic demo data.</p>
+          <p className="muted">
+            No source connection is configured yet, so KPIs use synthetic demo data. Add one under
+            Integrations.
+          </p>
         ) : (
           <div className="table-wrap">
             <table className="table">
@@ -83,19 +86,19 @@ export function DataQualityTab() {
           <Metric
             label="Jira assignees mapped"
             value={pctLabel(d.jira.assigneeCoveragePct)}
-            hint={`${d.jira.mappedAssignees} of ${d.jira.withAssignee} assigned items · ${plural(d.jira.unmappedAccounts, 'unmapped account')}`}
+            hint={`${d.jira.mappedAssignees} of ${d.jira.withAssignee} assigned items. ${plural(d.jira.unmappedAccounts, 'unmapped account')}.`}
             warn={lowCoverage(d.jira.assigneeCoveragePct)}
           />
           <Metric
             label="GitLab MR authors mapped"
             value={pctLabel(d.gitlab.authorCoveragePct)}
-            hint={`${d.gitlab.mappedAuthors} of ${d.gitlab.mergeRequests} MRs · ${plural(d.gitlab.unmappedAccounts, 'unmapped account')}`}
+            hint={`${d.gitlab.mappedAuthors} of ${d.gitlab.mergeRequests} MRs. ${plural(d.gitlab.unmappedAccounts, 'unmapped account')}.`}
             warn={lowCoverage(d.gitlab.authorCoveragePct)}
           />
           <Metric
             label="MRs linked to Jira"
             value={pctLabel(d.gitlab.jiraLinkPct)}
-            hint={`${d.gitlab.linkedToJira} of ${d.gitlab.mergeRequests} MRs carry a known issue key`}
+            hint={`${d.gitlab.linkedToJira} of ${d.gitlab.mergeRequests} MRs carry a known issue key.`}
           />
         </div>
         {(d.jira.unmappedAccounts > 0 || d.gitlab.unmappedAccounts > 0) && (

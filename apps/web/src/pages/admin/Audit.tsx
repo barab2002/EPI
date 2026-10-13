@@ -14,11 +14,42 @@ const ACTION_GROUPS = [
   ['sync.', 'Syncs'],
 ] as const;
 
-/** Compact, readable metadata ("key: value · …"); values are never personal data or review text. */
-function details(m: Record<string, unknown>): string {
-  return Object.entries(m)
-    .map(([k, v]) => `${k}: ${typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}`)
-    .join(' · ');
+/** Plain-language names for audit actions; unknown actions fall back to their code. */
+const ACTION_LABELS: Record<string, string> = {
+  'auth.login': 'Signed in',
+  'auth.login_failed': 'Sign-in failed',
+  'auth.logout': 'Signed out',
+  'assessment.create': 'Assessment written',
+  'assessment.update': 'Assessment changed',
+  'grade.set': 'Grade set',
+  'group.create': 'Group created',
+  'group.rename': 'Group renamed',
+  'identity.linked': 'Sign-in identity linked',
+  'identity.map': 'Account mapped',
+  'identity.unmap': 'Account unmapped',
+  'integration.upsert': 'Connection saved',
+  'membership.add': 'Added to team',
+  'membership.end': 'Team membership ended',
+  'person.create': 'Person added',
+  'person.update': 'Person changed',
+  'role.assign': 'Role assigned',
+  'role.end': 'Role ended',
+  'seed.demo': 'Demo data loaded',
+  'status_mapping.update': 'Status mapping changed',
+  'sync.schedule': 'Sync scheduled',
+  'sync.scheduled': 'Scheduled sync ran',
+  'sync.start': 'Sync started',
+  'sync_schedule.update': 'Daily sync changed',
+  'team.create': 'Team created',
+  'team.update': 'Team changed',
+};
+export const actionLabel = (a: string) => ACTION_LABELS[a] ?? a;
+
+/** Readable metadata pairs; values are never personal data or review text. */
+function details(m: Record<string, unknown>): string[] {
+  return Object.entries(m).map(
+    ([k, v]) => `${k}: ${typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}`,
+  );
 }
 
 function buildQuery(f: { action: string; actor: PersonOption | null; from: string; to: string }) {
@@ -90,9 +121,9 @@ export function AuditTab() {
         Every administrative change, review action, sign-in and sync, newest first. Entries are
         append-only. For reviews you see who acted and when — never about whom or what was written.
       </p>
-      <div className="toolbar">
+      <div className="inline-form">
         <label className="inline-field">
-          Action{' '}
+          Action
           <select value={action} onChange={(e) => setAction(e.target.value)}>
             {ACTION_GROUPS.map(([v, l]) => (
               <option key={v} value={v}>
@@ -103,7 +134,7 @@ export function AuditTab() {
               <optgroup label="Exact action">
                 {knownExact.map((a) => (
                   <option key={a} value={a}>
-                    {a}
+                    {actionLabel(a)} ({a})
                   </option>
                 ))}
               </optgroup>
@@ -111,9 +142,14 @@ export function AuditTab() {
           </select>
         </label>
         {actor ? (
-          <span className="inline-field">
-            By <strong>{actor.display_name}</strong>{' '}
-            <button type="button" className="btn" onClick={() => setActor(null)}>
+          <span className="form-subject">
+            By&nbsp;<strong>{actor.display_name}</strong>&nbsp;
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setActor(null)}
+              aria-label={`Clear person filter (${actor.display_name})`}
+            >
               Clear
             </button>
           </span>
@@ -121,7 +157,7 @@ export function AuditTab() {
           <PersonSearch label="Filter by person…" onPick={setActor} />
         )}
         <label className="inline-field">
-          From{' '}
+          From
           <input
             type="date"
             value={from}
@@ -130,7 +166,7 @@ export function AuditTab() {
           />
         </label>
         <label className="inline-field">
-          To{' '}
+          To
           <input
             type="date"
             value={to}
@@ -163,14 +199,23 @@ export function AuditTab() {
                     </td>
                     <td>{e.actor?.name ?? <span className="muted">system</span>}</td>
                     <td>
-                      <code className="nowrap">{e.action}</code>
+                      {actionLabel(e.action)}
+                      <div>
+                        <code className="nowrap small">{e.action}</code>
+                      </div>
                     </td>
                     <td>
                       {e.resourceLabel ?? (
                         <span className="muted">{e.resourceType.replace(/_/g, ' ')}</span>
                       )}
                     </td>
-                    <td className="small">{details(e.metadata)}</td>
+                    <td className="small">
+                      <ul className="detail-list">
+                        {details(e.metadata).map((d) => (
+                          <li key={d}>{d}</li>
+                        ))}
+                      </ul>
+                    </td>
                   </tr>
                 ))}
               </tbody>
