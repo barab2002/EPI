@@ -3,7 +3,7 @@ import type { KpiCard } from '../api';
 import { KpiDrawer } from '../components/KpiDrawer';
 import { Breadcrumb, PageTitle } from '../components/Layout';
 import { ErrorState, Skeleton } from '../components/States';
-import { kpiTitle, MessageKey, t } from '../i18n';
+import { getLocale, kpiTitle, MessageKey, t } from '../i18n';
 import { useApi } from '../useApi';
 
 interface CatalogEntry {
@@ -49,7 +49,7 @@ function catalogCard(k: CatalogEntry): KpiCard {
 }
 
 export function CatalogPage() {
-  const list = useApi<CatalogEntry[]>('/api/v1/kpis/catalog');
+  const list = useApi<CatalogEntry[]>(`/api/v1/kpis/catalog?lang=${getLocale()}`);
   const [open, setOpen] = useState<KpiCard | null>(null);
   return (
     <>

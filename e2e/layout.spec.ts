@@ -74,6 +74,14 @@ test('no horizontal overflow in Hebrew (right-to-left)', async ({ page }) => {
   await page.getByRole('link', { name: 'Payments' }).first().click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expectNoOverflow(page, 'team (he)');
+  // KPI explanation texts come from the server in Hebrew too (ADR-035 stage 3).
+  await page.getByRole('button', { name: 'איך זה מחושב?' }).first().click();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer).toContainText('זמן מחזור');
+  await expect(drawer).toContainText('חציון 4 ימים');
+  await expectNoOverflow(page, 'KPI explanation (he)');
+  if (process.env.EPI_HE_SHOT) await page.screenshot({ path: process.env.EPI_HE_SHOT });
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'התנתקות' }).click();
   await expect(page.getByRole('heading', { name: 'כניסה ל-EPI' })).toBeVisible();
   await page.getByRole('button', { name: /^Avery Admin/ }).click();

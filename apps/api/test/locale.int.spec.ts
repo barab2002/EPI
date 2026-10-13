@@ -42,4 +42,27 @@ describe('Interface language (integration)', () => {
     await put(eli.cookie, null, { locale: 'en' }).expect(403);
     await request(app.getHttpServer()).put('/api/v1/me/locale').send({ locale: 'en' }).expect(401);
   });
+
+  it('serves KPI definitions and explanations in the requested language', async () => {
+    const lead = await login(app, ds, 'Taylor Lead');
+    const en = (await lead.get('/api/v1/kpis/CYCLE_TIME/explanation').expect(200)).body;
+    expect(en.title).toBe('Cycle Time');
+    const he = (await lead.get('/api/v1/kpis/CYCLE_TIME/explanation?lang=he').expect(200)).body;
+    expect(he.title).toBe('זמן מחזור');
+    expect(he.example.description).toMatch(/חציון 4 ימים/);
+    // Numbers come from the same engine run; only the words change.
+    expect(he.example.result).toEqual(en.example.result);
+    expect([he.version, he.unit]).toEqual([en.version, en.unit]);
+    const viaHeader = (
+      await lead.get('/api/v1/kpis/catalog').set('Accept-Language', 'he-IL,he;q=0.9').expect(200)
+    ).body;
+    expect(viaHeader.find((k: { code: string }) => k.code === 'WORK_ITEM_AGING').title).toBe(
+      'גיל פריטים פתוחים',
+    );
+    // An explicit ?lang wins over the browser header.
+    const forced = (
+      await lead.get('/api/v1/kpis/catalog?lang=en').set('Accept-Language', 'he').expect(200)
+    ).body;
+    expect(forced[0].title).toBe('Cycle Time');
+  });
 });

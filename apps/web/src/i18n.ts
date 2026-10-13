@@ -34,6 +34,8 @@ const en = {
   loginErrorUnavailable: 'Single sign-on is temporarily unavailable. Please try again later.',
   window: 'Window',
   howCalculated: 'How calculated?',
+  trendHypothesisNote:
+    'Exploratory comparison of two non-overlapping windows. A hypothesis for investigation, not a causal conclusion or a statistical significance test.',
   sample: 'Sample',
   confidence: 'Confidence',
   dataAsOf: 'Data as of',
@@ -228,6 +230,8 @@ const he: Record<MessageKey, string> = {
   loginErrorUnavailable: 'הכניסה הארגונית אינה זמינה כרגע. נסו שוב מאוחר יותר.',
   window: 'טווח זמן',
   howCalculated: 'איך זה מחושב?',
+  trendHypothesisNote:
+    'השוואה מגששת בין שני חלונות זמן שאינם חופפים. השערה לבדיקה, לא מסקנה סיבתית ולא מבחן מובהקות סטטיסטית.',
   sample: 'מדגם',
   confidence: 'מהימנות',
   dataAsOf: 'עדכון אחרון',
