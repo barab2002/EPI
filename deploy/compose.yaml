@@ -35,6 +35,10 @@ services:
       EPI_DB_HOST: postgres
       # Jira/GitLab tokens, one file per reference (./epi.sh source-token EPI_JIRA_TOKEN).
       EPI_SOURCE_SECRETS_DIR: /run/epi-sources
+      # Optional server rules (set in .epi/sso.conf; empty = default): Jira/GitLab hosts allowed in
+      # Administration › Settings (comma-separated), data retention in months (default 24, or off).
+      EPI_SOURCE_HOSTS: ${EPI_SOURCE_HOSTS:-}
+      EPI_RETENTION_MONTHS: ${EPI_RETENTION_MONTHS:-}
       # Company CA for Jira/GitLab over https (./epi.sh source-ca; empty file = public CAs only).
       NODE_EXTRA_CA_CERTS: /run/epi-sources/ca.pem
     secrets: [db_password]
