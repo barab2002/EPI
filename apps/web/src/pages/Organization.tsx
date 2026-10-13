@@ -50,7 +50,7 @@ export function OrganizationPage() {
                     )}
                     <AccessBadge access={g.access} />
                     <span className="tree-meta">
-                      {g.teams.length} {g.teams.length === 1 ? 'team' : t('teams').toLowerCase()}
+                      {g.teams.length} {t(g.teams.length === 1 ? 'teamOne' : 'teamMany')}
                     </span>
                   </div>
                   <ul>
@@ -60,7 +60,7 @@ export function OrganizationPage() {
                         <AccessBadge access={tm.access} />
                         {tm.memberCount !== null && (
                           <span className="tree-meta">
-                            {tm.memberCount} {t('members').toLowerCase()}
+                            {tm.memberCount} {t(tm.memberCount === 1 ? 'memberOne' : 'memberMany')}
                           </span>
                         )}
                       </li>

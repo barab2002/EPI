@@ -4,7 +4,7 @@ import { KpiPanel } from '../components/KpiPanel';
 import { Breadcrumb, Crumb, PageTitle } from '../components/Layout';
 import { Empty, ErrorState, Skeleton } from '../components/States';
 import { formatDate, formatMonth } from '../format';
-import { t } from '../i18n';
+import { t, tf } from '../i18n';
 import { useSession } from '../session';
 import { useApi } from '../useApi';
 import { AssessmentForm } from './AssessmentForm';
@@ -55,11 +55,11 @@ export function AssessmentList({
           <dl className="facts compact">
             <div>
               <dt>{t('independence')}</dt>
-              <dd>{a.independence} of 5</dd>
+              <dd>{tf('outOf5', { n: a.independence })}</dd>
             </div>
             <div>
               <dt>{t('growth')}</dt>
-              <dd>{a.growth} of 5</dd>
+              <dd>{tf('outOf5', { n: a.growth })}</dd>
             </div>
           </dl>
           <p className="evidence">{a.evidence}</p>
@@ -120,7 +120,7 @@ export function DeveloperPage() {
               {d.teams
                 .map(
                   (tm) =>
-                    `${tm.name} from ${formatDate(tm.effective_from)}${tm.effective_to ? ` to ${formatDate(tm.effective_to)}` : ''}`,
+                    `${tf('teamFrom', { team: tm.name, from: formatDate(tm.effective_from) })}${tm.effective_to ? ` ${tf('teamTo', { to: formatDate(tm.effective_to) })}` : ''}`,
                 )
                 .join('; ')}
             </dd>

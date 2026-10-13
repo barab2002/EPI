@@ -1,6 +1,6 @@
 /**
- * Localization: all UI strings live in message catalogs. English ships first; a Hebrew catalog
- * (dir="rtl") can be added without code changes — layout uses CSS logical properties.
+ * Localization (English + Hebrew, ADR-035): all UI strings live in these catalogs. Hebrew sets
+ * dir="rtl"; layout uses CSS logical properties. The type system enforces complete catalogs.
  */
 const en = {
   appName: 'EPI',
@@ -118,16 +118,319 @@ const en = {
   question: 'Question',
   structureOnly: 'As an administrator you can see structure, not metrics or reviews.',
   emptyOrg: 'Nothing in your scope yet.',
+  assessmentIntro:
+    'Human judgment with evidence. Ratings are relative to the person’s grade and development plan — never derived from KPIs.',
+  skipToContent: 'Skip to content',
+  mainNav: 'Main',
+  breadcrumb: 'Breadcrumb',
+  language: 'Language',
+  unitDayOne: 'day',
+  unitDayMany: 'days',
+  unitHourOne: 'hour',
+  unitHourMany: 'hours',
+  unitDaysName: 'Days',
+  unitHoursName: 'Hours',
+  roleAdmin: 'Administrator',
+  roleEngineeringManager: 'Engineering manager',
+  roleGroupManager: 'Group manager',
+  roleTeamLead: 'Team lead',
+  roleHrPartner: 'HR partner',
+  roleDeveloper: 'Developer',
+  confNormal: 'Normal',
+  confLow: 'Low (small sample)',
+  confInsufficient: 'Insufficient sample',
+  confNone: 'No data',
+  confSuppressed: 'Suppressed',
+  loginGroupAdmin: 'Administrator',
+  loginGroupEngineeringManager: 'Engineering manager',
+  loginGroupGroupManager: 'Group managers',
+  loginGroupTeamLead: 'Team leads',
+  loginGroupDeveloper: 'Developers',
+  loginHintAdmin: 'Structure, integrations and data quality. No KPIs or private reviews.',
+  loginHintEngineeringManager: 'The whole organization and all KPIs.',
+  loginHintGroupManager: 'Their group’s teams and people.',
+  loginHintTeamLead: 'Their team’s members and KPIs. Writes monthly assessments.',
+  loginHintDeveloper: 'Their own KPIs and assessments. Their team only as a total.',
+  dirLower: 'Lower is better',
+  dirHigher: 'Higher is better',
+  scopeOrganization: 'Organization',
+  scopeGroup: 'Group',
+  scopeTeam: 'Team',
+  scopeDeveloper: 'Developer',
+  hello: 'Hello, {name}',
+  roleIn: '{role} in {teams}',
+  forMonth: 'for {month}',
+  toWrite: '{n} to write',
+  name: 'Name',
+  item: 'Item',
+  value: 'Value',
+  itemOne: 'item',
+  itemMany: 'items',
+  teamOne: 'team',
+  teamMany: 'teams',
+  memberOne: 'member',
+  memberMany: 'members',
+  outOf5: '{n} of 5',
+  teamFrom: '{team} from {from}',
+  teamTo: 'to {to}',
+  reviewsIntro:
+    'You see assessments about yourself (once submitted), assessments you wrote, and submitted assessments of people you manage. To write one, open a team member’s profile.',
+  synthetic: 'Synthetic',
+  reference: 'Reference',
+  exampleInput: 'Input: [{input}]; engine result:',
+  anchorIndependence1: 'Substantially dependent',
+  anchorIndependence2: 'Needs frequent guidance',
+  anchorIndependence3: 'Meets grade expectations',
+  anchorIndependence4: 'Above-grade autonomy',
+  anchorIndependence5: 'Demonstrates and develops others',
+  anchorGrowth1: 'No progress on plan',
+  anchorGrowth2: 'Limited progress',
+  anchorGrowth3: 'Progressing as agreed',
+  anchorGrowth4: 'Ahead of plan',
+  anchorGrowth5: 'Exceptional growth, helps others grow',
+  kpiCYCLE_TIME: 'Cycle Time',
+  kpiWORK_ITEM_AGING: 'Work Item Aging',
+  kpiREVIEW_WAITING_TIME: 'Review Waiting Time',
+  kpiMR_OPEN_TO_FIRST_REVIEW: 'MR open to first review (proxy)',
 };
 
 export type MessageKey = keyof typeof en;
-const catalogs: Record<string, Record<MessageKey, string>> = { en };
+
+/** Hebrew (right-to-left). Neutral plural imperatives; product names stay in Latin script. */
+const he: Record<MessageKey, string> = {
+  appName: 'EPI',
+  appTagline: 'ביצועים ושיפור בהנדסה',
+  syntheticBanner: 'מצב הדגמה — כל האנשים והנתונים המוצגים סינתטיים.',
+  navHome: 'התצוגה שלי',
+  navOrganization: 'ארגון',
+  navReviews: 'הערכות',
+  navCatalog: 'קטלוג מדדים',
+  navAdmin: 'ניהול מערכת',
+  signOut: 'התנתקות',
+  loading: 'טוען…',
+  retry: 'לנסות שוב',
+  errorTitle: 'משהו השתבש',
+  notFoundTitle: 'לא זמין',
+  notFoundBody: 'הפריט לא קיים או שאין לכם הרשאה אליו.',
+  sessionExpired: 'החיבור הסתיים. יש להתחבר מחדש.',
+  loginTitle: 'כניסה ל-EPI',
+  loginPurpose:
+    'ראו איך העבודה זורמת בצוותים שלכם, עם הסבר לכל מספר, ונהלו את ההערכות החודשיות במקום אחד.',
+  loginDemoHint: 'בחרו דמות סינתטית כדי לראות מה כל תפקיד רואה.',
+  loginNoMethod: 'לא הוגדרה שיטת כניסה. פנו למנהל המערכת כדי להגדיר כניסה ארגונית.',
+  loginSso: 'כניסה עם החשבון הארגוני',
+  loginOr: 'או נסו את ההדגמה',
+  loginErrorNotProvisioned:
+    'ההתחברות הצליחה, אבל עדיין אין לכם משתמש ב-EPI. בקשו ממנהל המערכת להוסיף אתכם.',
+  loginErrorInactive: 'המשתמש שלכם ב-EPI הושבת. פנו למנהל המערכת.',
+  loginErrorExpired: 'ניסיון הכניסה פג או נקטע. נסו שוב.',
+  loginErrorIdp: 'ספק הזהות לא השלים את הכניסה. נסו שוב.',
+  loginErrorUnavailable: 'הכניסה הארגונית אינה זמינה כרגע. נסו שוב מאוחר יותר.',
+  window: 'טווח זמן',
+  howCalculated: 'איך זה מחושב?',
+  sample: 'מדגם',
+  confidence: 'מהימנות',
+  dataAsOf: 'עדכון אחרון',
+  noData: 'אין עדיין נתונים',
+  na: 'לא זמין',
+  notEnoughData: 'אין מספיק נתונים לערך מהימן',
+  suppressed: 'מוסתר: קבוצה קטנה מדי',
+  suppressedHint: 'נתונים מצטברים של פחות ממספר האנשים המינימלי מוסתרים כדי לשמור על פרטיות.',
+  proxyLabel: 'מדד עקיף',
+  trendImproved: 'השתפר',
+  trendDeteriorated: 'דורש תשומת לב',
+  trendStable: 'יציב',
+  trendInsufficient: 'אין מספיק נתונים למגמה',
+  trendNoBaseline: 'אין נקודת השוואה',
+  trendVsPrevious: 'לעומת התקופה הקודמת',
+  members: 'חברי צוות',
+  teams: 'צוותים',
+  team: 'צוות',
+  history: 'היסטוריה',
+  assessmentsDue: 'הערכות לכתיבה',
+  noOpenCycle: 'אין כרגע מחזור הערכה חודשי פתוח.',
+  allAssessmentsDone: 'כל ההערכות של החודש הוגשו.',
+  notStarted: 'לא התחיל',
+  orgKpis: 'מדדי הארגון',
+  openDataQuality: 'בדיקת איכות הנתונים',
+  openMyProfile: 'לפרופיל ולהערכות שלי',
+  unit: 'יחידה',
+  direction: 'כיוון',
+  shownFor: 'מוצג עבור',
+  by: 'מאת',
+  teamsOverviewHint:
+    'מסודר לפי שם. פתחו צוות כדי לראות איך מחושב כל מספר ועל כמה פריטים הוא מבוסס.',
+  grade: 'דרגה',
+  lead: 'ראש צוות',
+  kpis: 'מדדים הנדסיים',
+  kpiDisclaimer: 'המדדים מתארים איך העבודה זורמת. הם אינם ציון ביצועים אישי ויש לקרוא אותם בהקשר.',
+  assessments: 'הערכות חודשיות',
+  noAssessments: 'אין עדיין הערכות.',
+  newAssessment: 'כתיבת ההערכה של החודש',
+  independence: 'עצמאות',
+  growth: 'צמיחה',
+  evidence: 'דוגמאות',
+  evidenceHint: 'דוגמאות קונקרטיות מהחודש.',
+  errIndependence: 'בחרו דירוג עצמאות.',
+  errGrowth: 'בחרו דירוג צמיחה.',
+  errEvidence: 'כתבו לפחות 20 תווים של דוגמאות קונקרטיות',
+  submitNote: 'הגשה משתפת את ההערכה ונועלת אותה לחודש הזה.',
+  submitNoteNamed: 'הגשה משתפת אותה עם {name} ונועלת אותה לחודש הזה.',
+  saving: 'שומר…',
+  submitting: 'מגיש…',
+  signingIn: 'מתחבר…',
+  assessmentDoneFor: 'הגשתם את ההערכה של החודש ב-',
+  assessmentDoneVisible: 'היא גלויה ל-{name} ונעולה.',
+  saveDraft: 'שמירת טיוטה',
+  submit: 'הגשה',
+  saved: 'נשמר.',
+  submitted: 'הוגש.',
+  draft: 'טיוטה',
+  submittedStatus: 'הוגש',
+  myTeams: 'הצוותים שלי',
+  managedTeams: 'הצוותים שבניהולך',
+  myKpis: 'מדדי הזרימה שלי',
+  teamAggregate: 'סיכום צוות',
+  accessManaged: 'בניהולך',
+  accessAggregate: 'סיכום בלבד',
+  accessStructure: 'מבנה בלבד',
+  evidenceItems: 'הפריטים שמאחורי הערך',
+  excluded: 'הוחרגו',
+  formula: 'נוסחה',
+  population: 'אוכלוסייה',
+  source: 'מקור',
+  exclusions: 'החרגות',
+  minimumSample: 'מדגם מינימלי',
+  caveats: 'מגבלות',
+  actions: 'צעדים אפשריים',
+  example: 'דוגמה מחושבת (על ידי המנוע)',
+  version: 'גרסה',
+  implementation: 'מימוש',
+  close: 'סגירה',
+  question: 'שאלה',
+  structureOnly: 'כמנהלי מערכת אתם רואים את המבנה, לא מדדים או הערכות.',
+  emptyOrg: 'עדיין אין כאן דבר בתחום שלכם.',
+  assessmentIntro:
+    'שיקול דעת אנושי מבוסס דוגמאות. הדירוגים יחסיים לדרגה ולתוכנית הפיתוח של האדם — ולעולם לא נגזרים מהמדדים.',
+  skipToContent: 'דילוג לתוכן',
+  mainNav: 'ראשי',
+  breadcrumb: 'נתיב ניווט',
+  language: 'שפה',
+  unitDayOne: 'יום',
+  unitDayMany: 'ימים',
+  unitHourOne: 'שעה',
+  unitHourMany: 'שעות',
+  unitDaysName: 'ימים',
+  unitHoursName: 'שעות',
+  roleAdmin: 'מנהל/ת מערכת',
+  roleEngineeringManager: 'מנהל/ת הנדסה',
+  roleGroupManager: 'מנהל/ת קבוצה',
+  roleTeamLead: 'ראש צוות',
+  roleHrPartner: 'שותף/ה משאבי אנוש',
+  roleDeveloper: 'מפתח/ת',
+  confNormal: 'רגילה',
+  confLow: 'נמוכה (מדגם קטן)',
+  confInsufficient: 'מדגם לא מספיק',
+  confNone: 'אין נתונים',
+  confSuppressed: 'מוסתר',
+  loginGroupAdmin: 'מנהל/ת מערכת',
+  loginGroupEngineeringManager: 'מנהל/ת הנדסה',
+  loginGroupGroupManager: 'מנהלי קבוצות',
+  loginGroupTeamLead: 'ראשי צוותים',
+  loginGroupDeveloper: 'מפתחים',
+  loginHintAdmin: 'מבנה, חיבורים ואיכות נתונים. בלי מדדים ובלי הערכות פרטיות.',
+  loginHintEngineeringManager: 'כל הארגון וכל המדדים.',
+  loginHintGroupManager: 'הצוותים והאנשים בקבוצה שלהם.',
+  loginHintTeamLead: 'חברי הצוות שלהם והמדדים שלהם. כותבים הערכות חודשיות.',
+  loginHintDeveloper: 'המדדים וההערכות שלהם. את הצוות רק כסיכום.',
+  dirLower: 'נמוך יותר עדיף',
+  dirHigher: 'גבוה יותר עדיף',
+  scopeOrganization: 'ארגון',
+  scopeGroup: 'קבוצה',
+  scopeTeam: 'צוות',
+  scopeDeveloper: 'מפתח/ת',
+  hello: 'שלום, {name}',
+  roleIn: '{role}, {teams}',
+  forMonth: 'ל{month}',
+  toWrite: '{n} לכתיבה',
+  name: 'שם',
+  item: 'פריט',
+  value: 'ערך',
+  itemOne: 'פריט',
+  itemMany: 'פריטים',
+  teamOne: 'צוות',
+  teamMany: 'צוותים',
+  memberOne: 'חבר/ה',
+  memberMany: 'חברים',
+  outOf5: '{n} מתוך 5',
+  teamFrom: '{team} מ-{from}',
+  teamTo: 'עד {to}',
+  reviewsIntro:
+    'מוצגות כאן הערכות עליכם (אחרי שהוגשו), הערכות שכתבתם, והערכות שהוגשו על אנשים בניהולכם. כדי לכתוב הערכה, פתחו את הפרופיל של חבר/ת הצוות.',
+  synthetic: 'סינתטי',
+  reference: 'מזהה',
+  exampleInput: 'קלט: [{input}]; תוצאת המנוע:',
+  anchorIndependence1: 'תלוי/ה במידה רבה',
+  anchorIndependence2: 'זקוק/ה להכוונה תכופה',
+  anchorIndependence3: 'עומד/ת בציפיות הדרגה',
+  anchorIndependence4: 'עצמאות מעל הדרגה',
+  anchorIndependence5: 'מדגים/ה ומפתח/ת אחרים',
+  anchorGrowth1: 'אין התקדמות בתוכנית',
+  anchorGrowth2: 'התקדמות מוגבלת',
+  anchorGrowth3: 'מתקדם/ת כמוסכם',
+  anchorGrowth4: 'לפני התוכנית',
+  anchorGrowth5: 'צמיחה יוצאת דופן, עוזר/ת לאחרים לצמוח',
+  kpiCYCLE_TIME: 'זמן מחזור',
+  kpiWORK_ITEM_AGING: 'גיל פריטים פתוחים',
+  kpiREVIEW_WAITING_TIME: 'זמן המתנה לסקירה',
+  kpiMR_OPEN_TO_FIRST_REVIEW: 'זמן עד סקירה ראשונה (עקיף)',
+};
+
+export type Locale = 'en' | 'he';
+export const LOCALES: { code: Locale; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'he', label: 'עברית' },
+];
+const catalogs: Record<Locale, Record<MessageKey, string>> = { en, he };
+let currentLocale: Locale = 'en';
 let current: Record<MessageKey, string> = en;
 
 export function setLocale(locale: string): void {
-  current = catalogs[locale] ?? en;
+  currentLocale = locale === 'he' ? 'he' : 'en';
+  current = catalogs[currentLocale];
+}
+
+export function getLocale(): Locale {
+  return currentLocale;
+}
+
+/** BCP 47 tag for Intl formatting (dates in the "12 Oct 2026" style for English). */
+export function intlLocale(): string {
+  return currentLocale === 'he' ? 'he-IL' : 'en-GB';
+}
+
+export function isRtl(locale: Locale = currentLocale): boolean {
+  return locale === 'he';
 }
 
 export function t(key: MessageKey): string {
   return current[key];
+}
+
+/** Message with {placeholders}: tf('hello', { name: 'Dana' }). */
+export function tf(key: MessageKey, vars: Record<string, string | number>): string {
+  return current[key].replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+}
+
+/** KPI name by code in the current language; falls back to the server's title. */
+export function kpiTitle(code: string, fallback: string): string {
+  const key = `kpi${code}` as MessageKey;
+  return key in current ? current[key] : fallback;
+}
+
+/** First choice when nothing is saved: the browser's language. */
+export function browserLocale(): Locale {
+  const langs =
+    typeof navigator === 'undefined' ? [] : (navigator.languages ?? [navigator.language]);
+  return langs.some((l) => /^(he|iw)\b/i.test(l ?? '')) ? 'he' : 'en';
 }

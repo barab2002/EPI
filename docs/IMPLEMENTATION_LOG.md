@@ -14,3 +14,4 @@
 - **2026-10-13** — EPI-012c `./epi.sh upgrade` with automatic rollback (ADR-031) and `scripts/test-upgrade.sh`; `offline-install` and `upgrade` share bundle verification and image loading.
 - **2026-10-13** — Data retention (ADR-032): `RetentionService` (daily, one transaction, audited), `retention` CLI, admin view on Data quality; assessments/people kept pending HR.
 - **2026-10-13** — Administration › Settings (ADR-033): connections editable in the UI with Test connection, token presence only, `EPI_SOURCE_HOSTS` allow-list; minimum group size 3 (ADR-034).
+- **2026-10-13** — Hebrew UI stage 1 (ADR-035): typed he catalog, per-user locale (`users.locale`, `PUT /me/locale`), language switch, RTL, Hebrew Intl formatting, layout guard in Hebrew.

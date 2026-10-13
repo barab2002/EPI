@@ -41,7 +41,7 @@ export function ErrorState({ error, onRetry }: { error: Error; onRetry?: () => v
       <p>{error.message}</p>
       {error instanceof ApiError && error.correlationId && (
         <p className="muted">
-          Reference: <code translate="no">{error.correlationId}</code>
+          {t('reference')}: <code translate="no">{error.correlationId}</code>
         </p>
       )}
       {onRetry && (

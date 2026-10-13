@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { KpiCard, KpiExplanation } from '../api';
 import { formatDate, formatValue } from '../format';
-import { t } from '../i18n';
+import { kpiTitle, t, tf } from '../i18n';
 import { useApi } from '../useApi';
 import { CloseIcon } from './Icons';
 import { ErrorState, Loading } from './States';
@@ -61,7 +61,7 @@ export function KpiDrawer({
         onClick={(e) => e.stopPropagation()}
       >
         <header className="drawer-head">
-          <h2 id="drawer-title">{card.title}</h2>
+          <h2 id="drawer-title">{kpiTitle(card.code, card.title)}</h2>
           <button
             ref={closeRef}
             type="button"
@@ -76,16 +76,20 @@ export function KpiDrawer({
         {exp.state === 'error' && <ErrorState error={exp.error} onRetry={exp.reload} />}
         {exp.state === 'ready' && (
           <div className="drawer-body">
-            <p className="lead">{exp.data.question}</p>
+            <p className="lead" dir="auto">
+              {exp.data.question}
+            </p>
             <dl className="defs">
               <dt>{t('formula')}</dt>
               <dd>
-                <code translate="no">{exp.data.formula}</code>
+                <code translate="no" dir="ltr">
+                  {exp.data.formula}
+                </code>
               </dd>
               <dt>{t('population')}</dt>
-              <dd>{exp.data.population}</dd>
+              <dd dir="auto">{exp.data.population}</dd>
               <dt>{t('source')}</dt>
-              <dd>{exp.data.source}</dd>
+              <dd dir="auto">{exp.data.source}</dd>
               {showWindow && (
                 <>
                   <dt>{t('window')}</dt>
@@ -96,37 +100,45 @@ export function KpiDrawer({
                 </>
               )}
               <dt>{t('minimumSample')}</dt>
-              <dd>{exp.data.minimumSample}</dd>
+              <dd dir="auto">{exp.data.minimumSample}</dd>
               <dt>{t('version')}</dt>
               <dd>
                 {exp.data.code} v{exp.data.version},{' '}
-                <code translate="no">{exp.data.implementation}</code>
+                <code translate="no" dir="ltr">
+                  {exp.data.implementation}
+                </code>
               </dd>
             </dl>
             <h3>{t('exclusions')}</h3>
             <ul>
               {exp.data.exclusions.map((x) => (
-                <li key={x}>{x}</li>
+                <li key={x} dir="auto">
+                  {x}
+                </li>
               ))}
             </ul>
             <h3>{t('caveats')}</h3>
             <ul>
               {exp.data.caveats.map((x) => (
-                <li key={x}>{x}</li>
+                <li key={x} dir="auto">
+                  {x}
+                </li>
               ))}
             </ul>
             {card.trend && <p className="muted small">{card.trend.note}</p>}
             <h3>{t('example')}</h3>
-            <p>{exp.data.example.description}</p>
+            <p dir="auto">{exp.data.example.description}</p>
             <p className="muted small">
-              Input: [{exp.data.example.input.join(', ')}]; engine result:{' '}
+              {tf('exampleInput', { input: exp.data.example.input.join(', ') })}{' '}
               <strong>{formatValue(exp.data.example.result.value, exp.data.unit)}</strong> (n=
               {exp.data.example.result.sampleSize}, {exp.data.example.result.confidence})
             </p>
             <h3>{t('actions')}</h3>
             <ul>
               {exp.data.possibleActions.map((x) => (
-                <li key={x}>{x}</li>
+                <li key={x} dir="auto">
+                  {x}
+                </li>
               ))}
             </ul>
             {card.evidence && (
@@ -139,9 +151,9 @@ export function KpiDrawer({
                     <table className="table">
                       <thead>
                         <tr>
-                          <th scope="col">Item</th>
+                          <th scope="col">{t('item')}</th>
                           <th scope="col" className="num">
-                            Value
+                            {t('value')}
                           </th>
                         </tr>
                       </thead>

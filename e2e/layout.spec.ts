@@ -55,3 +55,23 @@ test('no horizontal overflow on key screens', async ({ page }) => {
     await expectNoOverflow(page, path);
   }
 });
+
+test('no horizontal overflow in Hebrew (right-to-left)', async ({ page }) => {
+  test.skip(test.info().project.name !== 'desktop', 'widths are set explicitly');
+  test.setTimeout(120_000);
+  await page.addInitScript(() => window.localStorage.setItem('epi.locale', 'he'));
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByRole('heading', { name: 'כניסה ל-EPI' })).toBeVisible();
+  await expectNoOverflow(page, 'sign-in (he)');
+  await page.getByRole('button', { name: /^Taylor Lead/ }).click();
+  await expect(page.getByRole('button', { name: 'התנתקות' })).toBeVisible();
+  for (const path of ['/', '/kpis', '/reviews', '/organization']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoOverflow(page, `${path} (he)`);
+  }
+  await page.getByRole('link', { name: 'Payments' }).first().click();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoOverflow(page, 'team (he)');
+});

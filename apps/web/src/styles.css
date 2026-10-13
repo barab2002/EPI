@@ -1718,3 +1718,31 @@ textarea[aria-invalid='true'] {
   display: inline-flex;
   align-items: center;
 }
+
+/* ---------- Language (ADR-035) ---------- */
+.segmented-sm button {
+  min-height: 26px;
+  min-width: 0;
+  padding: 0 var(--s-2);
+  font-size: var(--text-caption);
+}
+.login-lang {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--s-4);
+}
+/* Numbers, percentages and Latin names keep their own direction inside Hebrew text. */
+.kpi-value,
+.num,
+time {
+  unicode-bidi: isolate;
+}
+.user > .segmented {
+  flex: none;
+}
+/* Phones: the greeting already shows who is signed in; keep the top bar for brand, language and sign-out. */
+@media (max-width: 599px) {
+  .user > div:first-child {
+    display: none;
+  }
+}

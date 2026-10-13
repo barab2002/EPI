@@ -2,25 +2,26 @@ import { useState } from 'react';
 import { api, DemoUser } from '../api';
 import { MarkIcon } from '../components/Icons';
 import { ErrorState, Skeleton } from '../components/States';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import { MessageKey, t } from '../i18n';
 import { useApi } from '../useApi';
 
 const ROLE_ORDER = ['ADMIN', 'ENGINEERING_MANAGER', 'GROUP_MANAGER', 'TEAM_LEAD', 'DEVELOPER'];
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN: 'Administrator',
-  ENGINEERING_MANAGER: 'Engineering manager',
-  GROUP_MANAGER: 'Group managers',
-  TEAM_LEAD: 'Team leads',
-  DEVELOPER: 'Developers',
+const ROLE_LABEL: Record<string, MessageKey> = {
+  ADMIN: 'loginGroupAdmin',
+  ENGINEERING_MANAGER: 'loginGroupEngineeringManager',
+  GROUP_MANAGER: 'loginGroupGroupManager',
+  TEAM_LEAD: 'loginGroupTeamLead',
+  DEVELOPER: 'loginGroupDeveloper',
 };
 
 /** What each demo role can see — the point of trying several people. */
-const ROLE_HINT: Record<string, string> = {
-  ADMIN: 'Structure, integrations and data quality. No KPIs or private reviews.',
-  ENGINEERING_MANAGER: 'The whole organization and all KPIs.',
-  GROUP_MANAGER: 'Their group’s teams and people.',
-  TEAM_LEAD: 'Their team’s members and KPIs. Writes monthly assessments.',
-  DEVELOPER: 'Their own KPIs and assessments. Their team only as a total.',
+const ROLE_HINT: Record<string, MessageKey> = {
+  ADMIN: 'loginHintAdmin',
+  ENGINEERING_MANAGER: 'loginHintEngineeringManager',
+  GROUP_MANAGER: 'loginHintGroupManager',
+  TEAM_LEAD: 'loginHintTeamLead',
+  DEVELOPER: 'loginHintDeveloper',
 };
 
 const LOGIN_ERRORS: Record<string, MessageKey> = {
@@ -76,6 +77,9 @@ export function Login({
   return (
     <main className="login">
       <div className="login-card">
+        <div className="login-lang">
+          <LanguageSwitch />
+        </div>
         <div className="login-brand">
           <span className="brand-mark">
             <MarkIcon />
@@ -118,8 +122,8 @@ export function Login({
                 if (!list.length) return null;
                 return (
                   <section key={role} className="login-group">
-                    <h2>{ROLE_LABEL[role]}</h2>
-                    <p className="muted small login-hint">{ROLE_HINT[role]}</p>
+                    <h2>{t(ROLE_LABEL[role])}</h2>
+                    <p className="muted small login-hint">{t(ROLE_HINT[role])}</p>
                     <ul>
                       {list.map((u) => (
                         <li key={u.id}>

@@ -216,3 +216,10 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 ## ADR-034 · 2026-10-13 · Accepted (owner) — Minimum group size 3
 
 - The small-group privacy threshold (`EPI_MIN_AGGREGATE_SIZE`) defaults to **3** (was 5): viewers who only see aggregates get no numbers for teams of fewer than 3 people. Managers of the members still see their own people. Answers C7's threshold question; HR/privacy sign-off for real data (B7) is still required.
+
+## ADR-035 · 2026-10-13 · Accepted — Hebrew interface: per-user language, right-to-left, staged
+
+- **Owner decision (ADR-024):** English + Hebrew. Each user picks the language (sidebar / sign-in page switch, "English | עברית"); it is saved to the account (`users.locale`, `PUT /api/v1/me/locale`) and remembered on the browser before sign-in; with nothing saved, the browser language decides.
+- **How:** one typed catalog per language in `apps/web/src/i18n.ts` (the compiler rejects a missing Hebrew key); `tf()` for placeholders; dates and numbers through `Intl` with `he-IL`; `<html lang dir>` set on change, layout already uses CSS logical properties; numbers/percentages isolated so signs stay correct in RTL; people, team and product names stay as entered.
+- **Stages:** (1) infrastructure + every manager/developer screen (this ADR); (2) the administration area; (3) KPI definitions/explanations, which come from the server catalog (until then they show in English, laid out left-to-right with `dir="auto"`).
+- **Checks:** unit tests (placeholders match across languages, Hebrew formatting, switch sets RTL and saves), integration test for the saved preference, and the layout guard runs in Hebrew at six widths.

@@ -1,6 +1,6 @@
 import type { KpiCard as Card } from '../api';
 import { confidenceLabel, formatDate, formatPct, trendLabel, valueParts } from '../format';
-import { t } from '../i18n';
+import { kpiTitle, t } from '../i18n';
 
 export function KpiCardView({
   card,
@@ -17,9 +17,9 @@ export function KpiCardView({
   return (
     <article className="kpi-card" aria-labelledby={`kpi-${card.code}`}>
       <header className="kpi-head">
-        <h3 id={`kpi-${card.code}`}>{card.title}</h3>
+        <h3 id={`kpi-${card.code}`}>{kpiTitle(card.code, card.title)}</h3>
         {card.proxy && <span className="badge badge-warn">{t('proxyLabel')}</span>}
-        {card.synthetic && <span className="badge">Synthetic</span>}
+        {card.synthetic && <span className="badge">{t('synthetic')}</span>}
       </header>
       {card.suppressed ? (
         <>
@@ -41,14 +41,14 @@ export function KpiCardView({
             <p className="trend">
               {card.sampleSize === 0
                 ? t('noData')
-                : `${t('notEnoughData')} (${card.sampleSize} ${card.sampleSize === 1 ? 'item' : 'items'})`}
+                : `${t('notEnoughData')} (${card.sampleSize} ${t(card.sampleSize === 1 ? 'itemOne' : 'itemMany')})`}
             </p>
           )}
           {trend &&
           neutralTrend &&
           (trend.status === 'improved' || trend.status === 'deteriorated') ? (
             <p className="trend">
-              {formatPct(trend.changePct)} {t('trendVsPrevious')}
+              <span dir="ltr">{formatPct(trend.changePct)}</span> {t('trendVsPrevious')}
             </p>
           ) : (
             trend && (
@@ -56,7 +56,7 @@ export function KpiCardView({
                 <span className="trend-label">{trendLabel(trend.status)}</span>{' '}
                 {trend.changePct !== null && (
                   <span>
-                    {formatPct(trend.changePct)} {t('trendVsPrevious')}
+                    <span dir="ltr">{formatPct(trend.changePct)}</span> {t('trendVsPrevious')}
                   </span>
                 )}
               </p>

@@ -5,7 +5,7 @@ import { PageTitle } from '../components/Layout';
 import { ErrorState, Skeleton } from '../components/States';
 import { TeamOverview } from '../components/TeamOverview';
 import { formatMonth, roleLabel } from '../format';
-import { t } from '../i18n';
+import { t, tf } from '../i18n';
 import { useSession } from '../session';
 import { useApi } from '../useApi';
 
@@ -28,11 +28,14 @@ function AssessmentsDue() {
         <h2 id="due-title">
           {t('assessmentsDue')}
           {due.state === 'ready' && due.data.cycle && (
-            <span className="muted"> for {formatMonth(due.data.cycle.periodStart)}</span>
+            <span className="muted">
+              {' '}
+              {tf('forMonth', { month: formatMonth(due.data.cycle.periodStart) })}
+            </span>
           )}
         </h2>
         {due.state === 'ready' && due.data.people.length > 0 && (
-          <span className="badge">{due.data.people.length} to write</span>
+          <span className="badge">{tf('toWrite', { n: due.data.people.length })}</span>
         )}
       </div>
       {due.state === 'loading' && <Skeleton lines={3} />}
@@ -75,10 +78,11 @@ export function HomePage() {
 
   return (
     <>
-      <PageTitle>Hello, {firstName}</PageTitle>
+      <PageTitle>{tf('hello', { name: firstName })}</PageTitle>
       <p className="lead page-lead">
-        {roleLabel(me.roles)}
-        {teamNames && !isAdmin ? ` in ${teamNames}` : ''}
+        {teamNames && !isAdmin
+          ? tf('roleIn', { role: roleLabel(me.roles), teams: teamNames })
+          : roleLabel(me.roles)}
       </p>
 
       {me.canReview && <AssessmentsDue />}
