@@ -139,6 +139,10 @@ Captured by `scripts/e2e-admin.sh --screenshots`: EPI synced against in-process 
 
 ![Administration › People: create a person, assign roles on a scope, grade history](screenshots/30-admin-people.png)
 
+### Administration › Audit log: who changed what and when, filterable; review subjects and text never shown
+
+![Administration › Audit log: who changed what and when, filterable; review subjects and text never shown](screenshots/31-admin-audit-log.png)
+
 ## How these were made
 
 1. `./epi.sh demo` (signs-in users from `./epi.sh credentials`).

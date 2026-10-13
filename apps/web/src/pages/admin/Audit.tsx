@@ -162,7 +162,7 @@ export function AuditTab() {
                   </td>
                   <td>{e.actor?.name ?? <span className="muted">system</span>}</td>
                   <td>
-                    <code>{e.action}</code>
+                    <code className="nowrap">{e.action}</code>
                   </td>
                   <td>
                     {e.resourceLabel ?? (

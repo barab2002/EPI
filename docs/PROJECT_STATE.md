@@ -1,6 +1,6 @@
 # Project state — what actually works (2026-10-13)
 
-**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector (PR #4), screenshots (PR #6), EPI-007 GitLab collector, EPI-008 identity mapping & admin screens, EPI-004b organization admin, scheduled daily sync. Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
+**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector (PR #4), screenshots (PR #6), EPI-007 GitLab collector, EPI-008 identity mapping & admin screens, EPI-004b organization admin, scheduled daily sync, audit-log viewer. Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
 
 ## Working and verified (tests in `TEST_STATUS.md`)
 
@@ -13,6 +13,7 @@
 - **Administration (EPI-008):** admin-only screens for integrations (Sync now, run history), identity mapping (map/unmap Jira & GitLab accounts to people, re-attributing synced data, audited), status mappings and data quality (freshness, coverage, link rate, unmapped statuses). Verified end to end with `scripts/e2e-admin.sh`.
 - **Organization administration (EPI-004b):** groups/teams (create, rename, move, deactivate), people (create, edit, deactivate with session revocation), dated memberships and transfers, roles with scope validation, grades; admins cannot change their own roles; ≥1 admin always remains; all audited, nothing deleted.
 - **Scheduled daily sync (ADR-021):** admin-set local hour + IANA time zone (off by default) on the Integrations tab / `GET|PUT /api/v1/admin/sync-schedule`; in-process minute timer runs all enabled Jira/GitLab connections sequentially, once per local day (DB claim — safe with several processes, DST-safe, same-day catch-up), failures isolated, audited; `EPI_SYNC_SCHEDULER=off` disables it.
+- **Audit-log viewer (ADR-022):** admin-only, read-only Audit log tab and API; filter by action group/exact action, person and dates; keyset paging; review subjects and text never shown.
 - **Demo SSO:** bundled dev-mode Keycloak with generated per-install users (`./epi.sh credentials`).
 - **Auth & RBAC:** opaque server-side sessions (HttpOnly, SameSite=Lax, CSRF header for mutations); demo login only in demo mode. Scope resolution from EPI DB; out-of-scope = 404; small-group suppression (default 5) for aggregate-only viewers; admin sees structure but not KPIs/reviews.
 - **API:** `/health/*`, `/api/v1/me`, organization tree, groups/teams/developers, KPI cards + catalog + explanation, reviews (list, create/update/submit), demo auth. OpenAPI/Swagger at `/api/docs`.
@@ -25,6 +26,6 @@
 - No real Jira connected (needs B1–B3); deleted-issue reconciliation; sprint data.
 - Offline bundle, `install`, `upgrade`, `offline-install` (EPI-012) — commands exit 2 with a message.
 - KPIs computed on request; `kpi_snapshots` not populated yet. Stratification by work type/complexity not shown in UI yet.
-- Audit-log viewer (next).
+- Audit-log retention policy and export (needs owner decision on retention period).
 - Hebrew catalog not written (structure supports it). `PUT /reviews/{id}` replaced by idempotent `POST` upsert.
 - Images not pinned by digest; no SBOM/vulnerability scan (tools not installed).

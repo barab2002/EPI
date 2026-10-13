@@ -113,3 +113,9 @@ Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `depl
 - **Once per day:** the run is claimed with a conditional `UPDATE app_settings … WHERE lastRunDate < <local date>`, so several API processes sharing one database never double-run, and editing the schedule after today's run does not trigger a second one. "At or after the hour" gives same-day catch-up after downtime; keying by local date makes DST gaps and repeated hours run exactly once.
 - **Safety:** off by default (admin opt-in); sequential runs (gentle on Jira/GitLab rate limits); existing one-running-sync guard per connection; failures are isolated and never advance cursors; audited with counts only. `EPI_SYNC_SCHEDULER=off` disables it per process for operators who prefer an external scheduler calling the CLI.
 - **Settings store:** new `app_settings` table (key → non-secret JSON) for admin-editable runtime settings.
+
+## ADR-022 · 2026-10-13 · Accepted — Read-only audit-log viewer for administrators
+
+- **Decision:** admins get `GET /api/v1/admin/audit-events` (filters: exact action or `prefix.`, actor, from/to; newest first; opaque keyset cursor on `(at, id)` with microsecond timestamps, so paging never skips or repeats events with equal times) and `GET /api/v1/admin/audit-actions`, shown as an "Audit log" tab. Spec §4.9 "Audit & Operations".
+- **Privacy:** audit metadata never holds review text or personal values (ADR-020). For `assessment.*` events the viewer additionally withholds the subject and resource ID — admins see who acted and when, never about whom (spec §5: administrators do not see private reviews).
+- **Read-only:** no edit/delete endpoint exists; the table stays append-only. Retention/export are later work (needs an owner decision on retention period).
