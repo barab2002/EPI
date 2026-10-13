@@ -1,6 +1,6 @@
 # Project state — what actually works (2026-10-12)
 
-**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector (PR #4), screenshots (PR #6), EPI-007 GitLab collector, EPI-008 identity mapping & admin screens. Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
+**Milestone:** On `main`: vertical slice 1, Keycloak SSO (EPI-003) and demo Keycloak. EPI-006 Jira collector (PR #4), screenshots (PR #6), EPI-007 GitLab collector, EPI-008 identity mapping & admin screens, EPI-004b organization admin. Demo uses synthetic data. Not production-ready (no real Jira/GitLab connected, no offline bundle).
 
 ## Working and verified (tests in `TEST_STATUS.md`)
 
@@ -11,6 +11,7 @@
 - **Jira DC collector (EPI-006):** read-only REST client (paging, retries, timeouts), relative-time incremental JQL with 48 h overlap and 6-month backfill, status mapping by ID (inferred + admin override), metadata-only idempotent upserts, safe cursor, one run per connection; CLI `jira-add/check/sync`; admin API for integrations, sync runs and status mappings. Verified against a fake Jira DC (see `JIRA.md`).
 - **GitLab collector (EPI-007):** read-only REST v4 (`read_api`), MRs + reviewer requests/notes/approvals as metadata only, bot/self exclusion, Jira-key links with confidence, `updated_after` incremental with overlap, CLI `gitlab-add/check/sync`, admin sync dispatch. Feeds Review Waiting Time end to end. See `GITLAB.md`.
 - **Administration (EPI-008):** admin-only screens for integrations (Sync now, run history), identity mapping (map/unmap Jira & GitLab accounts to people, re-attributing synced data, audited), status mappings and data quality (freshness, coverage, link rate, unmapped statuses). Verified end to end with `scripts/e2e-admin.sh`.
+- **Organization administration (EPI-004b):** groups/teams (create, rename, move, deactivate), people (create, edit, deactivate with session revocation), dated memberships and transfers, roles with scope validation, grades; admins cannot change their own roles; ≥1 admin always remains; all audited, nothing deleted.
 - **Demo SSO:** bundled dev-mode Keycloak with generated per-install users (`./epi.sh credentials`).
 - **Auth & RBAC:** opaque server-side sessions (HttpOnly, SameSite=Lax, CSRF header for mutations); demo login only in demo mode. Scope resolution from EPI DB; out-of-scope = 404; small-group suppression (default 5) for aggregate-only viewers; admin sees structure but not KPIs/reviews.
 - **API:** `/health/*`, `/api/v1/me`, organization tree, groups/teams/developers, KPI cards + catalog + explanation, reviews (list, create/update/submit), demo auth. OpenAPI/Swagger at `/api/docs`.
@@ -23,6 +24,6 @@
 - No real Jira connected (needs B1–B3); deleted-issue reconciliation; sprint data.
 - Offline bundle, `install`, `upgrade`, `offline-install` (EPI-012) — commands exit 2 with a message.
 - KPIs computed on request; `kpi_snapshots` not populated yet. Stratification by work type/complexity not shown in UI yet.
-- Admin CRUD for groups/teams/memberships/roles (next), audit viewer, scheduled daily sync.
+- Audit-log viewer, scheduled daily sync (next).
 - Hebrew catalog not written (structure supports it). `PUT /reviews/{id}` replaced by idempotent `POST` upsert.
 - Images not pinned by digest; no SBOM/vulnerability scan (tools not installed).

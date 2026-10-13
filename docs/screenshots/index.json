@@ -110,5 +110,13 @@
   {
     "name": "28-admin-data-quality",
     "title": "Administration \u203a Data quality: freshness, identity coverage, MR-to-Jira links, unmapped statuses"
+  },
+  {
+    "name": "29-admin-organization",
+    "title": "Administration \u203a Organization: groups and teams, members with dates, add/transfer and end memberships"
+  },
+  {
+    "name": "30-admin-people",
+    "title": "Administration \u203a People: create a person, assign roles on a scope, grade history"
   }
 ]

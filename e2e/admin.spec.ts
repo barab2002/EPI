@@ -76,3 +76,59 @@ test('admin syncs sources, maps identities and statuses, and sees data quality',
   await page.goto('/admin/identities');
   await expect(page.getByText('Administrator role required.')).toBeVisible();
 });
+
+test('admin builds a team and onboards a person; the group manager sees the new team', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Avery Admin/ }).click();
+  await page.getByRole('link', { name: 'Administration' }).click();
+  // Two links are called "Organization" (main nav and admin tab); go to the admin tab directly.
+  await page.goto('/admin/organization');
+
+  // New team "Edge" in the Platform group.
+  const platform = page
+    .locator('li')
+    .filter({ has: page.getByText('Platform', { exact: true }) })
+    .first();
+  await platform.getByText('Rename / add team').click();
+  await platform.getByRole('textbox', { name: 'New team in Platform' }).fill('Edge');
+  await platform.getByRole('textbox', { name: 'New team in Platform' }).press('Enter');
+  await expect(page.locator('p.ok-text')).toContainText('Team Edge created.');
+
+  // People: create a person, make them team lead of Edge, set a grade.
+  await page.getByRole('link', { name: 'People' }).click();
+  await page.getByPlaceholder('Full name').fill('Rowan Newhire');
+  await page.getByPlaceholder('E-mail (optional)').fill('rowan.newhire@example.invalid');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByRole('heading', { name: 'Rowan Newhire' })).toBeVisible();
+  await page.getByLabel(/^Scope/).selectOption({ label: 'Edge (Platform)' });
+  await page.getByRole('button', { name: 'Assign role' }).click();
+  await expect(page.getByRole('cell', { name: 'Edge' })).toBeVisible();
+  await page.getByLabel(/^New grade/).selectOption({ label: 'Senior' });
+  await page.getByRole('button', { name: 'Set grade' }).click();
+  await expect(page.getByText(/^Senior:/)).toBeVisible();
+  await shot(page, '30-admin-people');
+
+  // Organization: add Rowan to Edge.
+  await page.goto('/admin/organization');
+  await page.getByRole('button', { name: 'Edge' }).click();
+  await page.getByRole('searchbox', { name: 'Find a person to add…' }).fill('Rowan');
+  await page.getByRole('button', { name: 'Rowan Newhire' }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.locator('p.ok-text')).toContainText('Rowan Newhire added to Edge.');
+  await expect(page.getByRole('cell', { name: 'Rowan Newhire' })).toBeVisible();
+  await shot(page, '29-admin-organization');
+
+  // The Platform group manager now sees the new team; the Product manager does not.
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByRole('button', { name: /^Gal Groupman/ }).click();
+  await page.getByRole('link', { name: 'Organization', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Edge' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByRole('button', { name: /^Noa Groupwoman/ }).click();
+  await page.getByRole('link', { name: 'Organization', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Mobile' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Edge' })).toHaveCount(0);
+});

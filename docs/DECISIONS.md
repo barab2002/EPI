@@ -99,3 +99,10 @@ Owner has no Keycloak and asked for ready-made users. `./epi.sh demo` adds `depl
 - Collectors store external IDs on records (`assignee_external_id`, `author_external_id`, `actor_external_id`) and list seen accounts in `source_accounts` (display names kept only for the admin mapping screen), so a mapping made later re-attributes existing data and an unmapping removes attribution; both are audited.
 - One account per person and source; bot accounts cannot be mapped.
 - Data quality is a first-class admin page: freshness (stale after 26 h), mapping coverage, MR-to-Jira link rate, statuses without category.
+
+## ADR-020 · 2026-10-13 · Accepted — Organization administration safeguards
+
+- Administrators manage structure, people, memberships, roles and grades, but **cannot change their own roles or deactivate themselves**: otherwise an admin could grant themselves a manager role and read private reviews, which spec §5 forbids. A second administrator must do it (two-person rule).
+- At least one active administrator always remains (checked in the service, below the API's self-change rule).
+- No hard deletes: memberships, roles and grades end with a date; teams are deactivated only when empty. Transfers end the old membership at the new start instant in one transaction, so historical KPIs stay attributed to the team at the time.
+- Deactivating a person revokes their sessions immediately. Audit entries record which fields changed, never personal values.
