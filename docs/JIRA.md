@@ -25,7 +25,7 @@ EPI_JIRA_TOKEN_FILE=/etc/epi/jira_token node dist/cli.js jira-check --name jira-
 EPI_JIRA_TOKEN_FILE=/etc/epi/jira_token node dist/cli.js jira-sync --name jira-main   # first run = 6-month backfill
 ```
 
-(Inside the container: `docker compose exec epi node dist/cli.js …`.) Admins can also use the API: `GET /api/v1/admin/integrations`, `POST /api/v1/admin/sync`, `GET /api/v1/admin/sync-runs`, `GET|PUT /api/v1/admin/status-mappings…`.
+(On an installation: `./epi.sh cli jira-check --name …`, which runs inside the app container.) Admins can also use the API: `GET /api/v1/admin/integrations`, `POST /api/v1/admin/sync`, `GET /api/v1/admin/sync-runs`, `GET|PUT /api/v1/admin/status-mappings…`.
 
 ## 3. Map people and statuses
 

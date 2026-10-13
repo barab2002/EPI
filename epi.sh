@@ -76,6 +76,8 @@ Usage: ./epi.sh <command> [options]
   source-token <REF> [--remove]
                       Store a Jira/GitLab token on this server (asks for it; never in chat or Git)
   source-ca <ca.pem>  Trust the company CA of Jira/GitLab https certificates
+  cli <command> ...   Run a server command in the app (setup-admin, directory-check, jira-check, …;
+                      ./epi.sh cli help lists them)
   start [--no-wait] | stop   Start / stop the stack (data volume is kept)
   status              Show containers and application health
   logs                Follow application logs
@@ -492,6 +494,10 @@ case "${1:-help}" in
   sso-setup) cmd_sso_setup ;;
   source-token) shift; cmd_source_token "$@" ;;
   source-ca) shift; cmd_source_ca "$@" ;;
+  cli)
+    # EPI's server commands (node dist/cli.js) inside the running app container, e.g. setup-admin.
+    shift
+    if [ -t 0 ]; then compose exec epi node dist/cli.js "$@"; else compose exec -T epi node dist/cli.js "$@"; fi ;;
   credentials)
     [ -f "$KC_DIR/demo-credentials.txt" ] || die "no demo credentials yet — run ./epi.sh demo"
     cat "$KC_DIR/demo-credentials.txt" ;;
