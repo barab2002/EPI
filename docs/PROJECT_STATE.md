@@ -4,6 +4,8 @@
 
 ## Working and verified (tests in `TEST_STATUS.md`)
 
+- **`./epi.sh up` (ADR-038):** the real app on one computer in one command — production mode, empty database (own volume), sign-in with local accounts (Keycloak, one-time password changed at first sign-in) or AD when `.epi/sso.conf` exists, the owner becomes administrator, 127.0.0.1 only; builds inside Docker when Node/pnpm are missing and rebuilds when the code changed. Verified by `scripts/test-up.sh`.
+
 - **First setup (ADR-037):** `./epi.sh cli setup-admin --name … --email … --org …` creates the organization and the first administrator on an empty installation; administrators then build groups/teams in the UI (empty ones are listed for them).
 
 - **Source tokens and company CA (ADR-036):** `./epi.sh source-token EPI_JIRA_TOKEN` / `EPI_GITLAB_TOKEN` (hidden input) and `./epi.sh source-ca <pem>`; the running app, its scheduler, Settings › Test connection and the CLI read them from `.epi/sources` (read-only mount). Verified in the offline install test.

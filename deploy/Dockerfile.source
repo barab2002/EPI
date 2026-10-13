@@ -1,0 +1,38 @@
+# Builds EPI from source inside Docker, for computers without Node/pnpm (`./epi.sh up`/`build`).
+# Needs registry/npm access during the build only. The runtime stage matches deploy/Dockerfile
+# (checked by scripts/dockerfiles.test.mjs).
+ARG EPI_NODE_IMAGE=docker.io/library/node:22-alpine
+FROM ${EPI_NODE_IMAGE} AS source-build
+WORKDIR /src
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+# Optional company CA for a TLS-inspecting proxy (EPI_BUILD_CA_FILE): a build secret, so it is
+# used for the downloads only and never stored in an image layer.
+RUN --mount=type=secret,id=build_ca \
+    if [ -s /run/secrets/build_ca ]; then \
+      export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca npm_config_cafile=/run/secrets/build_ca; fi \
+ && pnpm install --frozen-lockfile
+COPY . .
+RUN --mount=type=secret,id=build_ca \
+    if [ -s /run/secrets/build_ca ]; then \
+      export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca npm_config_cafile=/run/secrets/build_ca; fi \
+ && pnpm --filter @epi/api run build && pnpm --filter @epi/web run build \
+ && pnpm --filter @epi/api deploy --prod --legacy build/api \
+ && rm -rf build/api/src build/api/test && cp -r apps/web/dist build/web
+
+# --- runtime (same as deploy/Dockerfile) ---
+FROM ${EPI_NODE_IMAGE}
+ENV NODE_ENV=production \
+    PORT=8080 \
+    EPI_WEB_DIST=/app/web
+WORKDIR /app
+COPY --from=source-build --chown=node:node /src/build/api/ /app/
+COPY --from=source-build --chown=node:node /src/build/web/ /app/web/
+COPY --chown=node:node deploy/entrypoint.sh /app/entrypoint.sh
+USER node
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=6 \
+  CMD wget -qO- http://127.0.0.1:8080/health/ready >/dev/null || exit 1
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]

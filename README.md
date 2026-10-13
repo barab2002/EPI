@@ -4,9 +4,32 @@ One self-hosted web application for engineering managers and developers: organiz
 
 > **Status (2026-10-13): pilot feature set on synthetic data** — Keycloak SSO, Jira/GitLab collectors (tested against fakes), identity mapping, organization admin, daily sync, audit log, offline bundle. Not yet connected to real Jira/GitLab/Keycloak; see [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md). Guides: [SSO](docs/KEYCLOAK.md) · [Jira](docs/JIRA.md) · [GitLab](docs/GITLAB.md) · [Offline install](docs/OFFLINE_INSTALL.md).
 
+## Run the real app on your computer (one command)
+
+Prerequisites: Docker (Docker Desktop on macOS/Windows; on Windows run it from WSL2) and this
+repository. Node and pnpm are optional: without them the app is built inside Docker.
+
+```bash
+./epi.sh up
+```
+
+The first time it asks for your name, work e-mail and organization name, then:
+
+- builds EPI (only when the code changed since the last build) and starts it in **production
+  mode with an empty database**: no demo people, no demo sign-in;
+- sets up sign-in on this computer and makes you the administrator; it prints a one-time password
+  (`./epi.sh credentials` shows it again) and asks you to choose your own at first sign-in;
+- opens nothing to the network: EPI is at http://127.0.0.1:8080, reachable from this computer only.
+
+Then, in Administration: Organization (groups, teams) → People → Settings (Jira, GitLab; tokens
+with `./epi.sh source-token`). `./epi.sh stop` stops it; `./epi.sh up` starts it again with your
+data. With `.epi/sso.conf` present (see [docs/KEYCLOAK.md](docs/KEYCLOAK.md)), `up` signs people in
+with Active Directory instead. Behind a company proxy that inspects HTTPS, set `EPI_BUILD_CA_FILE`
+to its CA certificate (and `EPI_BUILD_NETWORK=host` if the proxy runs on your computer).
+
 ## Quick start (demo, synthetic data)
 
-Prerequisites: Docker Engine 24+ with Compose v2, Node 22 + pnpm 10 (to build), ~5 GB disk.
+Prerequisites: Docker Engine 24+ with Compose v2, ~5 GB disk (Node 22 + pnpm 10 optional). The demo keeps its data apart from the real app (separate database volumes).
 
 ```bash
 ./epi.sh doctor          # checks prerequisites
