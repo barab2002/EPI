@@ -132,55 +132,58 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
       {isSelf && (
         <p className="muted small">You cannot change your own roles — ask another administrator.</p>
       )}
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col">Role</th>
-            <th scope="col">Scope</th>
-            <th scope="col">Period</th>
-            <th scope="col">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Developer</td>
-            <td className="muted">own data (implicit)</td>
-            <td>—</td>
-            <td />
-          </tr>
-          {p.roles.map((r) => (
-            <tr key={r.id}>
-              <td>{ROLES.find((x) => x.role === r.role)?.label ?? r.role}</td>
-              <td>{r.scope_type === 'SYSTEM' ? 'System' : r.scope_name}</td>
-              <td>
-                {shortDate(r.effective_from)} – {r.effective_to ? shortDate(r.effective_to) : 'now'}
-              </td>
-              <td>
-                {!r.effective_to && !isSelf && (
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() =>
-                      window.confirm(
-                        `End this ${r.role.toLowerCase().replace('_', ' ')} role today?`,
-                      ) &&
-                      run(
-                        () => api.post(`/api/v1/admin/role-assignments/${r.id}/end`, {}),
-                        'Role ended.',
-                        reload,
-                      )
-                    }
-                  >
-                    End role
-                  </button>
-                )}
-              </td>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Role</th>
+              <th scope="col">Scope</th>
+              <th scope="col">Period</th>
+              <th scope="col">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Developer</td>
+              <td className="muted">own data (implicit)</td>
+              <td>—</td>
+              <td />
+            </tr>
+            {p.roles.map((r) => (
+              <tr key={r.id}>
+                <td>{ROLES.find((x) => x.role === r.role)?.label ?? r.role}</td>
+                <td>{r.scope_type === 'SYSTEM' ? 'System' : r.scope_name}</td>
+                <td>
+                  {shortDate(r.effective_from)} –{' '}
+                  {r.effective_to ? shortDate(r.effective_to) : 'now'}
+                </td>
+                <td>
+                  {!r.effective_to && !isSelf && (
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() =>
+                        window.confirm(
+                          `End this ${r.role.toLowerCase().replace('_', ' ')} role today?`,
+                        ) &&
+                        run(
+                          () => api.post(`/api/v1/admin/role-assignments/${r.id}/end`, {}),
+                          'Role ended.',
+                          reload,
+                        )
+                      }
+                    >
+                      End role
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {!isSelf && p.active && (
         <form
           className="inline-form"

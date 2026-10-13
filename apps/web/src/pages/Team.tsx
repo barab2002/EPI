@@ -50,29 +50,31 @@ export function TeamPage() {
       {d.members && (
         <section className="panel">
           <h2>{t('members')}</h2>
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">{t('grade')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {d.members.map((m) => (
-                <tr key={m.id}>
-                  <td>
-                    {d.access === 'managed' ? (
-                      <Link to={`/developers/${m.id}`}>{m.display_name}</Link>
-                    ) : (
-                      m.display_name
-                    )}
-                    {m.is_lead && <span className="badge"> {t('lead')}</span>}
-                  </td>
-                  <td>{m.grade ?? '—'}</td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">{t('grade')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {d.members.map((m) => (
+                  <tr key={m.id}>
+                    <td>
+                      {d.access === 'managed' ? (
+                        <Link to={`/developers/${m.id}`}>{m.display_name}</Link>
+                      ) : (
+                        m.display_name
+                      )}
+                      {m.is_lead && <span className="badge"> {t('lead')}</span>}
+                    </td>
+                    <td>{m.grade ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
     </>

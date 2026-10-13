@@ -59,49 +59,55 @@ export function StatusesTab() {
         <Empty>No statuses yet — they appear after the first Jira sync.</Empty>
       )}
       {list.state === 'ready' && list.data.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Connection</th>
-              <th scope="col">Jira status</th>
-              <th scope="col">EPI category</th>
-              <th scope="col">Set by</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.data.map((m) => (
-              <tr key={`${m.connection}:${m.source_status_id}`}>
-                <td>{m.connection}</td>
-                <td>
-                  {m.source_status_name} <span className="muted small">#{m.source_status_id}</span>
-                </td>
-                <td>
-                  <label className="sr-only" htmlFor={`cat-${m.connection}-${m.source_status_id}`}>
-                    Category for {m.source_status_name}
-                  </label>
-                  <select
-                    id={`cat-${m.connection}-${m.source_status_id}`}
-                    value={m.category ?? ''}
-                    onChange={(e) => save(m, e.target.value)}
-                  >
-                    {CATEGORIES.map(([v, label]) => (
-                      <option key={v} value={v}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <span
-                    className={`badge ${m.origin === 'admin' ? 'badge-managed' : 'badge-warn'}`}
-                  >
-                    {m.origin === 'admin' ? 'Administrator' : 'Inferred — please confirm'}
-                  </span>
-                </td>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Connection</th>
+                <th scope="col">Jira status</th>
+                <th scope="col">EPI category</th>
+                <th scope="col">Set by</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {list.data.map((m) => (
+                <tr key={`${m.connection}:${m.source_status_id}`}>
+                  <td>{m.connection}</td>
+                  <td>
+                    {m.source_status_name}{' '}
+                    <span className="muted small">#{m.source_status_id}</span>
+                  </td>
+                  <td>
+                    <label
+                      className="sr-only"
+                      htmlFor={`cat-${m.connection}-${m.source_status_id}`}
+                    >
+                      Category for {m.source_status_name}
+                    </label>
+                    <select
+                      id={`cat-${m.connection}-${m.source_status_id}`}
+                      value={m.category ?? ''}
+                      onChange={(e) => save(m, e.target.value)}
+                    >
+                      {CATEGORIES.map(([v, label]) => (
+                        <option key={v} value={v}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <span
+                      className={`badge ${m.origin === 'admin' ? 'badge-managed' : 'badge-warn'}`}
+                    >
+                      {m.origin === 'admin' ? 'Administrator' : 'Inferred — please confirm'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

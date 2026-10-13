@@ -112,48 +112,52 @@ function TeamMembers({
       {members.state === 'loading' && <Loading />}
       {members.state === 'error' && <ErrorState error={members.error} onRetry={members.reload} />}
       {members.state === 'ready' && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Person</th>
-              <th scope="col">Since</th>
-              <th scope="col">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {current.map((m) => (
-              <tr key={m.id}>
-                <td>{m.display_name}</td>
-                <td>{shortDate(m.effective_from)}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() =>
-                      window.confirm(`End ${m.display_name}'s membership in ${team.name} today?`) &&
-                      run(
-                        () => api.post(`/api/v1/admin/memberships/${m.id}/end`, {}),
-                        `${m.display_name} left ${team.name}.`,
-                        reload,
-                      )
-                    }
-                  >
-                    End membership
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {current.length === 0 && (
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
               <tr>
-                <td colSpan={3} className="muted">
-                  No current members.
-                </td>
+                <th scope="col">Person</th>
+                <th scope="col">Since</th>
+                <th scope="col">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {current.map((m) => (
+                <tr key={m.id}>
+                  <td>{m.display_name}</td>
+                  <td>{shortDate(m.effective_from)}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() =>
+                        window.confirm(
+                          `End ${m.display_name}'s membership in ${team.name} today?`,
+                        ) &&
+                        run(
+                          () => api.post(`/api/v1/admin/memberships/${m.id}/end`, {}),
+                          `${m.display_name} left ${team.name}.`,
+                          reload,
+                        )
+                      }
+                    >
+                      End membership
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {current.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="muted">
+                    No current members.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
       {past.length > 0 && (
         <details>

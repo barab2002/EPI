@@ -161,44 +161,46 @@ export function IdentitiesTab() {
         </Empty>
       )}
       {accounts.state === 'ready' && accounts.data.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Account</th>
-              <th scope="col">Source</th>
-              <th scope="col">Activity</th>
-              <th scope="col">Last seen</th>
-              <th scope="col">{status === 'unmapped' ? 'Map to person' : 'Mapped to'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts.data.map((a) => (
-              <tr key={`${a.source}:${a.external_id}`}>
-                <td>
-                  <strong>{a.display_name ?? '—'}</strong>
-                  <div className="muted small">
-                    <code>{a.external_id}</code>
-                  </div>
-                </td>
-                <td>{a.source === 'jira' ? 'Jira' : 'GitLab'}</td>
-                <td>{a.activity}</td>
-                <td>{formatTime(a.last_seen_at)}</td>
-                <td>
-                  {a.user_id ? (
-                    <>
-                      {a.user_name}{' '}
-                      <button type="button" className="btn" onClick={() => unmap(a)}>
-                        Unmap
-                      </button>
-                    </>
-                  ) : (
-                    <PersonPicker account={a} onPick={(p) => map(a, p)} />
-                  )}
-                </td>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Account</th>
+                <th scope="col">Source</th>
+                <th scope="col">Activity</th>
+                <th scope="col">Last seen</th>
+                <th scope="col">{status === 'unmapped' ? 'Map to person' : 'Mapped to'}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {accounts.data.map((a) => (
+                <tr key={`${a.source}:${a.external_id}`}>
+                  <td>
+                    <strong>{a.display_name ?? '—'}</strong>
+                    <div className="muted small">
+                      <code>{a.external_id}</code>
+                    </div>
+                  </td>
+                  <td>{a.source === 'jira' ? 'Jira' : 'GitLab'}</td>
+                  <td>{a.activity}</td>
+                  <td>{formatTime(a.last_seen_at)}</td>
+                  <td>
+                    {a.user_id ? (
+                      <>
+                        {a.user_name}{' '}
+                        <button type="button" className="btn" onClick={() => unmap(a)}>
+                          Unmap
+                        </button>
+                      </>
+                    ) : (
+                      <PersonPicker account={a} onPick={(p) => map(a, p)} />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

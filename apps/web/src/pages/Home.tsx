@@ -35,7 +35,7 @@ export function HomePage() {
                     <Link className="tile" to={`/teams/${tm.id}`}>
                       <strong>{tm.name}</strong>
                       <span className="muted small">
-                        {tm.group.name} · {tm.memberCount} {t('members').toLowerCase()}
+                        {tm.memberCount} {t('members').toLowerCase()} in {tm.group.name}
                       </span>
                     </Link>
                   </li>
@@ -57,7 +57,7 @@ export function HomePage() {
               />
             ))}
           <p>
-            <Link to={`/developers/${me.user.id}`}>Open my profile and assessments →</Link>
+            <Link to={`/developers/${me.user.id}`}>Open my profile and assessments</Link>
           </p>
         </>
       )}
