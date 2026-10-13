@@ -36,6 +36,8 @@ test('no horizontal overflow on key screens', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expectNoOverflow(page, 'team');
   await page.getByRole('button', { name: 'Sign out' }).click();
+  // Sign-out may redirect through the IdP (demo Keycloak); let it finish before navigating again.
+  await expect(page.getByRole('heading', { name: 'Sign in to EPI' })).toBeVisible();
   await signIn(page, /^Avery Admin/);
   for (const path of [
     '/admin/organization',

@@ -58,6 +58,7 @@ test('capture key screens', async ({ page }) => {
   await page.getByRole('link', { name: 'KPI catalog' }).click();
   await shoot(page, '07-kpi-catalog');
   await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page.getByRole('heading', { name: 'Sign in to EPI' })).toBeVisible();
 
   await signIn(page, /^Morgan Example/);
   await page.getByRole('link', { name: 'Organization' }).first().click();
@@ -66,6 +67,7 @@ test('capture key screens', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Platform');
   await shoot(page, '08b-group');
   await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page.getByRole('heading', { name: 'Sign in to EPI' })).toBeVisible();
 
   await signIn(page, /^Avery Admin/);
   await page.goto('/admin/organization');

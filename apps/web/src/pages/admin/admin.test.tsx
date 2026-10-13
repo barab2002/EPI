@@ -109,6 +109,18 @@ describe('DataQualityTab', () => {
           unmappedAccounts: 0,
         },
       }),
+      '/api/v1/admin/retention': () => ({
+        months: 24,
+        automatic: true,
+        cutoff: '2024-10-13T12:00:00Z',
+        due: { workItems: 0, auditEvents: 3 },
+        categories: [],
+        lastRun: {
+          at: '2026-10-13T03:00:00Z',
+          cutoff: '2024-10-13T03:00:00Z',
+          counts: { auditEvents: 1 },
+        },
+      }),
     });
     render(
       <MemoryRouter>
@@ -120,6 +132,13 @@ describe('DataQualityTab', () => {
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getAllByText('N/A')).toHaveLength(2);
     expect(screen.getByText('Parked')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        /older than 24 months \(before 13 Oct 2024\) are deleted automatically once a day/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Due now: 3 records')).toBeInTheDocument();
+    expect(screen.getByText(/Last run: .*, 1 record deleted/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Map the remaining accounts/ })).toHaveAttribute(
       'href',
       '/admin/identities',

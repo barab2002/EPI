@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import type { DataQuality } from '../../api';
+import type { DataQuality, RetentionInfo } from '../../api';
 import { ErrorState, Skeleton } from '../../components/States';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
+import { shortDate } from './shared';
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
@@ -27,6 +28,44 @@ function Metric({
       <p className={`kpi-value${warn ? ' warn-value' : ''}`}>{value}</p>
       <p className="muted small">{hint}</p>
     </article>
+  );
+}
+
+/** How long EPI keeps data (ADR-032). Read-only: deletion runs daily on the server. */
+export function RetentionSection() {
+  const r = useApi<RetentionInfo>('/api/v1/admin/retention');
+  if (r.state === 'loading') return <Skeleton lines={2} />;
+  if (r.state === 'error') return <ErrorState error={r.error} onRetry={r.reload} />;
+  const d = r.data;
+  const total = (c: Record<string, number> | null | undefined) =>
+    c ? Object.values(c).reduce((a, b) => a + b, 0) : 0;
+  return (
+    <section className="panel" aria-labelledby="retention-title">
+      <h2 id="retention-title">Data retention</h2>
+      {d.months === null ? (
+        <p className="muted">
+          Retention is switched off on this server (EPI_RETENTION_MONTHS=off).
+        </p>
+      ) : (
+        <>
+          <p>
+            Source activity, sync history, stored KPI snapshots and audit entries older than{' '}
+            {d.months} months (before {shortDate(d.cutoff)}) are deleted
+            {d.automatic ? ' automatically once a day' : ' when an administrator runs it'}.
+            Assessments, people, roles and team history are kept.
+          </p>
+          <p className="meta-row">
+            <span>Due now: {plural(total(d.due), 'record')}</span>
+            <span>
+              Last run:{' '}
+              {d.lastRun
+                ? `${formatTime(d.lastRun.at)}, ${plural(total(d.lastRun.counts), 'record')} deleted`
+                : 'never'}
+            </span>
+          </p>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -127,6 +166,7 @@ export function DataQualityTab() {
           </>
         )}
       </section>
+      <RetentionSection />
     </>
   );
 }

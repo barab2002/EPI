@@ -1,3 +1,4 @@
+import { retentionMonths } from './retention/retention';
 import { readFileSync } from 'node:fs';
 
 /** Runtime configuration from environment variables. Secrets are never logged. */
@@ -45,9 +46,11 @@ export interface EpiConfig {
   kpiMinimumSample: number;
   kpiLowConfidenceFloor: number;
   trendThresholdPct: number;
-  /** Run the in-process daily sync scheduler (EPI_SYNC_SCHEDULER=off disables it). */
+  /** Run in-process daily jobs: sync and retention (EPI_SYNC_SCHEDULER=off disables both). */
   syncScheduler: boolean;
   directory: DirectoryConfig | null;
+  /** Delete source activity, audit entries and runs older than this (EPI_RETENTION_MONTHS). */
+  retentionMonths: number | null;
 }
 
 function int(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
@@ -95,6 +98,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): EpiConfig {
     trendThresholdPct: int(env, 'EPI_TREND_THRESHOLD_PCT', 8),
     syncScheduler: syncSchedulerFlag(env.EPI_SYNC_SCHEDULER),
     directory: resolveDirectory(env, mode),
+    retentionMonths: retentionMonths(env.EPI_RETENTION_MONTHS),
   };
 }
 

@@ -12,3 +12,4 @@
 - **2026-10-13** — Owner decisions (ADR-024). EPI-003b (ADR-025): production realm generator, `sso-setup`, `compose.sso.yaml` (Keycloak prod mode, own DB, vault, truststore), synthetic LDAPS directory fixture and SSO e2e.
 - **2026-10-13** — UX-01 UI/UX pass complete (PRs #17–#22: design system, 6 slices, CI contrast check, refreshed screenshots). EPI-004c AD team import (ADR-030): `planImport`, directory mappings migration, admin API (preview/apply with plan hash), Directory tab, `directory-check`, compose wiring; fixed `sso.conf` loading in `epi.sh`.
 - **2026-10-13** — EPI-012c `./epi.sh upgrade` with automatic rollback (ADR-031) and `scripts/test-upgrade.sh`; `offline-install` and `upgrade` share bundle verification and image loading.
+- **2026-10-13** — Data retention (ADR-032): `RetentionService` (daily, one transaction, audited), `retention` CLI, admin view on Data quality; assessments/people kept pending HR.

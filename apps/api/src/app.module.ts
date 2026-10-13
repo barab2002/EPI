@@ -27,6 +27,8 @@ import { KpiService } from './kpi/kpi.service';
 import { OrgController } from './org/org.controller';
 import { OrgService } from './org/org.service';
 import { ScopeService } from './org/scope.service';
+import { RetentionController } from './retention/retention.controller';
+import { RetentionService } from './retention/retention.service';
 import { ReviewsController } from './reviews/reviews.controller';
 import { ReviewsService } from './reviews/reviews.service';
 
@@ -48,6 +50,7 @@ export class AppModule {
         OrgAdminController,
         AuditController,
         DirectoryController,
+        RetentionController,
       ],
       providers: [
         { provide: EPI_CONFIG, useValue: config },
@@ -64,6 +67,7 @@ export class AppModule {
         IdentityService,
         OrgAdminService,
         DirectoryService,
+        RetentionService,
         {
           provide: DIRECTORY_READER,
           useValue: config.directory ? new DirectoryClient(config.directory) : null,

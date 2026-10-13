@@ -198,3 +198,10 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
 - **Self-replacement:** `upgrade` re-executes from a temporary copy of `epi.sh` because bash reads scripts while running and the upgrade replaces `epi.sh` itself.
 - **Test hooks:** `scripts/bundle.sh` accepts `EPI_BUNDLE_VERSION` and `EPI_BUNDLE_SOURCE_IMAGE` (used only by `scripts/test-upgrade.sh` to bundle a deliberately broken release).
 - **Not in CI:** the test builds three bundles (~6 min); it runs before release like `test-offline-install.sh`.
+
+## ADR-032 · 2026-10-13 · Accepted — Data retention: 24 months, daily, source activity and logs only
+
+- **Owner decision (ADR-024):** keep data 24 months with automatic deletion. `EPI_RETENTION_MONTHS` (default 24; 13–240; `off`). The 13-month floor keeps the 6-month backfill, 180-day KPI windows plus their comparison window, and a year of audit history.
+- **Deleted when older than the cutoff (now − months, UTC calendar months):** Jira work items by last update (with status history; links from kept merge requests are cleared), merge requests by merge/creation date (with review events), sync runs, stored KPI snapshots, source accounts not seen since, audit entries. Expired sessions and sign-in requests are deleted at any age.
+- **Kept (deliberately):** assessments and review cycles, people, memberships, roles, grades, identity mappings. Deleting assessments or people is an HR/privacy decision (B7/C7); until HR answers they follow the organization's HR records policy, not this job. **Open question for the owner/HR.**
+- **How:** one transaction per run, counted with `WITH … DELETE … RETURNING`, audited as `retention.run` (counts only); daily in-process job claimed once per UTC day (safe with several processes); disabled with the other in-process jobs by `EPI_SYNC_SCHEDULER=off`. CLI `retention --dry-run` / `retention`. Administration › Data quality shows the window, what is due and the last run. No delete button in the UI.

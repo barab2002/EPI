@@ -264,6 +264,16 @@ export interface DataQuality {
   };
 }
 
+/** Data retention (ADR-032). */
+export interface RetentionInfo {
+  months: number | null;
+  automatic: boolean;
+  cutoff: string | null;
+  due: Record<string, number> | null;
+  categories: { key: string; label: string }[];
+  lastRun: { at: string; cutoff: string; counts: Record<string, number> } | null;
+}
+
 /** AD team import (EPI-004c). */
 export interface DirectoryStatus {
   configured: boolean;
