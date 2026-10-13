@@ -8,9 +8,23 @@ if [ -f "$ROOT/deploy/offline.env" ]; then set -a; . "$ROOT/deploy/offline.env";
 STATE_DIR="${EPI_STATE_DIR:-$ROOT/.epi}"      # local runtime state (gitignored), mode 0700
 export EPI_STATE_DIR="$STATE_DIR"
 SSO_DIR="$STATE_DIR/sso"
+# Reads KEY=value lines literally (same rules as scripts/kc-prod-realm.mjs parseConf): never
+# executed as shell, so ";" in group lists and spaces in DNs ("OU=Service Accounts") are kept.
+load_conf() {
+  local line key value
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
+    case "$line" in ''|'#'*) continue ;; esac
+    [[ "$line" =~ ^([A-Z0-9_]+)=(.*)$ ]] || { echo "epi: $1: cannot parse line: $line" >&2; exit 1; }
+    key="${BASH_REMATCH[1]}"; value="${BASH_REMATCH[2]}"
+    if [[ "$value" =~ ^\"(.*)\"$ || "$value" =~ ^\'(.*)\'$ ]]; then value="${BASH_REMATCH[1]}"; fi
+    export "$key=$value"
+  done <"$1"
+}
 # Production SSO configured (./epi.sh sso-setup): export its non-secret settings for Compose.
 if [ -f "$SSO_DIR/epi-realm.json" ] && [ -f "$STATE_DIR/sso.conf" ]; then
-  set -a; . "$STATE_DIR/sso.conf"; set +a
+  load_conf "$STATE_DIR/sso.conf"
 fi
 COMPOSE_FILE="$ROOT/deploy/compose.yaml"
 export EPI_IMAGE_REGISTRY="${EPI_IMAGE_REGISTRY:-docker.io}"

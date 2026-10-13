@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # End-to-end test of production sign-in with a directory (EPI-003b): a SYNTHETIC OpenLDAP over
 # LDAPS (test CA) → Keycloak from deploy/compose.sso.yaml (production mode, own database, file
-# vault, truststore) → EPI. Uses ./epi.sh sso-setup/start with a temporary state directory and
+# vault, truststore) → EPI, which also reads the team groups for the AD team import (EPI-004c). Uses ./epi.sh sso-setup/start with a temporary state directory and
 # Compose project; everything is removed afterwards. Requires the epi:local image (./epi.sh build).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -58,6 +58,12 @@ bash "$ROOT/epi.sh" start | tail -1
 kc="http://127.0.0.1:$EPI_SSO_PORT"
 curl -fsS "$kc/realms/epi/.well-known/openid-configuration" | grep -q "\"issuer\":\"$kc/realms/epi\""
 echo "    issuer OK; keycloak database: $(docker compose -p "$project" exec -T postgres psql -U epi -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname='keycloak'")"
+
+echo "==> Directory import: EPI reads the team groups with the same read-only account"
+check=$(docker compose -p "$project" exec -T epi node dist/cli.js directory-check)
+echo "$check" | sed 's/^/    /'
+echo "$check" | grep -q '2 member(s)  Team-Payments' && echo "$check" | grep -q '1 member(s)  Team-Platform' ||
+  { echo "FAIL: directory-check did not read the team groups" >&2; exit 1; }
 
 echo "==> Browser sign-in"
 cd "$ROOT"

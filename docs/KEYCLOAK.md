@@ -43,7 +43,7 @@ cp /path/to/corp-ca.pem .epi/sso/ldap-ca.pem
 ./epi.sh start         # PostgreSQL + Keycloak + EPI
 ```
 
-People must exist in EPI with the same e-mail as in AD (the AD import, EPI-004c, creates them); they are linked automatically on first sign-in (verified e-mail from the directory). Keycloak's admin console is for emergencies only (`admin`, password in `.epi/sso/kc_admin_password`). Keycloak imports the realm on its **first** start; to change the team groups later, edit the realm's "directory" provider in the admin console (an `sso-apply` command is planned).
+People must exist in EPI with the same e-mail as in AD (the AD team import below creates them); they are linked automatically on first sign-in (verified e-mail from the directory). Keycloak's admin console is for emergencies only (`admin`, password in `.epi/sso/kc_admin_password`). Keycloak imports the realm on its **first** start; to change the team groups later, edit the realm's "directory" provider in the admin console (an `sso-apply` command is planned).
 
 Security properties: read-only federation (`editMode READ_ONLY`), password reset/registration disabled, LDAPS enforced (plain LDAP refused unless explicitly allowed), the bind password stays in Keycloak's file vault (`${vault.ldapbind}`), disabled AD accounts excluded, brute-force protection on. Verified by `scripts/e2e-sso-ldap.sh` against a synthetic LDAPS directory: team members sign in with their directory password, wrong passwords and non-team users are refused, and the realm holds no stored credentials.
 
@@ -94,3 +94,12 @@ Sign-in failures show a short message to the user (`not_provisioned`, `inactive_
 Authorization Code + PKCE (S256), `state` (single-use, hashed, 10-min expiry), `nonce`, confidential client, browser-binding cookie against login CSRF, same-origin return paths only, ID token issuer/audience/expiry/nonce validated by `openid-client` (token obtained directly from the token endpoint over TLS). EPI stores **no** access, refresh or ID tokens; the browser gets only EPI's opaque HttpOnly session cookie. Because no ID token is kept, Keycloak asks the user to confirm sign-out.
 
 Sessions are not revoked when a Keycloak account is disabled; they end at EPI's idle timeout (30 min) or when the EPI user is deactivated.
+
+## AD team import (EPI-004c, ADR-030)
+
+With production sign-in configured, EPI also reads the same team groups (same read-only account, same CA) to keep team membership in step with AD:
+
+1. Check access: `docker compose exec epi node dist/cli.js directory-check` lists each team group with its member count (and members without an e-mail, who cannot sign in).
+2. **Administration › Directory**: choose the EPI team each AD group feeds ("Not imported" leaves a team managed by hand).
+3. **Preview import** shows every change: new people, people linked by e-mail, name/e-mail updates, people joining or leaving a team, and skipped people with the reason. Nothing changes yet.
+4. **Apply** runs exactly that preview (if AD or EPI changed meanwhile, EPI asks you to preview again). Leavers' memberships end today with history kept; nobody is deactivated and roles are never imported — assign roles under People.
