@@ -16,6 +16,7 @@
 - **Audit-log viewer (ADR-022):** admin-only, read-only Audit log tab and API; filter by action group/exact action, person and dates; keyset paging; review subjects and text never shown.
 - **Offline installation (EPI-012a, ADR-023):** images pinned by digest; `./epi.sh bundle` and `./epi.sh offline-install` (checksums, image identity check, bundled images only); verified by `scripts/test-offline-install.sh` on a no-egress Docker network incl. refusal of corrupted/tampered bundles. Production dependency licenses checked in CI (216 packages, all permissive).
 - **Production sign-in with AD (EPI-003b, ADR-025):** `./epi.sh sso-setup` + `deploy/compose.sso.yaml` — Keycloak in production mode with its own database, read-only LDAPS federation limited to pilot team groups, bind password in Keycloak's file vault, customer CA trust. Verified end to end against a synthetic LDAPS directory (`scripts/e2e-sso-ldap.sh`); not yet against the real AD.
+- **Upgrade with automatic rollback (EPI-012c, ADR-031):** `./epi.sh upgrade <bundle>` — bundle verification, version checks, database (and Keycloak) backup, image load, file swap, migrations on start, health check; on failure the previous files, database and version come back. Verified by `scripts/test-upgrade.sh` (upgrade, refusals, broken release rolled back with data intact).
 - **AD team import (EPI-004c, ADR-030):** Administration › Directory maps configured AD team groups to EPI teams; preview shows every change (new people, e-mail links, detail updates, joins/transfers, leavers, skipped conflicts) and apply runs exactly the previewed plan (hash, advisory lock, one transaction, audited). `directory-check` CLI verifies AD access. Verified against the synthetic LDAPS directory (unit, integration, browser and deployed-container tests).
 - **Demo SSO:** bundled dev-mode Keycloak with generated per-install users (`./epi.sh credentials`).
 - **Auth & RBAC:** opaque server-side sessions (HttpOnly, SameSite=Lax, CSRF header for mutations); demo login only in demo mode. Scope resolution from EPI DB; out-of-scope = 404; small-group suppression (default 5) for aggregate-only viewers; admin sees structure but not KPIs/reviews.
@@ -27,7 +28,7 @@
 
 - Not yet run against the real AD (needs the owner's server, bind account and CA); `sso-apply` for realm changes after first start; Keycloak DB not in `./epi.sh backup`; TLS front end is the customer's.
 - No real Jira/GitLab connected (needs B1–B6); deleted-issue reconciliation; sprint data.
-- `install` and `upgrade` (EPI-012) — commands exit 2 with a message. Bundle signing; clean-VM offline test.
+- `install` (EPI-012) exits 2 with a message (use `offline-install`). Bundle signing; clean-VM offline test.
 - KPIs computed on request; `kpi_snapshots` not populated yet. Stratification by work type/complexity not shown in UI yet.
 - Audit-log retention policy and export (needs owner decision on retention period).
 - Hebrew catalog not written (structure supports it). `PUT /reviews/{id}` replaced by idempotent `POST` upsert.

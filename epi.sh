@@ -2,7 +2,9 @@
 # EPI operations CLI. Run `./epi.sh help`. Commands that are not implemented yet say so and exit 2.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# EPI_UPGRADE_ROOT: set only by `upgrade`, which runs from a temporary copy of this script so the
+# installation files (this file included) can be replaced safely while it runs.
+ROOT="${EPI_UPGRADE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 # Installed from an offline bundle: use only the bundled images (never pull).
 if [ -f "$ROOT/deploy/offline.env" ]; then set -a; . "$ROOT/deploy/offline.env"; set +a; fi
 STATE_DIR="${EPI_STATE_DIR:-$ROOT/.epi}"      # local runtime state (gitignored), mode 0700
@@ -80,7 +82,8 @@ Usage: ./epi.sh <command> [options]
   bundle [--no-keycloak]    Build an offline bundle in dist/ (EPI + pinned images, checksums)
   offline-install <bundle.tar> [--dir DIR]
                       Verify and install a bundle on a host without internet (no start)
-  install | upgrade   Not implemented yet (backlog EPI-012)
+  upgrade <bundle> [--yes]  Upgrade an installation from a newer bundle (backup, migrate, health check, automatic rollback)
+  install             Not implemented yet (use offline-install; backlog EPI-012)
 
 Environment: EPI_IMAGE_REGISTRY (image mirror, default docker.io), EPI_PORT (8080),
 EPI_BIND (127.0.0.1 — binding to other interfaces requires approval).
@@ -159,8 +162,8 @@ cmd_build() {
 }
 
 wait_healthy() {
-  local url="http://127.0.0.1:$EPI_PORT/health/ready"
-  for _ in $(seq 1 90); do
+  local url="http://127.0.0.1:$EPI_PORT/health/ready" tries="${1:-90}"
+  for _ in $(seq 1 "$tries"); do
     if curl -fsS "$url" >/dev/null 2>&1; then return 0; fi
     sleep 2
   done
@@ -228,6 +231,32 @@ SQL
   } | compose exec -T postgres psql -q -U epi -d postgres -v ON_ERROR_STOP=1 >/dev/null
 }
 
+# Loads the images of an extracted bundle and checks each one's identity against the manifest.
+load_bundle_images() {
+  local dir="$1" tag file manifest_id config_id id
+  while IFS=$'\t' read -r tag file manifest_id config_id; do
+    info "Loading $tag"
+    docker load -q -i "$dir/$file" >/dev/null || die "docker load failed for $file"
+    id="$(docker image inspect --format '{{.Id}}' "$tag" 2>/dev/null)" || die "$tag missing after load"
+    [ "$id" = "$manifest_id" ] || [ "$id" = "$config_id" ] || die "$tag has unexpected identity $id"
+    rm -f "$dir/$file"
+  done <"$dir/images/manifest.tsv"
+}
+
+# Verifies a bundle file (outer .sha256 when present, inner SHA256SUMS) and extracts it to $2.
+extract_bundle() {
+  local bundle="$1" dest="$2"
+  if [ -f "$bundle.sha256" ]; then
+    info "Verifying bundle checksum"
+    (cd "$(dirname "$bundle")" && sha256sum -c --quiet "$(basename "$bundle").sha256") || die "bundle checksum mismatch — copy it again"
+  else
+    warn "no $bundle.sha256 next to the bundle; checking the contents' checksums only"
+  fi
+  mkdir -p "$dest"
+  tar -xf "$bundle" -C "$dest" --strip-components=1 --no-same-owner
+  (cd "$dest" && sha256sum -c --quiet SHA256SUMS) || die "bundle contents are corrupt (SHA256SUMS mismatch)"
+}
+
 cmd_offline_install() {
   local bundle="" dir="$PWD/epi"
   while [ $# -gt 0 ]; do
@@ -239,25 +268,10 @@ cmd_offline_install() {
   [ -n "$bundle" ] && [ -f "$bundle" ] || die "usage: ./epi.sh offline-install <epi-bundle-….tar> [--dir DIR]"
   docker info >/dev/null 2>&1 || die "docker daemon not reachable — start Docker first (./epi.sh doctor)"
   docker compose version >/dev/null 2>&1 || die "docker compose v2 plugin missing"
-  [ ! -e "$dir/epi.sh" ] || die "$dir already contains an installation (upgrade is not implemented yet)"
-  if [ -f "$bundle.sha256" ]; then
-    info "Verifying bundle checksum"
-    (cd "$(dirname "$bundle")" && sha256sum -c --quiet "$(basename "$bundle").sha256") || die "bundle checksum mismatch — copy it again"
-  else
-    warn "no $bundle.sha256 next to the bundle; checking the contents' checksums only"
-  fi
+  [ ! -e "$dir/epi.sh" ] || die "$dir already contains an installation — use ./epi.sh upgrade <bundle> there"
   info "Extracting to $dir"
-  mkdir -p "$dir"
-  tar -xf "$bundle" -C "$dir" --strip-components=1 --no-same-owner
-  (cd "$dir" && sha256sum -c --quiet SHA256SUMS) || die "bundle contents are corrupt (SHA256SUMS mismatch)"
-  local tag file manifest_id config_id id
-  while IFS=$'\t' read -r tag file manifest_id config_id; do
-    info "Loading $tag"
-    docker load -q -i "$dir/$file" >/dev/null || die "docker load failed for $file"
-    id="$(docker image inspect --format '{{.Id}}' "$tag" 2>/dev/null)" || die "$tag missing after load"
-    [ "$id" = "$manifest_id" ] || [ "$id" = "$config_id" ] || die "$tag has unexpected identity $id"
-    rm -f "$dir/$file"
-  done <"$dir/images/manifest.tsv"
+  extract_bundle "$bundle" "$dir"
+  load_bundle_images "$dir"
   printf '\n%sEPI %s installed in %s%s (images loaded and verified; nothing was downloaded).\n' "$G" "$(sed -n 's/^EPI_VERSION=//p' "$dir/deploy/offline.env")" "$dir" "$N"
   printf 'Next:\n  cd %s && ./epi.sh doctor\n  ./epi.sh demo    # synthetic demo\nProduction (your Keycloak): see docs/OFFLINE_INSTALL.md\n' "$dir"
 }
@@ -302,6 +316,7 @@ cmd_backup() {
   [ -s "$file" ] || die "backup is empty"
   gzip -t "$file" || die "backup is corrupt"
   printf 'Backup written: %s (%s)\n' "$file" "$(du -h "$file" | cut -f1)"
+  BACKUP_FILE="$file"
 }
 
 cmd_restore() {
@@ -317,6 +332,100 @@ cmd_restore() {
   gunzip -c "$file" | compose exec -T postgres psql -U epi -d epi -v ON_ERROR_STOP=1 -q >/dev/null
   compose start epi >/dev/null
   wait_healthy && echo "Restore complete; EPI healthy." || die "EPI unhealthy after restore"
+}
+
+# Installation files replaced by an upgrade (state in .epi/ and backups/ are never touched).
+UPGRADE_ITEMS=(epi.sh LICENSE NOTICE THIRD_PARTY_LICENSES.md SHA256SUMS deploy scripts docs)
+
+swap_files() { # <from-dir> <to-dir>
+  local item
+  for item in "${UPGRADE_ITEMS[@]}"; do
+    rm -rf "${2:?}/$item"
+    [ ! -e "$1/$item" ] || cp -a "$1/$item" "$2/$item"
+  done
+}
+
+# Upgrade an installation made from a bundle (EPI-012c, ADR-031): verify → back up → load images →
+# replace files → start (migrations run on start) → health check; on failure put the previous
+# files back, restore the backup and start the previous version again.
+cmd_upgrade() {
+  local bundle="" yes=""
+  while [ $# -gt 0 ]; do
+    case "$1" in --yes) yes=1; shift ;; *) bundle="$1"; shift ;; esac
+  done
+  [ -n "$bundle" ] && [ -f "$bundle" ] || die "usage: ./epi.sh upgrade <epi-bundle-….tar> [--yes]"
+  [ -n "${EPI_OFFLINE:-}" ] || die "upgrade is for installations made from a bundle; in a source checkout: git pull && ./epi.sh build && ./epi.sh start"
+  bundle="$(cd "$(dirname "$bundle")" && pwd)/$(basename "$bundle")"
+  if [ -z "${EPI_UPGRADE_ROOT:-}" ]; then
+    local self; self="$(mktemp)"; cp "$ROOT/epi.sh" "$self"
+    EPI_UPGRADE_ROOT="$ROOT" exec bash "$self" upgrade "$bundle" ${yes:+--yes}
+  fi
+  # shellcheck disable=SC2064 # expand now: remove this temporary copy of the script on exit
+  trap "rm -f '${BASH_SOURCE[0]}'" EXIT
+  docker info >/dev/null 2>&1 || die "docker daemon not reachable"
+  wait_healthy 1 || die "EPI is not running healthy — start it first (./epi.sh start); the upgrade backs up the live database"
+
+  local work="$STATE_DIR/upgrade" new current="${EPI_VERSION:-unknown}" target
+  rm -rf "$work"; mkdir -p "$work"; chmod 700 "$work"
+  new="$work/new"
+  info "Checking the bundle"
+  extract_bundle "$bundle" "$new"
+  target="$(sed -n 's/^EPI_VERSION=//p' "$new/deploy/offline.env")"
+  [ -n "$target" ] || die "the bundle has no EPI_VERSION"
+  [ "$target" != "$current" ] || die "EPI $current is already installed"
+  local cur_base="${current%%-*}" new_base="${target%%-*}"
+  if [ "$cur_base" != "$new_base" ] && [ "$(printf '%s\n%s\n' "$cur_base" "$new_base" | sort -V | head -1)" = "$new_base" ]; then
+    die "the bundle ($target) is older than the installed EPI ($current); downgrades are not supported — restore a backup instead"
+  fi
+  if [ -z "$yes" ]; then
+    printf 'Upgrade EPI %s → %s? A backup is taken first; on failure EPI rolls back. Type "upgrade" to continue: ' "$current" "$target"
+    read -r answer
+    [ "$answer" = "upgrade" ] || die "aborted"
+  fi
+
+  info "Backing up the database"
+  cmd_backup
+  local db_backup="$BACKUP_FILE" kc_backup=""
+  if prod_sso_enabled; then
+    kc_backup="${db_backup%/*}/keycloak-${db_backup##*/epi-}"
+    (umask 077 && compose exec -T postgres pg_dump -U epi -d keycloak --clean --if-exists --no-owner | gzip >"$kc_backup")
+    gzip -t "$kc_backup" || die "Keycloak backup is corrupt"
+    echo "Keycloak backup written: $kc_backup"
+  fi
+
+  load_bundle_images "$new"
+  info "Installing EPI $target files (previous files kept in $work/previous)"
+  mkdir -p "$work/previous"
+  swap_files "$ROOT" "$work/previous"
+  swap_files "$new" "$ROOT"
+
+  info "Starting EPI $target (database migrations run on start)"
+  if bash "$ROOT/epi.sh" start --no-wait >"$work/start.log" 2>&1 && wait_healthy "${EPI_UPGRADE_HEALTH_TRIES:-90}"; then
+    printf '\n%sEPI upgraded: %s → %s.%s Backup: %s\n' "$G" "$current" "$target" "$N" "$db_backup"
+    printf 'The previous version'"'"'s images stay loaded; remove them with docker image prune when satisfied.\n'
+    rm -rf "$new"
+    return 0
+  fi
+
+  printf '%sEPI %s did not become healthy — rolling back to %s.%s\n' "$R" "$target" "$current" "$N" >&2
+  compose logs --no-color --tail 300 epi >"$work/failed-version.log" 2>&1 || true
+  compose stop epi >/dev/null 2>&1 || true
+  swap_files "$work/previous" "$ROOT"
+  # Reload the previous version's settings (image tags) before using Compose again.
+  set -a; . "$ROOT/deploy/offline.env"; set +a
+  info "Restoring the database from $db_backup"
+  # Fresh schema first: objects the failed version created are not in the dump and must go too.
+  { echo 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'; gunzip -c "$db_backup"; } |
+    compose exec -T postgres psql -U epi -d epi -v ON_ERROR_STOP=1 -q >/dev/null
+  if [ -n "$kc_backup" ]; then
+    compose stop keycloak >/dev/null 2>&1 || true
+    gunzip -c "$kc_backup" | compose exec -T postgres psql -U epi -d keycloak -v ON_ERROR_STOP=1 -q >/dev/null
+  fi
+  compose up -d >/dev/null 2>&1
+  if wait_healthy; then
+    die "upgrade to $target failed and was rolled back: EPI $current is running with the data from before the upgrade. Logs of the failed version: $work/failed-version.log"
+  fi
+  die "upgrade to $target failed AND the rollback did not become healthy. Data backup: $db_backup. Logs: $work/failed-version.log"
 }
 
 not_yet() {
@@ -344,7 +453,7 @@ case "${1:-help}" in
   backup) cmd_backup ;;
   restore) shift; cmd_restore "$@" ;;
   install) not_yet install "production config + Keycloak, backlog EPI-003/EPI-012" ;;
-  upgrade) not_yet upgrade "backlog EPI-012" ;;
+  upgrade) shift; cmd_upgrade "$@" ;;
   offline-install) shift; cmd_offline_install "$@" ;;
   bundle)
     [ -z "${EPI_OFFLINE:-}" ] || die "bundles are built from the source repository, not an installation"
