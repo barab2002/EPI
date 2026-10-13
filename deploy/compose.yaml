@@ -33,7 +33,13 @@ services:
       EPI_COOKIE_SECURE: ${EPI_COOKIE_SECURE:-false}
       EPI_DB_PASSWORD_FILE: /run/secrets/db_password
       EPI_DB_HOST: postgres
+      # Jira/GitLab tokens, one file per reference (./epi.sh source-token EPI_JIRA_TOKEN).
+      EPI_SOURCE_SECRETS_DIR: /run/epi-sources
+      # Company CA for Jira/GitLab over https (./epi.sh source-ca; empty file = public CAs only).
+      NODE_EXTRA_CA_CERTS: /run/epi-sources/ca.pem
     secrets: [db_password]
+    volumes:
+      - ${EPI_STATE_DIR:-../.epi}/sources:/run/epi-sources:ro
     ports:
       - '${EPI_BIND:-127.0.0.1}:${EPI_PORT:-8080}:8080'
     deploy:

@@ -11,9 +11,9 @@ EPI reads **merge request metadata and review activity** from GitLab: project ID
 | Numeric project IDs of the pilot repositories | Settings → General |
 | Bot/service account usernames (CI, Renovate, Sonar…) | GitLab bot accounts and `*-bot` names are detected automatically |
 | Branch naming / Jira key convention | default pattern finds keys like `ENG-123` in branch, title or description |
-| Internal CA certificate | via `NODE_EXTRA_CA_CERTS` |
+| Internal CA certificate | `./epi.sh source-ca <ca.pem>` (sets `NODE_EXTRA_CA_CERTS`) |
 
-Put the token in a root-only file and expose it as `EPI_GITLAB_TOKEN_FILE`. **Never paste it into chat, tickets or Git.**
+On the server, run `./epi.sh source-token EPI_GITLAB_TOKEN` and paste the token when asked (input hidden); it is stored in `.epi/sources/` and read by the running app. **Never paste it into chat, tickets or Git.** (Outside Docker, `EPI_GITLAB_TOKEN_FILE` still works and takes precedence.)
 
 ## 2. Configure and verify
 
