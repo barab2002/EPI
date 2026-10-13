@@ -1,6 +1,6 @@
 # Resume point
 
-status: active — EPI-003b DONE (PR #14, CI green); next: EPI-004c AD team import
+status: active — EPI-004c AD team import IN PROGRESS on `feature/ad-team-import` (from main @ `0b99c4d`)
 
 - **main** contains PRs #1–#12 (… scheduled daily sync, audit-log viewer, EPI-012a offline bundle); PR #13 `docs/pilot-decisions` records the owner's answers.
 - **Next task:** EPI-004c on `feature/ad-team-import` from `main` — `NEXT_ACTIONS.md` #2. Keycloak already syncs the team groups (group-ldap-mapper, READ_ONLY). Add a confidential service-account client `epi-import` (realm-management `view-users` only) to `kc-prod-realm.mjs`; EPI reads groups + members via Keycloak admin REST; admin maps AD group → EPI team; dry-run preview; apply creates/updates people (name, e-mail) and dated memberships, ends memberships of removed members; audited; roles stay manual. Test with the synthetic directory (`scripts/dev/ldap-*.sh`).
