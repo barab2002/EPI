@@ -4,6 +4,8 @@
 
 ## Working and verified (tests in `TEST_STATUS.md`)
 
+- **Source tokens and company CA (ADR-036):** `./epi.sh source-token EPI_JIRA_TOKEN` / `EPI_GITLAB_TOKEN` (hidden input) and `./epi.sh source-ca <pem>`; the running app, its scheduler, Settings › Test connection and the CLI read them from `.epi/sources` (read-only mount). Verified in the offline install test.
+
 - **One-command demo:** `./epi.sh demo` builds the image, starts PostgreSQL + EPI via Compose (localhost only), migrates, seeds labeled synthetic data, waits for `/health/ready`. `doctor`, `start/stop/status/logs`, `backup`, `restore` verified.
 - **KPI engine (pure, unit-tested):** Cycle Time, Work Item Aging (median/P85/oldest), Review Waiting Time (per reviewer request) and the separately coded proxy `MR_OPEN_TO_FIRST_REVIEW`; confidence classes (N/A < 5, low 5–9, normal ≥ 10); window-over-window trend from raw observations, ±8% exploratory threshold, zero-baseline guard.
 - **Data model:** migration for hierarchy, effective-dated memberships/roles/grades, identities, ingestion tables, assessments, KPI snapshots, audit, sessions.

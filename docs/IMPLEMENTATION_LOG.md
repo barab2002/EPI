@@ -16,3 +16,4 @@
 - **2026-10-13** — Administration › Settings (ADR-033): connections editable in the UI with Test connection, token presence only, `EPI_SOURCE_HOSTS` allow-list; minimum group size 3 (ADR-034).
 - **2026-10-13** — Hebrew UI stage 1 (ADR-035): typed he catalog, per-user locale (`users.locale`, `PUT /me/locale`), language switch, RTL, Hebrew Intl formatting, layout guard in Hebrew.
 - **2026-10-13** — Hebrew UI stage 2 (ADR-035): administration screens via typed `i18n-admin.ts`, audit actions/resources translated, Hebrew layout guard covers all admin tabs.
+- **2026-10-13** — Source tokens on the server (ADR-036): found that Settings-added connections could not see their token in the Compose stack; `.epi/sources` mounted read-only, `./epi.sh source-token`, `./epi.sh source-ca` (company CA via `NODE_EXTRA_CA_CERTS`), proven in the offline install test.

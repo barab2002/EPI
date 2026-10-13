@@ -44,7 +44,7 @@ read it over the phone or from a signed ticket). Cryptographic signing of bundle
 - **Production:** sign-in with Active Directory through the bundled Keycloak — `docs/KEYCLOAK.md`
   section A (`./epi.sh sso-setup`, then `./epi.sh start`). Build the bundle **with** Keycloak (no
   `--no-keycloak`). An existing corporate Keycloak is the alternative (section 1).
-  Internal CAs: set `NODE_EXTRA_CA_CERTS`. Exposing EPI beyond localhost (`EPI_BIND`) needs TLS
+  Internal CAs for Jira/GitLab: `./epi.sh source-ca <ca.pem>`; tokens: `./epi.sh source-token EPI_JIRA_TOKEN` / `EPI_GITLAB_TOKEN`. Exposing EPI beyond localhost (`EPI_BIND`) needs TLS
   in front and approval.
 - Operations: `status`, `logs`, `stop`, `backup`, `restore` work as in any installation.
 

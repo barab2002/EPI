@@ -56,6 +56,17 @@ YAML
 echo "==> Starting on an internal-only network (no egress)"
 export COMPOSE_PROJECT_NAME="$project" EPI_COMPOSE_EXTRA="$dir/no-egress.yaml"
 export EPI_PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')"
+echo "==> Storing a (fake) Jira token with ./epi.sh source-token"
+(cd "$dir" && printf 'offline-test-token\n' | ./epi.sh source-token EPI_JIRA_TOKEN)
+echo "==> Trusting a test company CA with ./epi.sh source-ca"
+pki="$(dirname "$dir")/pki"; mkdir -p "$pki"
+openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=EPI test CA" \
+  -keyout "$pki/ca.key" -out "$pki/ca.pem" 2>/dev/null
+openssl req -newkey rsa:2048 -nodes -subj "/CN=localhost" -keyout "$pki/srv.key" -out "$pki/srv.csr" 2>/dev/null
+printf 'subjectAltName=DNS:localhost\n' >"$pki/ext"
+openssl x509 -req -in "$pki/srv.csr" -CA "$pki/ca.pem" -CAkey "$pki/ca.key" -CAcreateserial \
+  -days 2 -extfile "$pki/ext" -out "$pki/srv.pem" 2>/dev/null
+(cd "$dir" && ./epi.sh source-ca "$pki/ca.pem")
 (cd "$dir" && ./epi.sh start --no-wait)
 health() { docker inspect --format '{{.State.Health.Status}}' "$(docker compose -p "$project" ps -q "$1")" 2>/dev/null; }
 for i in $(seq 1 90); do
@@ -70,6 +81,27 @@ if docker compose -p "$project" exec -T epi wget -q -T 5 -O /dev/null https://re
   echo "FAIL: container reached the internet" >&2; exit 1
 fi
 echo "    egress blocked: OK"
+# The running app (not only the CLI) sees tokens stored with source-token: Settings, sync, scheduler.
+docker compose -p "$project" exec -T epi node -e '
+  const { resolveSecret } = require("./dist/ingestion/secrets");
+  if (resolveSecret("EPI_JIRA_TOKEN") !== "offline-test-token") process.exit(1);
+  try { resolveSecret("EPI_GITLAB_TOKEN"); process.exit(1); } catch (e) { console.log("    " + e.message); }
+' || { echo "FAIL: app cannot read the token stored with source-token" >&2; exit 1; }
+echo "    source token visible to the app: OK"
+# An https server whose certificate the company CA issued: trusted only through NODE_EXTRA_CA_CERTS.
+tls_probe='
+  const https = require("https");
+  const [key, cert] = JSON.parse(require("fs").readFileSync(0, "utf8"));
+  const srv = https.createServer({ key, cert }, (q, r) => r.end("ok")).listen(0, "127.0.0.1", async () => {
+    try { await fetch(`https://localhost:${srv.address().port}/`); console.log("trusted"); }
+    catch (e) { console.log("untrusted: " + (e.cause?.code ?? e.message)); }
+    srv.close();
+  });'
+pems="$(node -e 'const f=require("fs");console.log(JSON.stringify([f.readFileSync(process.argv[1],"utf8"),f.readFileSync(process.argv[2],"utf8")]))' "$pki/srv.key" "$pki/srv.pem")"
+with_ca=$(printf '%s' "$pems" | docker compose -p "$project" exec -T epi node -e "$tls_probe")
+without_ca=$(printf '%s' "$pems" | docker compose -p "$project" exec -T epi env -u NODE_EXTRA_CA_CERTS node -e "$tls_probe")
+echo "    company CA: with source-ca $with_ca; without it $without_ca"
+[ "$with_ca" = trusted ] && [ "$without_ca" != trusted ] || { echo "FAIL: company CA not applied" >&2; exit 1; }
 users=$(docker compose -p "$project" exec -T postgres psql -U epi -d epi -tAc 'SELECT count(*) FROM users')
 echo "    synthetic users seeded: $users"
 [ "$users" -gt 0 ]

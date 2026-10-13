@@ -8,7 +8,8 @@ Engineering (Claude, unattended via the hourly routine; each on its own branch �
 3. ✅ **EPI-012c `upgrade` + rollback** — done (ADR-031): `./epi.sh upgrade <bundle>` verifies, backs up (incl. Keycloak DB), loads images, swaps files, migrates on start, health-checks and rolls back automatically; `scripts/test-upgrade.sh`.
 4. ✅ **Retention job** — done (ADR-032): 24 months (configurable), daily, audited; assessments/people kept pending HR (open question).
 5. **Hebrew UI** — stages 1–2 done (ADR-035: per-user language, RTL, all screens incl. administration); next: stage 3 KPI definitions/explanations and server messages in Hebrew.
-6. **Pilot install guide** (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind, Jira PAT, GitLab token), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
+5b. ✅ **Source tokens on the server** (ADR-036): `./epi.sh source-token EPI_JIRA_TOKEN|EPI_GITLAB_TOKEN` and `./epi.sh source-ca <pem>`; the running app, scheduler and CLI read them (before: only the CLI with `<REF>_FILE`).
+6. **Pilot install guide** (~0.5 d): `docs/PILOT_INSTALL.md` — build the bundle on the owner's machine, copy, `offline-install`, secret files (AD bind; Jira PAT and GitLab token via `./epi.sh source-token`), `jira-check`/`gitlab-check`, AD group selection, first sync, reconciliation checklist (20 issues, 10 MRs).
 
 Owner (when each step is reached, Claude asks for the non-secret details one at a time):
 

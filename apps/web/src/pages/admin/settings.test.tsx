@@ -67,7 +67,8 @@ describe('SettingsTab', () => {
     mock({ '/api/v1/admin/settings': settings });
     render(<SettingsTab />);
     expect(await screen.findByText('Token found on the server')).toBeInTheDocument();
-    expect(screen.getByText(/Token missing: put it in the file named by/)).toBeInTheDocument();
+    expect(screen.getByText(/Token missing\. On the server, run/)).toBeInTheDocument();
+    expect(screen.getByText('./epi.sh source-token EPI_GITLAB_TOKEN')).toBeInTheDocument();
     expect(screen.getByText(/Allowed hosts on this server: jira.corp.example/)).toBeInTheDocument();
     expect(screen.getByText('https://epi-sso.corp.example/realms/epi')).toBeInTheDocument();
     expect(screen.getByText('Team groups: Team-Payments')).toBeInTheDocument();
