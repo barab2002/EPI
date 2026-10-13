@@ -157,3 +157,14 @@ Owner answers (chat, 2026-10-13), recorded so later sessions don't re-ask:
   - Keep React + Vite + plain CSS tokens (ADR-004) instead of the prompt's "new project" stack. Tailwind, shadcn/ui, Lucide or Motion are adopted only via an ADR with a license check and a clear benefit.
 - **Skills:** the five named skills are third-party code. They are installed only after their code is reviewed and the owner approves; until then their roles are done manually and reported as manual. Playwright is already present.
 - **Scheduling:** UI work enters the plan after the pilot-critical items (EPI-004c, 012c, retention, Hebrew), or earlier if the owner asks. Hebrew/RTL work will follow the new design system.
+
+## ADR-027 · 2026-10-13 · Accepted (owner: "I want skills") — Five UI/UX skills installed as reviewed project skills
+
+- **What:** `.claude/skills/{ui-ux-pro-max, frontend-design, impeccable, web-design-guidelines, webapp-testing}`, committed to the repo so every session (including after container resets) has them. Each folder has `SOURCE.md` (upstream, commit, license, review notes, local changes) and the upstream license.
+- **Review (before installation):** all code read in an isolated scratch clone; nothing executed from it except UI UX Pro Max's offline search script (stdlib Python, local CSV/JSON only, no network). Licenses: MIT (UI UX Pro Max, Vercel) and Apache-2.0 (Anthropic skills, Impeccable), compatible with EPI's Apache-2.0.
+- **Deliberate deviations (documented, not silent):**
+  - **Impeccable:** guidance only. Its launcher downloads and runs a prebuilt binary that cannot be reviewed, so the launcher, its browser-injection scripts and its edit hooks are not installed. The skill's own "launcher unavailable" path is used.
+  - **Vercel Web Design Guidelines:** the rule list is vendored (`guidelines.md`, commit `434b7f9`) instead of being fetched at run time. This works offline and stops remote content from steering reviews.
+  - **Playwright role:** Anthropic's `webapp-testing` skill (Playwright-based) is used with the project's existing Node Playwright; no Python Playwright install.
+- **Activation:** Claude Code registers project skills at session start; the session that installed them reads their `SKILL.md` directly and says so.
+- **Hygiene:** vendored files are excluded from Prettier but **included** in the secret scan (passes).

@@ -21,7 +21,7 @@ Build **one self-hosted, open-source, air-gap-capable Engineering Performance & 
 
 ## UI/UX standard
 
-Before any UI work, read `docs/UI_UX_MASTER_PROMPT.md` (owner's Apple-level UI/UX guide, 2026-10-13) and its EPI notes at the top: offline rules win (system fonts, no CDNs, no Apple assets), the existing React + Vite + CSS-token stack stays (ADR-004/ADR-026), third-party design skills are installed only after code review and owner approval, and the UI records live in `docs/DESIGN.md`, `docs/UI_UX_PLAN.md`, `docs/UI_UX_PROGRESS.md`, `docs/UI_UX_ISSUES.md`, `docs/UI_UX_TESTS.md`.
+Before any UI work, read `docs/UI_UX_MASTER_PROMPT.md` (owner's Apple-level UI/UX guide, 2026-10-13) and its EPI notes at the top: offline rules win (system fonts, no CDNs, no Apple assets), the existing React + Vite + CSS-token stack stays (ADR-004/ADR-026), the five reviewed UI/UX skills live in `.claude/skills/` (ADR-027; re-review before updating them), and the UI records live in `docs/DESIGN.md`, `docs/UI_UX_PLAN.md`, `docs/UI_UX_PROGRESS.md`, `docs/UI_UX_ISSUES.md`, `docs/UI_UX_TESTS.md`.
 
 ## Project layout and working records
 
