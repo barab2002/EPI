@@ -9,6 +9,19 @@ export function Loading({ label = t('loading') }: { label?: string }) {
   );
 }
 
+/** Placeholder lines in the shape of the content being loaded (DESIGN.md §5 States). */
+export function Skeleton({ lines = 3, title = false }: { lines?: number; title?: boolean }) {
+  return (
+    <div className="skeleton" role="status" aria-live="polite" aria-busy="true">
+      <span className="sr-only">{t('loading')}</span>
+      {title && <span className="skeleton-line skeleton-title" aria-hidden="true" />}
+      {Array.from({ length: lines }, (_, i) => (
+        <span key={i} className="skeleton-line" aria-hidden="true" />
+      ))}
+    </div>
+  );
+}
+
 export function Empty({ children }: { children: React.ReactNode }) {
   return <div className="state state-empty">{children}</div>;
 }

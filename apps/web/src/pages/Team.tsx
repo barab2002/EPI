@@ -1,8 +1,9 @@
 import { Link, useParams } from 'react-router-dom';
 import type { Access } from '../api';
 import { KpiPanel } from '../components/KpiPanel';
-import { Breadcrumb } from '../components/Layout';
-import { ErrorState, Loading } from '../components/States';
+import { Breadcrumb, PageTitle } from '../components/Layout';
+import { ErrorState, Skeleton } from '../components/States';
+import { useKpiWindow, withWindow } from '../components/useKpiWindow';
 import { t } from '../i18n';
 import { useSession } from '../session';
 import { useApi } from '../useApi';
@@ -21,8 +22,9 @@ interface TeamDetail {
 export function TeamPage() {
   const { id } = useParams();
   const { me } = useSession();
+  const [window] = useKpiWindow();
   const team = useApi<TeamDetail>(`/api/v1/teams/${id}`);
-  if (team.state === 'loading') return <Loading />;
+  if (team.state === 'loading') return <Skeleton title lines={5} />;
   if (team.state === 'error') return <ErrorState error={team.error} onRetry={team.reload} />;
   const d = team.data;
   const canOpenGroup = me.managedGroupIds.includes(d.group_id) || me.roles.includes('ADMIN');
@@ -30,14 +32,15 @@ export function TeamPage() {
     <>
       <Breadcrumb
         items={[
-          { label: d.organization_name, to: '/organization' },
-          { label: d.group_name, to: canOpenGroup ? `/groups/${d.group_id}` : undefined },
+          { label: t('navOrganization'), to: '/organization' },
+          {
+            label: d.group_name,
+            to: canOpenGroup ? withWindow(`/groups/${d.group_id}`, window) : undefined,
+          },
           { label: d.name },
         ]}
       />
-      <h1>
-        {d.name} <AccessBadge access={d.access} />
-      </h1>
+      <PageTitle badge={<AccessBadge access={d.access} />}>{d.name}</PageTitle>
       {d.access === 'structure' ? (
         <p className="muted">{t('structureOnly')}</p>
       ) : (
@@ -63,7 +66,7 @@ export function TeamPage() {
                   <tr key={m.id}>
                     <td>
                       {d.access === 'managed' ? (
-                        <Link to={`/developers/${m.id}`}>{m.display_name}</Link>
+                        <Link to={withWindow(`/developers/${m.id}`, window)}>{m.display_name}</Link>
                       ) : (
                         m.display_name
                       )}

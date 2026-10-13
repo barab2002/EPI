@@ -58,6 +58,9 @@ test('capture key screens', async ({ page }) => {
   await signIn(page, /^Morgan Example/);
   await page.getByRole('link', { name: 'Organization' }).first().click();
   await shoot(page, '08-organization');
+  await page.getByRole('link', { name: 'Platform', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Platform');
+  await shoot(page, '08b-group');
   await page.getByRole('button', { name: 'Sign out' }).click();
 
   await signIn(page, /^Avery Admin/);

@@ -2,7 +2,16 @@ import type { KpiCard as Card } from '../api';
 import { confidenceLabel, formatDate, formatPct, trendLabel, valueParts } from '../format';
 import { t } from '../i18n';
 
-export function KpiCardView({ card, onExplain }: { card: Card; onExplain: (card: Card) => void }) {
+export function KpiCardView({
+  card,
+  onExplain,
+  neutralTrend = false,
+}: {
+  card: Card;
+  onExplain: (card: Card) => void;
+  /** Individual scope: describe change without judging it (no red/green, ethical measurement). */
+  neutralTrend?: boolean;
+}) {
   const trend = card.trend;
   const v = valueParts(card.value, card.unit);
   return (
@@ -28,15 +37,30 @@ export function KpiCardView({ card, onExplain }: { card: Card; onExplain: (card:
               </>
             )}
           </p>
-          {trend && (
-            <p className={`trend trend-${trend.status}`}>
-              <span className="trend-label">{trendLabel(trend.status)}</span>{' '}
-              {trend.changePct !== null && (
-                <span>
-                  {formatPct(trend.changePct)} {t('trendVsPrevious')}
-                </span>
-              )}
+          {card.value === null && (
+            <p className="trend">
+              {card.sampleSize === 0
+                ? t('noData')
+                : `${t('notEnoughData')} (${card.sampleSize} ${card.sampleSize === 1 ? 'item' : 'items'})`}
             </p>
+          )}
+          {trend &&
+          neutralTrend &&
+          (trend.status === 'improved' || trend.status === 'deteriorated') ? (
+            <p className="trend">
+              {formatPct(trend.changePct)} {t('trendVsPrevious')}
+            </p>
+          ) : (
+            trend && (
+              <p className={`trend trend-${trend.status}`}>
+                <span className="trend-label">{trendLabel(trend.status)}</span>{' '}
+                {trend.changePct !== null && (
+                  <span>
+                    {formatPct(trend.changePct)} {t('trendVsPrevious')}
+                  </span>
+                )}
+              </p>
+            )
           )}
           <dl className="kpi-meta">
             <div>

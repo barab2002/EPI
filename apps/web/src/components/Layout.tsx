@@ -27,6 +27,22 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
   );
 }
 
+/** Page title with an optional status badge kept OUT of the heading's accessible name. */
+export function PageTitle({
+  children,
+  badge,
+}: {
+  children: React.ReactNode;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div className="page-title">
+      <h1>{children}</h1>
+      {badge}
+    </div>
+  );
+}
+
 export function Layout() {
   const { me, signOut } = useSession();
   return (
