@@ -30,3 +30,26 @@ visible inconsistency or friction · **Low** polish. Close an issue only with ev
 | UX-016 | High | 10 tables | Tables without a scroll wrapper widened the page on narrow screens (audit log 461 px at 320). | Fixed — all tables in `.table-wrap`; guard covers all admin routes |
 | UX-017 | Medium | KPI value | Number and unit as separate elements would read "4.2days" to screen readers. | Fixed — explicit space; test asserts text "4.2 days" |
 | UX-018 | Medium | admin forms | Base input rule (`font: inherit`) overrode field size; inline field groups overflowed at 320 px. | Fixed — body-size fields, wrapping field groups |
+
+## Slice 2 critique (Impeccable `critique`, 2026-10-13)
+
+Method: dual-agent (A: design review sub-agent · B: browser-evidence sub-agent). Impeccable's
+deterministic detector was **not run** (not installed by policy, ADR-027); B used Node Playwright
+probes instead. Score before fixes: **27/40** (Nielsen). Snapshot persistence skipped (launcher absent).
+
+| ID | Sev | Issue (source) | Status |
+|---|---|---|---|
+| UX-019 | High | Group page dead end: no per-team overview for group managers (A) | Fixed — alphabetical team table (members, Cycle Time, Review Waiting Time, data as of); never sorted by value |
+| UX-020 | High | Red/green trend verdict on an individual's own KPIs conflicts with ethical measurement (A) | Fixed — neutral "+15% vs previous window" at developer scope |
+| UX-021 | Medium | KPI window resets per page and never shows dates (A) | Fixed — `?window=` URL param carried on drill-down; date range caption |
+| UX-022 | Medium | Breadcrumbs inconsistent / skip group level (A) | Fixed — Organization / Group / Team / Person everywhere |
+| UX-023 | Medium | Org tree flat, 7 identical "Managed" pills (A) | Fixed — groups as headline rows, badges only for exceptions, labelled counts |
+| UX-024 | Medium | Badge text inside headings ("Platform Managed") (B) | Fixed — `PageTitle` keeps badges outside `h1` |
+| UX-025 | Medium | "Managed" badge contrast 4.41:1 (B) | Fixed — `--positive` #126a3f |
+| UX-026 | Medium | Form fields/radios focus ring ≈1.1:1 (B) | Fixed — 2 px accent outline on fields; radios keep the base outline |
+| UX-027 | Medium | Org tree links 22 px tall; breadcrumb/table links < 24 px (B) | Fixed — 40 px tree rows, padded links; coarse-pointer sizes for nav/segmented/links |
+| UX-028 | Low | Catalog skips h2; raw codes; fake today–today window in sheet (A, B) | Fixed — h2 titles, human direction, window hidden from catalog sheet; catalog as a list |
+| UX-029 | Low | N/A without reason; spinners instead of skeletons; page jump on load (A) | Fixed — reason line; `Skeleton` in pages and KPI panels |
+| UX-030 | Low | Middle dots / arrow in UI copy (B) | Fixed on these pages and the rubric; admin run summaries remain (slice 5) |
+| UX-031 | Low | Duplicate h2 "Monthly assessments"/"Monthly assessment" (B) | Fixed — form title "Write this month’s assessment" |
+| UX-032 | Low | KPI disclaimer repeated per panel (A) | Open — kept (ethics copy); revisit with owner |
