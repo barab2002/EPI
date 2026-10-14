@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import type { Assessment } from '../api';
 import { KpiPanel } from '../components/KpiPanel';
+import { useKpiWindow, withWindow } from '../components/useKpiWindow';
 import { Breadcrumb, Crumb, PageTitle } from '../components/Layout';
 import { Empty, ErrorState, Skeleton } from '../components/States';
 import { formatDate, formatMonth } from '../format';
@@ -75,6 +76,7 @@ export function DeveloperPage() {
   const dev = useApi<DeveloperDetail>(`/api/v1/developers/${id}`);
   const reviews = useApi<Assessment[]>(`/api/v1/reviews?subject_user_id=${id}`);
   const due = useApi<DueList>(me.canReview ? '/api/v1/reviews/due' : null);
+  const [window] = useKpiWindow();
   if (dev.state === 'loading') return <Skeleton title lines={5} />;
   if (dev.state === 'error') return <ErrorState error={dev.error} onRetry={dev.reload} />;
   const d = dev.data;
@@ -85,9 +87,9 @@ export function DeveloperPage() {
       me.managedGroupIds.includes(current.group_id) || me.roles.includes('ADMIN');
     crumbs.push({
       label: current.group_name,
-      to: canOpenGroup ? `/groups/${current.group_id}` : undefined,
+      to: canOpenGroup ? withWindow(`/groups/${current.group_id}`, window) : undefined,
     });
-    crumbs.push({ label: current.name, to: `/teams/${current.id}` });
+    crumbs.push({ label: current.name, to: withWindow(`/teams/${current.id}`, window) });
   }
   crumbs.push({ label: d.display_name });
   const canAssess = !d.isSelf && me.canReview;

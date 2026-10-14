@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, AuditEvent, AuditPage, PersonOption } from '../../api';
 import { Empty, ErrorState, Skeleton } from '../../components/States';
+import { useUrlParam } from '../../components/useUrlParam';
 import { useApi } from '../../useApi';
 import { formatTime } from './Admin';
 import { PersonSearch } from './shared';
@@ -99,10 +100,11 @@ function buildQuery(f: { action: string; actor: PersonOption | null; from: strin
 /** Read-only audit trail: who changed what and when. Review subjects and text are never shown. */
 export function AuditTab() {
   const actions = useApi<string[]>('/api/v1/admin/audit-actions');
-  const [action, setAction] = useState('');
+  // Filters live in the URL (UX-062); the person filter needs a name from search, so it stays here.
+  const [action, setAction] = useUrlParam('action');
   const [actor, setActor] = useState<PersonOption | null>(null);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [from, setFrom] = useUrlParam('from');
+  const [to, setTo] = useUrlParam('to');
   const [items, setItems] = useState<AuditEvent[] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);

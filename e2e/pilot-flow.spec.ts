@@ -27,8 +27,21 @@ test('group manager drills down org → group → team → developer and opens a
   await expect(page.getByRole('heading', { name: 'Cycle Time' })).toBeVisible();
   await page.getByRole('link', { name: 'Payments', exact: true }).click();
   await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('Platform');
+  // The chosen KPI window follows the drill-down and the way back (UX-064).
+  await page.getByRole('button', { name: '180d' }).first().click();
+  await expect(page).toHaveURL(/window=180d/);
   await page.getByRole('link', { name: 'Dana Dev' }).click();
   await expect(page.getByRole('heading', { name: 'Dana Dev' })).toBeVisible();
+  await expect(page).toHaveURL(/window=180d/);
+  const crumbs = page.getByRole('navigation', { name: 'Breadcrumb' });
+  await expect(crumbs.getByRole('link', { name: 'Payments' })).toHaveAttribute(
+    'href',
+    /window=180d/,
+  );
+  await expect(crumbs.getByRole('link', { name: 'Platform' })).toHaveAttribute(
+    'href',
+    /window=180d/,
+  );
   await page.getByRole('button', { name: 'How calculated?' }).first().click();
   const drawer = page.getByRole('dialog');
   await expect(drawer).toContainText('median((done_at − started_at)');
