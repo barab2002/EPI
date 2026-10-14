@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import type { Me } from '../../api';
 import { SessionContext } from '../../session';
 import { OrganizationTab } from './Organization';
@@ -67,7 +68,7 @@ describe('OrganizationTab', () => {
       ],
       '/api/v1/admin/memberships': () => ({ id: 'm-2' }),
     });
-    render(<OrganizationTab />);
+    render(<OrganizationTab />, { wrapper: MemoryRouter });
     await userEvent.click(await screen.findByRole('button', { name: 'Payments' }));
     expect(await screen.findByText('Dana Dev')).toBeInTheDocument();
     await userEvent.type(screen.getByRole('searchbox', { name: 'Find a person to add…' }), 'eli');
@@ -91,12 +92,38 @@ describe('OrganizationTab', () => {
     expect(await screen.findByText('Eli Engineer added to Payments.')).toBeInTheDocument();
   });
 
+  it('opens the team named in the address (?team=), e.g. after a reload or from a link', async () => {
+    mockFetch({
+      '/api/v1/organization/tree': () => tree,
+      '/api/v1/admin/teams/t-1/memberships': () => [
+        {
+          id: 'm-1',
+          user_id: 'u-1',
+          display_name: 'Dana Dev',
+          active: true,
+          effective_from: '2026-01-01T00:00:00Z',
+          effective_to: null,
+        },
+      ],
+    });
+    render(
+      <MemoryRouter initialEntries={['/admin/organization?team=t-1']}>
+        <OrganizationTab />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Dana Dev')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Payments' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
   it('creates a team inside a group', async () => {
     const calls = mockFetch({
       '/api/v1/organization/tree': () => tree,
       '/api/v1/admin/teams': () => ({ id: 't-9' }),
     });
-    render(<OrganizationTab />);
+    render(<OrganizationTab />, { wrapper: MemoryRouter });
     await screen.findByText('Platform');
     await userEvent.click(screen.getAllByText('Rename / add team')[0]);
     await userEvent.type(screen.getByRole('textbox', { name: 'New team in Platform' }), 'Edge');
@@ -124,9 +151,11 @@ describe('PeopleTab', () => {
 
   function renderPeople() {
     return render(
-      <SessionContext.Provider value={{ me, signOut: () => undefined }}>
-        <PeopleTab />
-      </SessionContext.Provider>,
+      <MemoryRouter>
+        <SessionContext.Provider value={{ me, signOut: () => undefined }}>
+          <PeopleTab />
+        </SessionContext.Provider>
+      </MemoryRouter>,
     );
   }
 

@@ -3,6 +3,7 @@ import { api, OrgNode, PersonDetail, PersonOption } from '../../api';
 import { ErrorState, Skeleton } from '../../components/States';
 import { useSession } from '../../session';
 import { MessageKey, t } from '../../i18n';
+import { useUrlParam } from '../../components/useUrlParam';
 import { useApi } from '../../useApi';
 import {
   dateToIso,
@@ -340,7 +341,9 @@ function PersonPanel({ id, onChanged }: { id: string; onChanged: () => void }) {
 
 /** Find or create people; manage their roles and grades. */
 export function PeopleTab() {
-  const [selected, setSelected] = useState<PersonOption | null>(null);
+  // UX-062: the selected person is in the URL (?person=<id>).
+  const [personId, setPersonId] = useUrlParam('person');
+  const setSelected = (p: PersonOption | null) => setPersonId(p?.id ?? null);
   const [flash, setFlash] = useState<Flash>(null);
   const run = useMutation(setFlash);
 
@@ -398,7 +401,7 @@ export function PeopleTab() {
           </form>
         </div>
       </section>
-      {selected && <PersonPanel key={selected.id} id={selected.id} onChanged={() => undefined} />}
+      {personId && <PersonPanel key={personId} id={personId} onChanged={() => undefined} />}
     </>
   );
 }

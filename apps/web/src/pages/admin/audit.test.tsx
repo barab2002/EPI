@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { AuditTab } from './Audit';
 
 const event = (n: number, extra: object = {}) => ({
@@ -33,7 +34,7 @@ describe('AuditTab', () => {
       if (url.includes('cursor=c1')) return { items: [event(2)], nextCursor: null };
       return { items: [event(1)], nextCursor: 'c1' };
     });
-    render(<AuditTab />);
+    render(<AuditTab />, { wrapper: MemoryRouter });
     expect(await screen.findByText('Dana Dev')).toBeInTheDocument();
     expect(screen.getByText('role: TEAM_LEAD')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Load older events' }));
@@ -65,7 +66,7 @@ describe('AuditTab', () => {
               nextCursor: null,
             },
     );
-    render(<AuditTab />);
+    render(<AuditTab />, { wrapper: MemoryRouter });
     expect(await screen.findByText('system')).toBeInTheDocument();
     expect(screen.getByText('setting')).toBeInTheDocument(); // app_setting, in plain words
     const from = screen.getByLabelText('From');

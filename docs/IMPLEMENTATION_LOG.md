@@ -24,3 +24,4 @@
 - **2026-10-13** — Hebrew stage 3b: server messages (errors, validation, import reasons, connection tests) translated on the way out by request language; source-scan test keeps it complete.
 - **2026-10-13** — Backups include sign-in (ADR-039): Keycloak dump next to EPI's, restored as the keycloak role (fixes a latent rollback bug).
 - **2026-10-13** — `./epi.sh sso-apply` (ADR-040): sso.conf changes applied to the running Keycloak via its admin API (directory provider, team-groups mapper, client addresses), proven in the AD e2e.
+- **2026-10-14** — UX-062 (admin filters/selections in the URL), UX-063 (leave guard for unsaved assessments on in-app links), UX-064 (breadcrumbs keep the KPI window).

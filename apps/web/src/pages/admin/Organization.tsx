@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { api, GroupNode, Membership, OrgNode, PersonOption, TeamNode } from '../../api';
 import { ErrorState, Skeleton } from '../../components/States';
+import { useUrlParam } from '../../components/useUrlParam';
 import { useApi } from '../../useApi';
 import {
   dateToIso,
@@ -248,7 +249,7 @@ function TeamMembers({
 export function OrganizationTab() {
   const tree = useApi<OrgNode[]>('/api/v1/organization/tree');
   const [flash, setFlash] = useState<Flash>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useUrlParam('team'); // UX-062: selected team in the URL
   const run = useMutation(setFlash);
   if (tree.state === 'loading') return <Skeleton lines={4} />;
   if (tree.state === 'error') return <ErrorState error={tree.error} onRetry={tree.reload} />;

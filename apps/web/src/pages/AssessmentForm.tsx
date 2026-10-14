@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
+import { useLeaveGuard } from '../components/useLeaveGuard';
 import { api } from '../api';
 import { MessageKey, t } from '../i18n';
 
@@ -102,13 +103,8 @@ export function AssessmentForm({
       length >= MIN_EVIDENCE ? null : `${t('errEvidence')} (${length} of ${MIN_EVIDENCE} so far).`,
   };
 
-  // Warn before leaving with unsaved changes (Web Interface Guidelines: forms).
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
+  // Warn before leaving with unsaved changes: tab close and in-app links (UX-063).
+  useLeaveGuard(dirty, t('unsavedLeave'));
 
   async function save(submit: boolean, e?: FormEvent) {
     e?.preventDefault();

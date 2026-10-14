@@ -83,3 +83,39 @@ describe('AssessmentForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('already submitted');
   });
 });
+
+describe('AssessmentForm leave guard (UX-063)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  /** Clicks an in-app link; returns whether navigation went ahead (not prevented). */
+  function clickLink(): boolean {
+    const a = document.createElement('a');
+    a.href = '/organization';
+    a.textContent = 'Organization';
+    document.body.append(a);
+    let allowed = false;
+    const after = (e: MouseEvent) => {
+      allowed = !e.defaultPrevented;
+      e.preventDefault(); // jsdom: never actually navigate
+    };
+    document.addEventListener('click', after);
+    a.click();
+    document.removeEventListener('click', after);
+    a.remove();
+    return allowed;
+  }
+
+  it('asks before following an in-app link with unsaved text, and stays when declined', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<AssessmentForm subjectUserId="u1" onSaved={() => undefined} />);
+    expect(clickLink()).toBe(true); // nothing typed: no question
+    expect(confirm).not.toHaveBeenCalled();
+    await userEvent.type(screen.getByRole('textbox'), 'Half-written evidence');
+    expect(clickLink()).toBe(false);
+    expect(confirm).toHaveBeenCalledWith(
+      'Your assessment has unsaved changes. Leave without saving?',
+    );
+    confirm.mockReturnValue(true);
+    expect(clickLink()).toBe(true);
+  });
+});
